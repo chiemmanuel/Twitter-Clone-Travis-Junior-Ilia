@@ -1,0 +1,16 @@
+{
+  "name": "twitter-clone",
+  "version": "1.0.0",
+  "description": "Node.js environment for twitter clone",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongoose": "^8.1.1",
+    "mysql": "^2.18.1",
+    "nodemon": "^3.0.3"
+  }
+}
