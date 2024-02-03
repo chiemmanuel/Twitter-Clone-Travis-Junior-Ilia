@@ -13,10 +13,8 @@ const healthCheck = require("../middleware/healthCheck");
 const verifyToken = require("../middleware/authentication");
 const validator = require("../middleware/validator");
 
-// TESTING MYSQL CONNECTION POOL -- REMOVE LATER
-const pool = require("./database/mysql_db_connect");
-
 // ROUTES
+const tweetsRoutes = require("../routes/tweets.routes");
 
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");
@@ -49,11 +47,10 @@ const registerCoreMiddleWare = async () => {
     app.use(validator);
     app.use(healthCheck);
 
-
-
     app.use(verifyToken);
 
     // Route registration
+    app.use("/tweets", tweetsRoutes);
 
     // 404 handling for not found
     app.use(notFound);
