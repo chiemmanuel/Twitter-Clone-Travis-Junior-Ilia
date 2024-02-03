@@ -22,9 +22,9 @@ const getLiveTweets = async (req, res) => {
                 { $sort: { _id: -1 } },
                 { $limit: tweet_limit },
                 // Join the tweets with the polls and retweets they reference
-                { $lookup: { from: pollModel.collection.name, localField: 'poll_ref', foreignField: '_id', as: 'poll' } },
+                { $lookup: { from: pollModel.collection.name, localField: 'poll_id', foreignField: '_id', as: 'poll' } },
                 { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-                { $lookup: { from: tweetModel.collection.name, localField: 'retweet_ref', foreignField: '_id', as: 'retweet' } },
+                { $lookup: { from: tweetModel.collection.name, localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
             logger.info(`Successfully fetched tweets from the database`);
@@ -40,9 +40,9 @@ const getLiveTweets = async (req, res) => {
                 { $sort: { _id: -1 } },
                 { $limit: tweet_limit },
                 // Join the tweets with the polls and retweets they reference
-                { $lookup: { from: 'polls', localField: 'poll_ref', foreignField: '_id', as: 'poll' } },
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
                 { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-                { $lookup: { from: 'tweets', localField: 'retweet_ref', foreignField: '_id', as: 'retweet' } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
             logger.info(`Successfully fetched tweets from the database`);
@@ -82,9 +82,9 @@ const getFollowedTweets = async (req, res) => {
                 { $sort: { _id: -1 } },
                 { $limit: tweet_limit },
                 // Join the tweets with the polls and retweets they reference
-                { $lookup: { from: 'polls', localField: 'poll_ref', foreignField: '_id', as: 'poll' } },
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
                 { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-                { $lookup: { from: 'tweets', localField: 'retweet_ref', foreignField: '_id', as: 'retweet' } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
             logger.info(`Successfully fetched tweets from the database`);
@@ -101,9 +101,9 @@ const getFollowedTweets = async (req, res) => {
                 { $sort: { _id: -1 } },
                 { $limit: tweet_limit },
                 // Join the tweets with the polls and retweets they reference
-                { $lookup: { from: 'polls', localField: 'poll_ref', foreignField: '_id', as: 'poll' } },
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
                 { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-                { $lookup: { from: 'tweets', localField: 'retweet_ref', foreignField: '_id', as: 'retweet' } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
             logger.info(`Successfully fetched tweets from the database`);
