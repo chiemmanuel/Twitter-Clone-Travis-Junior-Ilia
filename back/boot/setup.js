@@ -16,6 +16,7 @@ const validator = require("../middleware/validator");
 // ROUTES
 const tweetsRoutes = require("../routes/tweets.routes");
 const followerRoutes = require("../routes/followers.routes");
+const usersRoutes = require("../routes/user.routes");
 
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");
@@ -47,6 +48,7 @@ const registerCoreMiddleWare = async () => {
 
     app.use(validator);
     app.use(healthCheck);
+    app.use("/user", usersRoutes);
 
     app.use(verifyToken);
 

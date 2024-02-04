@@ -1,6 +1,5 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const logger = require('../../middleware/winston');
-const { cli } = require('winston/lib/winston/config');
 
 const db_config = {
     host: process.env.MYSQL_HOST,
@@ -14,28 +13,26 @@ const db_config = {
 
 let connection; 
 
-function startConnection() {
-    connection = new mysql.createPool(db_config);
-    connection.getConnection(function(err) {
-        if (err) {
-            logger.error('error when connecting to db:', err);
-            setTimeout(startConnection, 2000);
-        }
+async function startConnection() {
+    try {
+        connection = mysql.createPool(db_config);
+        await connection.getConnection();
         logger.info('Connected to MySQL');
-    });
-
-    connection.on("error", (err, client) => {
-        logger.error("Error in MySQL: ", err);
-        startConnection();
-    });
+    } catch (error) {
+        logger.error('error when connecting to db:', error);
+        setTimeout(startConnection, 2000);
+    }
 }
 
 startConnection();
 
-setInterval(function () {
-    connection.query("SELECT 1", (err, res) => {
-        if (err) logger.error("SELECT 1", err.sqlMessage);
-    });
+setInterval(async function () {
+    try {
+        await connection.query('SELECT 1');
+    } catch (error) {
+        logger.error('MySQL error: ', error);
+        startConnection();
+    }
 }, 5000);
 
 module.exports = connection;

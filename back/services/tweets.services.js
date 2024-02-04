@@ -127,7 +127,11 @@ const registerVote = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getLiveTweets = async (req, res) => {
-    last_tweet_id = req.query.last_tweet_id;
+    if(req.query.last_tweet_id) {
+        last_tweet_id = req.query.last_tweet_id;
+    } else {
+        last_tweet_id = null;
+    }
     if (last_tweet_id) {
         try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
@@ -159,8 +163,13 @@ const getLiveTweets = async (req, res) => {
                 { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
-            logger.info(`Successfully fetched tweets from the database`);
-            return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+            if (tweets.length > 0) {
+                logger.info(`Successfully fetched tweets from the database`);
+                return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+            } else {
+                logger.info(`No more tweets to fetch from the database`);
+                return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
+            }
         } catch (error) {
             logger.error(`Error fetching tweets from the database: ${error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
