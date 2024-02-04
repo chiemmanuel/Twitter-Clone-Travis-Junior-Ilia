@@ -69,7 +69,8 @@ const signin = async (req, res) => {
             return res.status(400).json({ message: "Email or password don't match" });
         }
 
-        req.session.user = { email: user.email };
+        req.session.user = { username: user.username, email: user.email };
+        console.log(req.session.user);
 
         const token = jwt.sign(
             { user: { email: user.email } },
@@ -89,19 +90,19 @@ const signin = async (req, res) => {
 const updateUser = async (req, res) => {
     const { email } = req.session.user;
     const { username, bio, gender, dob, contact } = req.body;
+
     // Parse the incoming date string
     const parsedDate = new Date(dob);
 
     // Check if the parsed date is a valid date
     if (!isNaN(parsedDate)) {
-    // Format the date to 'YYYY-MM-DD'
+        // Format the date to 'YYYY-MM-DD'
         const formattedDate = parsedDate.toISOString().split('T')[0];
-
         // Now, `formattedDate` can be used to store in MySQL
         console.log(formattedDate);
     } else {
         console.error("Invalid date format");
-    // Handle the case where the incoming date is invalid
+        // Handle the case where the incoming date is invalid
     }
 
     try {
@@ -111,6 +112,9 @@ const updateUser = async (req, res) => {
         if (username) {
             updateFields.push('username');
             updateValues.push(username);
+
+            // Update session's username if changed
+            req.session.user.username = username;
         }
 
         if (bio) {
@@ -137,7 +141,7 @@ const updateUser = async (req, res) => {
             return res.status(400).json({ error: "No fields to update" });
         }
 
-        pool.query(
+        await pool.query(
             `UPDATE users SET ${updateFields.map(field => `${field} = ?`).join(', ')} WHERE email = ?`,
             [...updateValues, email]
         );
@@ -148,6 +152,7 @@ const updateUser = async (req, res) => {
         return res.status(500).json({ error: "Failed to update user information" });
     }
 };
+
 
 const updatePassword = (req, res) => {
     const { email } = req.session.user;
@@ -191,12 +196,12 @@ const updatePassword = (req, res) => {
 };
 
 const getUser = async (req, res) => {
+    console.log("here");
     console.log(req.session.user);
-    console.log(req.user);
     if (!req.session.user || typeof req.session.user !== 'object') {
         return res.status(400).json({ message: "Invalid user object" });
     }
-
+    console.log("here 2");
     const { email } = req.session.user;
     console.log(email);
 
