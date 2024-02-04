@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const pool = require('../boot/database/mysql_db_connect');
 
 // User signup
-const signup = (req, res) => {
+const signup = async (req, res) => {
     const { username, email, password, bio, gender, dob, contact } = req.body;
     let followers = 0;
     let following = 0;
@@ -29,47 +29,37 @@ const signup = (req, res) => {
 
     const hash = bcrypt.hashSync(password, 10);
 
-    pool.query("SELECT * FROM users WHERE email = ?", [email], (err, existingUsers) => {
-        if (err) {
-            console.error("Error while checking existing users", err);
-            return res.status(500).json({ message: "Failed to check existing users" });
-        }
+    try {
+        const [existingUsers] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
 
         if (existingUsers && existingUsers.length > 0) {
             return res.status(400).json({ message: "User with this email already exists" });
         }
 
-        pool.query(
+        await pool.query(
             "INSERT INTO users (email, username, password, bio_quote, gender, dob, contact, followers_count, following_count, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            [email, username, hash, bio, gender, parsedDate, contact, followers, following, created_at],
-            (err) => {
-                if (err) {
-                    console.error("Error while saving user to DB", err);
-                    return res.status(500).json({ message: "Failed to save user" });
-                }
-
-                return res.status(200).json({ message: "User registered successfully" });
-            }
+            [email, username, hash, bio, gender, parsedDate, contact, followers, following, created_at]
         );
-    });
+
+        return res.status(200).json({ message: "User registered successfully" });
+    } catch (err) {
+        console.error("Error while saving user to DB", err);
+        return res.status(500).json({ message: "Failed to save user" });
+    }
 };
 
 // User signin
-const signin = (req, res) => {
+const signin = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
         return res.status(400).json({ error: "Missing information" });
     }
 
-    pool.query("SELECT * FROM users WHERE email = ?", [email], (err, rows) => {
-        if (err) {
-            console.error("Error while getting user from DB", err);
-            return res.status(500).json({ error: "Failed to get user" });
-        }
+    try {
+        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
 
         const user = rows[0];
-        console.log(user.email)
 
         if (!user) {
             return res.status(400).json({ message: "User not found" });
@@ -78,11 +68,8 @@ const signin = (req, res) => {
         if (!bcrypt.compareSync(password, user.password)) {
             return res.status(400).json({ message: "Email or password don't match" });
         }
-        //create a session
-        req.session.user = {
-            email: user.email,
-          };
-        console.log(req.session.user);
+
+        req.session.user = { email: user.email };
 
         const token = jwt.sign(
             { user: { email: user.email } },
@@ -93,11 +80,14 @@ const signin = (req, res) => {
         );
 
         return res.status(200).json({ token });
-    });
+    } catch (error) {
+        console.error("Error while getting user from DB", error.message);
+        return res.status(500).json({ error: "Failed to get user" });
+    }
 };
 
 const updateUser = async (req, res) => {
-    const { email } = req.session.user.email;
+    const { email } = req.session.user;
     const { username, bio, gender, dob, contact } = req.body;
 
     try {
@@ -182,11 +172,11 @@ const getUser = async (req, res) => {
         return res.status(400).json({ message: "Invalid user object" });
     }
 
-    const { email } = req.session.user.email;
+    const { email } = req.session.user;
     console.log(email);
 
     try {
-        const [rows] = pool.query("SELECT * FROM users WHERE email = ?", [email]);
+        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
 
         const user = rows[0];
         console.log(user);

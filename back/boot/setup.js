@@ -49,7 +49,7 @@ const registerCoreMiddleWare = async () => {
     app.use(healthCheck);
     app.use("/user", usersRoutes);
 
-    app.use(verifyToken);
+    //app.use(verifyToken);
 
     // Route registration
     app.use("/tweets", tweetsRoutes);
