@@ -89,6 +89,20 @@ const signin = async (req, res) => {
 const updateUser = async (req, res) => {
     const { email } = req.session.user;
     const { username, bio, gender, dob, contact } = req.body;
+    // Parse the incoming date string
+    const parsedDate = new Date(dob);
+
+    // Check if the parsed date is a valid date
+    if (!isNaN(parsedDate)) {
+    // Format the date to 'YYYY-MM-DD'
+        const formattedDate = parsedDate.toISOString().split('T')[0];
+
+        // Now, `formattedDate` can be used to store in MySQL
+        console.log(formattedDate);
+    } else {
+        console.error("Invalid date format");
+    // Handle the case where the incoming date is invalid
+    }
 
     try {
         const updateValues = [];
@@ -109,9 +123,9 @@ const updateUser = async (req, res) => {
             updateValues.push(gender);
         }
 
-        if (dob) {
+        if (parsedDate) {
             updateFields.push('dob');
-            updateValues.push(dob);
+            updateValues.push(parsedDate);
         }
 
         if (contact) {
@@ -135,8 +149,8 @@ const updateUser = async (req, res) => {
     }
 };
 
-const updatePassword = async (req, res) => {
-    const { email } = req.session.user.email;
+const updatePassword = (req, res) => {
+    const { email } = req.session.user;
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
@@ -144,24 +158,35 @@ const updatePassword = async (req, res) => {
     }
 
     try {
-        const [rows] = pool.query("SELECT * FROM users WHERE email = ?", [email]);
-        const user = rows[0];
+        pool.query("SELECT * FROM users WHERE email = ?", [email], (err, rows) => {
+            if (err) {
+                console.error("Error while getting user from DB", err);
+                return res.status(500).json({ error: "Failed to get user" });
+            }
 
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
+            const user = rows && rows.length > 0 ? rows[0] : null;
 
-        if (!bcrypt.compareSync(oldPassword, user.password)) {
-            return res.status(400).json({ message: "Old password is incorrect" });
-        }
+            if (!user) {
+                return res.status(400).json({ message: "User not found" });
+            }
 
-        const hash = bcrypt.hashSync(newPassword, 10);
-        pool.query("UPDATE users SET password = ? WHERE email = ?", [hash, email]);
+            if (!bcrypt.compareSync(oldPassword, user.password)) {
+                return res.status(400).json({ message: "Old password is incorrect" });
+            }
 
-        return res.status(200).json({ message: "Password updated successfully" });
+            const hash = bcrypt.hashSync(newPassword, 10);
+            pool.query("UPDATE users SET password = ? WHERE email = ?", [hash, email], (updateErr) => {
+                if (updateErr) {
+                    console.error("Error while updating password", updateErr);
+                    return res.status(500).json({ error: "Failed to update password" });
+                }
+
+                return res.status(200).json({ message: "Password updated successfully" });
+            });
+        });
     } catch (error) {
-        console.error("Error while updating password", error.message);
-        return res.status(500).json({ error: "Failed to update password" });
+        console.error("Error in try-catch block", error.message);
+        return res.status(500).json({ error: "Internal server error" });
     }
 };
 
@@ -194,7 +219,11 @@ const getUser = async (req, res) => {
 
 const getUsers = async (req, res) => {
     try {
-        const [rows] = pool.query("SELECT * FROM users");
+        const [rows] = await pool.query("SELECT * FROM users");
+
+        if (!Array.isArray(rows)) {
+            return res.status(500).json({ error: "Unexpected response from the database" });
+        }
 
         return res.status(200).json(rows);
     } catch (error) {
@@ -205,7 +234,7 @@ const getUsers = async (req, res) => {
 
 const logout = (req, res) => {
     if (req.session.user) {
-        delete req.session.user;
+        req.session.destroy();
     }
 
     return res.status(200).json({ message: "Disconnected" });
