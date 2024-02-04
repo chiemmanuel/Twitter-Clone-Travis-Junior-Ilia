@@ -7,6 +7,120 @@ const pollModel = require('../models/pollModel.js');
 const tweet_limit = 20;
 
 /**
+ * TODO: Add socket.io to emit a tweet-created event to active clients
+ * 
+ * This function creates a new tweet and saves it to the database using the tweetModel schema
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message
+ */
+const postTweet = async (req, res) => {
+    let poll_id = null;
+    if (req.body.poll) {
+        poll_id = await createPoll(req.body.poll.title, req.body.poll.duration_seconds, req.body.poll.options);
+        if (poll_id === null) {
+            logger.error(`Error creating poll: ${error}`);
+            return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
+        }
+    }
+    const newTweet = new tweetModel({
+        author_email: req.user,
+        author_name: req.body.author_name,
+        profile_img: req.body.profile_img,
+        content: req.body.content,
+        media: req.body.media,
+        poll_id: poll_id,
+        retweet_id: req.body.retweet_id,
+        hashtags: req.body.hashtags,
+    });
+    try {
+        const tweet = await newTweet.save();
+        logger.info(`Successfully created tweet with id: ${tweet._id}`);
+        return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
+    } catch (error) {
+        logger.error(`Error creating tweet: ${error}`);
+        return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
+    }
+}
+
+/**
+ * This function creates a new poll and saves it to the database using the pollModel schema and values passed to it from the postTweet function
+ * @param {String} title: The title of the poll
+ * @param {Number} duration_seconds: The duration of the poll in seconds
+ * @param {Array} options: The options for the poll
+ * @returns: The id of the newly created poll, or null if an error occurs
+ * 
+ */
+const createPoll = async (title, duration_seconds, options) => {
+    const newPoll = new pollModel({
+        title: title,
+        duration_seconds: duration_seconds,
+        options: options
+    });
+    try {
+        const poll = await newPoll.save();
+        logger.info(`Successfully created poll with id: ${poll._id}`);
+        setTimeout(closePoll, duration_seconds * 1000, poll._id);
+        return poll._id;
+    } catch (error) {
+        logger.error(`Error creating poll: ${error}`);
+        return null;
+    }
+}
+
+/**
+ * TODO: Add socket.io to emit a poll-created event to the client
+ *
+ * This function closes a poll by updating the isClosed field to true and emitting a poll-closed event to the client
+ * @param {String} poll_id: The id of the poll to be closed
+ * @returns: Nothing
+ */
+const closePoll = async (poll_id) => {
+    try {
+        const poll = await pollModel.findByIdAndUpdate(poll_id, { isClosed: true });
+        logger.info(`Successfully closed poll with id: ${poll_id}`);
+        return;
+    } catch (error) {
+        logger.error(`Error closing poll: ${error}`);
+        return;
+    }
+}
+
+/**
+ * This function adds a new vote to a poll by updating the num_votes field of the option and adding the user's email to the voter_ids array
+ * @param {*} req The request object
+ * @param {*} res The response object
+ * @returns: The res object with a status code and a message
+ */
+const registerVote = async (req, res) => {
+    poll_id = req.body.poll_id;
+    option_index = req.body.option_index;
+    user_email = req.user;
+    try {
+        const poll = await pollModel.findById(poll_id);
+        if (poll.isClosed) {
+            logger.error(`Error registering vote: Poll with id ${poll_id} is closed`);
+            return res.status(statusCodes.queryError).json({ message: 'Error registering vote: Poll is closed' });
+        }
+        // Check if the user has already voted for an option in the poll
+        for (let i = 0; i < poll.options.length; i++) {
+            if (poll.options[i].voter_ids.includes(user_email)) {
+                logger.error(`Error registering vote: User with email ${user_email} has already voted for an option in poll with id ${poll_id}`);
+                return res.status(statusCodes.queryError).json({ message: 'Error registering vote: User has already voted for an option in this poll' });
+            }
+        }
+        poll.options[option_index].num_votes += 1;
+        poll.options[option_index].voter_ids.push(user_email);
+        await poll.save();
+        logger.info(`Successfully registered vote for poll with id: ${poll_id}`);
+        return res.status(statusCodes.success).json({ message: 'Successfully registered vote' });
+    } catch (error) {
+        logger.error(`Error registering vote: ${error}`);
+        return res.status(statusCodes.queryError).json({ message: 'Error registering vote' });
+    }
+}
+
+/**
  * This function fetches the next set of tweets from the database in chronological order
  * @param {*} req: The request object
  * @param {*} res: The response object
@@ -116,6 +230,8 @@ const getFollowedTweets = async (req, res) => {
 }
 
 module.exports = {
+    postTweet,
     getLiveTweets,
-    getFollowedTweets
+    getFollowedTweets,
+    registerVote,
 }
