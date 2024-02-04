@@ -100,13 +100,13 @@ const registerVote = async (req, res) => {
         const poll = await pollModel.findById(poll_id);
         if (poll.isClosed) {
             logger.error(`Error registering vote: Poll with id ${poll_id} is closed`);
-            return res.status(statusCodes.queryError).json({ message: 'Error registering vote: Poll is closed' });
+            return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: Poll is closed' });
         }
         // Check if the user has already voted for an option in the poll
         for (let i = 0; i < poll.options.length; i++) {
             if (poll.options[i].voter_ids.includes(user_email)) {
                 logger.error(`Error registering vote: User with email ${user_email} has already voted for an option in poll with id ${poll_id}`);
-                return res.status(statusCodes.queryError).json({ message: 'Error registering vote: User has already voted for an option in this poll' });
+                return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: User has already voted for an option in this poll' });
             }
         }
         poll.options[option_index].num_votes += 1;
@@ -177,12 +177,12 @@ const getLiveTweets = async (req, res) => {
 const getFollowedTweets = async (req, res) => {
     user_email = req.user;
     last_tweet_id = req.query.last_tweet_id;
-    follwed_users = [];
+    followed_users = [];
     try {
         // Find the users that the current user follows
         const [followed] = await pool.query('SELECT following_id FROM follows WHERE follower_id = ?', [user_email]);
         followed.forEach(user => {
-            follwed_users.push(user.following_id);
+            followed_users.push(user.following_id);
         });
     } catch (error) {
         logger.error(`Error fetching followed users from the database: ${error}`);
@@ -192,7 +192,7 @@ const getFollowedTweets = async (req, res) => {
         try {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             const tweets = await tweetModel.aggregate([
-                { $match: { author_email: { $in: follwed_users }, _id: { $lt: last_tweet_id } } },
+                { $match: { author_email: { $in: followed_users }, _id: { $lt: last_tweet_id } } },
                 { $sort: { _id: -1 } },
                 { $limit: tweet_limit },
                 // Join the tweets with the polls and retweets they reference
@@ -211,7 +211,7 @@ const getFollowedTweets = async (req, res) => {
         try {
             // Find tweets from the users that the current user follows
             const tweets = await tweetModel.aggregate([
-                { $match: { author_email: { $in: follwed_users } } },
+                { $match: { author_email: { $in: followed_users } } },
                 { $sort: { _id: -1 } },
                 { $limit: tweet_limit },
                 // Join the tweets with the polls and retweets they reference
