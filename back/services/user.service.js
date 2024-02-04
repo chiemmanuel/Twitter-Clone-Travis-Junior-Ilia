@@ -16,7 +16,7 @@ const signup = async (req, res) => {
     const hash = bcrypt.hashSync(password, 10);
 
     try {
-        const connection = await db.getConnection();
+        const connection = await pool.getConnection();
 
         const [existingUsers] = await connection.query("SELECT * FROM users WHERE email = ?", [email]);
         if (existingUsers.length > 0) {
@@ -45,7 +45,7 @@ const signin = async (req, res) => {
     }
 
     try {
-        const connection = await db.getConnection();
+        const connection = await pool.getConnection();
         const [rows] = await connection.query("SELECT * FROM users WHERE email = ?", [email]);
         connection.release();
 
@@ -78,7 +78,7 @@ const updateUser = async (req, res) => {
     const { username, bio, gender, dob, contact } = req.body;
 
     try {
-        const connection = await db.getConnection();
+        const connection = await pool.getConnection();
 
         const updateValues = [];
         const updateFields = [];
@@ -133,7 +133,7 @@ const updatePassword = async (req, res) => {
     }
 
     try {
-        const connection = await db.getConnection();
+        const connection = await pool.getConnection();
         const [rows] = await connection.query("SELECT * FROM users WHERE email = ?", [email]);
         const user = rows[0];
 
@@ -163,7 +163,7 @@ const getUser = async (req, res) => {
     const { email } = req.user;
 
     try {
-        const connection = await db.getConnection();
+        const connection = await pool.getConnection();
         const [rows] = await connection.query("SELECT * FROM users WHERE email = ?", [email]);
         connection.release();
 
@@ -183,7 +183,7 @@ const getUser = async (req, res) => {
 //Get all users from the database
 const getUsers = async (req, res) => {
     try {
-        const connection = await db.getConnection();
+        const connection = await pool.getConnection();
         const [rows] = await connection.query("SELECT * FROM users");
         connection.release();
 
