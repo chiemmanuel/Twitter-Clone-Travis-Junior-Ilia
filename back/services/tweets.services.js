@@ -1,5 +1,5 @@
 const pool = require('../boot/database/mysql_db_connect.js');
-const { logger } = require('../middleware/winston.js');
+const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
@@ -15,30 +15,31 @@ const tweet_limit = 20;
  * @returns: The res object with a status code and a message
  */
 const postTweet = async (req, res) => {
-    let poll_id = null;
     if (req.body.poll) {
-        poll_id = await createPoll(req.body.poll.title, req.body.poll.duration_seconds, req.body.poll.options);
-        if (poll_id === null) {
-            logger.error(`Error creating poll: ${error}`);
+        pollResult = await createPoll(req.body.poll.title, req.body.poll.duration_seconds, req.body.poll.options);
+        console.log(pollResult);
+        if (pollResult.error) {
+            logger.error(`Error creating poll: ${pollResult.error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
         }
     }
     const newTweet = new tweetModel({
-        author_email: req.user,
+        author_email: req.user.email,
         author_name: req.body.author_name,
         profile_img: req.body.profile_img,
         content: req.body.content,
-        media: req.body.media,
-        poll_id: poll_id,
-        retweet_id: req.body.retweet_id,
-        hashtags: req.body.hashtags,
+        media: req.body.media ? req.body.media : null,
+        poll_id: pollResult.id ? pollResult.id : null,
+        retweet_id: req.body.retweet_id ? req.body.retweet_id : null,
+        hashtags: req.body.hashtags ? req.body.hashtags : null,
     });
     try {
         const tweet = await newTweet.save();
-        logger.info(`Successfully created tweet with id: ${tweet._id}`);
+        //logger.info(`Successfully created tweet with id: ${tweet._id}`);
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
-        logger.error(`Error creating tweet: ${error}`);
+        //logger.error(`Error creating tweet: ${error}`);
+        console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
     }
 }
@@ -47,24 +48,28 @@ const postTweet = async (req, res) => {
  * This function creates a new poll and saves it to the database using the pollModel schema and values passed to it from the postTweet function
  * @param {String} title: The title of the poll
  * @param {Number} duration_seconds: The duration of the poll in seconds
- * @param {Array} options: The options for the poll
+ * @param {Array} option_values: The options for the poll
  * @returns: The id of the newly created poll, or null if an error occurs
  * 
  */
-const createPoll = async (title, duration_seconds, options) => {
+const createPoll = async (title, duration_seconds, option_values) => {
     const newPoll = new pollModel({
         title: title,
         duration_seconds: duration_seconds,
-        options: options
+        options: option_values.map(option => {
+            return { option_value: option, num_votes: 0, voter_ids: [] };
+        }),
     });
+    console.log(newPoll);
     try {
         const poll = await newPoll.save();
-        logger.info(`Successfully created poll with id: ${poll._id}`);
+        //logger.info(`Successfully created poll with id: ${poll._id}`);
         setTimeout(closePoll, duration_seconds * 1000, poll._id);
-        return poll._id;
+        return { id: poll._id };
     } catch (error) {
-        logger.error(`Error creating poll: ${error}`);
-        return null;
+        console.log(error);
+        //logger.error(`Error creating poll: ${error}`);
+        return { error: error.message };
     }
 }
 
@@ -148,7 +153,8 @@ const getLiveTweets = async (req, res) => {
             logger.info(`Successfully fetched tweets from the database`);
             return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
         } catch (error) {
-            logger.error(`Error fetching tweets from the database: ${error}`);
+            console.log(error);
+            logger.error("Error fetching tweets from the database:" + error);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
     } else {
@@ -171,7 +177,8 @@ const getLiveTweets = async (req, res) => {
                 return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
             }
         } catch (error) {
-            logger.error(`Error fetching tweets from the database: ${error}`);
+            console.log(error);
+            logger.error("Error fetching tweets from the database:" + error);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
     }

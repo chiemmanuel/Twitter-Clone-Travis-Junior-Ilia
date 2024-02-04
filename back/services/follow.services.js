@@ -1,5 +1,5 @@
 const pool = require('../boot/database/mysql_db_connect.js');
-const { logger } = require('../middleware/winston.js');
+const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 
 const followUser = async (req, res) => {
