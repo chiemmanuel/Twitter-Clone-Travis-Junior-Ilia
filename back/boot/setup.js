@@ -15,6 +15,7 @@ const validator = require("../middleware/validator");
 
 // ROUTES
 const tweetsRoutes = require("../routes/tweets.routes");
+const authRoutes = require("../routes/auth.routes");
 const usersRoutes = require("../routes/user.routes");
 
 try {
@@ -47,11 +48,13 @@ const registerCoreMiddleWare = async () => {
 
     app.use(validator);
     app.use(healthCheck);
-    app.use("/user", usersRoutes);
+    app.use("/auth", authRoutes);
+    
 
     app.use(verifyToken);
 
     // Route registration
+    app.use("/user", usersRoutes);
     app.use("/tweets", tweetsRoutes);
 
     // 404 handling for not found
