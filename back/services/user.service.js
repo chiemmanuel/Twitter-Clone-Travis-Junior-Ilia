@@ -118,7 +118,7 @@ const updateUser = async (req, res) => {
         }
 
         if (bio) {
-            updateFields.push('bio_qoute');
+            updateFields.push('bio_quote');
             updateValues.push(bio);
         }
 
@@ -153,9 +153,8 @@ const updateUser = async (req, res) => {
     }
 };
 
-
-const updatePassword = (req, res) => {
-    const { email } = req.session.user;
+const updatePassword = async (req, res) => {
+    const { email } = req.session.user.email;
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
@@ -163,13 +162,8 @@ const updatePassword = (req, res) => {
     }
 
     try {
-        pool.query("SELECT * FROM users WHERE email = ?", [email], (err, rows) => {
-            if (err) {
-                console.error("Error while getting user from DB", err);
-                return res.status(500).json({ error: "Failed to get user" });
-            }
-
-            const user = rows && rows.length > 0 ? rows[0] : null;
+        const [rows] = pool.query("SELECT * FROM users WHERE email = ?", [email]);
+        const user = rows[0];
 
             if (!user) {
                 return res.status(400).json({ message: "User not found" });
@@ -224,11 +218,7 @@ const getUser = async (req, res) => {
 
 const getUsers = async (req, res) => {
     try {
-        const [rows] = await pool.query("SELECT * FROM users");
-
-        if (!Array.isArray(rows)) {
-            return res.status(500).json({ error: "Unexpected response from the database" });
-        }
+        const [rows] = pool.query("SELECT * FROM users");
 
         return res.status(200).json(rows);
     } catch (error) {
