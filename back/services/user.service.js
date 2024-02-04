@@ -100,7 +100,7 @@ const updateUser = async (req, res) => {
         }
 
         if (bio) {
-            updateFields.push('bio_qoute');
+            updateFields.push('bio_quote');
             updateValues.push(bio);
         }
 
@@ -136,7 +136,7 @@ const updateUser = async (req, res) => {
 };
 
 const updatePassword = async (req, res) => {
-    const { email } = req.session.user.email;
+    const { email } = req.session.user;
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) {
@@ -144,7 +144,7 @@ const updatePassword = async (req, res) => {
     }
 
     try {
-        const [rows] = pool.query("SELECT * FROM users WHERE email = ?", [email]);
+        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
         const user = rows[0];
 
         if (!user) {
