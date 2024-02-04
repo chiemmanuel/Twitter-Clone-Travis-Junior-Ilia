@@ -1,5 +1,5 @@
 const pool = require('../boot/database/mysql_db_connect.js');
-const { logger } = require('../boot/winston.js');
+const { logger } = require('../middleware/winston.js');
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
