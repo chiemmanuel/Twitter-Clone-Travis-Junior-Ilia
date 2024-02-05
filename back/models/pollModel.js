@@ -14,7 +14,8 @@ const pollSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
-    options: [{
+    options: {
+        type: [{
         option_value: {
             type: String,
             required: true,
@@ -26,8 +27,20 @@ const pollSchema = new mongoose.Schema({
         voter_ids: [{
             type: String,
             }],
-        }], 
+        }],
+        required: true,
+        validate: [assertMinOptions, 'Polls must have at least 2 options'],
+        validate: [assertMaxOptions, 'Polls must have at most 4 options'],
+    }, 
     });
+
+function assertMaxOptions(value) {
+    return value.length <= 4;
+}
+
+function assertMinOptions(value) {
+    return value.length >= 2;
+}
 
 module.exports = mongoose.model('Poll', pollSchema);
 
