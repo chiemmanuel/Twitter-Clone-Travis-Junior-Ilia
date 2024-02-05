@@ -2,6 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require('../boot/database/mysql_db_connect');
 const statusCodes = require('../constants/statusCodes');
+const logger = require("../middleware/winston");
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -92,6 +93,10 @@ const updatePassword = async (req, res) => {
             return res.status(statusCodes.badRequest).json({ error: "Missing information" });
         }
 
+        if (oldPassword === newPassword) {
+            return res.status(statusCodes.badRequest).json({ error: "Old and new passwords cannot be the same" });
+        }
+
         // Fetch user information from the database
         const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
         const user = rows[0];
@@ -107,14 +112,13 @@ const updatePassword = async (req, res) => {
 
         // Hash and update the new password
         const hash = bcrypt.hashSync(newPassword, 10);
-        pool.query("UPDATE users SET password = ? WHERE email = ?", [hash, email], (updateErr) => {
+        await pool.query("UPDATE users SET password = ? WHERE email = ?", [hash, email], (updateErr) => {
             if (updateErr) {
                 console.error("Error while updating password", updateErr);
                 return res.status(statusCodes.queryError).json({ error: "Failed to update password" });
             }
-
-            return res.status(statusCodes.success).json({ message: "Password updated successfully" });
         });
+        return res.status(statusCodes.success).json({ message: "Password updated successfully" });
     } catch (error) {
         console.error("Error in try-catch block", error.message);
         return res.status(statusCodes.queryError).json({ error: "Internal server error" });
@@ -164,6 +168,7 @@ const getcurrentUser = async (req, res) => {
 const getUserbyUsername = async (req, res) => {
     try {
         const { username } = req.params;
+        logger.info(`Fetching user with username: ${username}`);
 
         // Fetch user information from the database based on the username
         const [rows] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);

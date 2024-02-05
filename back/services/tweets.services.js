@@ -37,10 +37,10 @@ const postTweet = async (req, res) => {
     });
     try {
         const tweet = await newTweet.save();
-        //logger.info(`Successfully created tweet with id: ${tweet._id}`);
+        logger.info(`Successfully created tweet with id: ${tweet._id}`);
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
-        //logger.error(`Error creating tweet: ${error}`);
+        logger.error(`Error creating tweet: ${error}`);
         console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
     }
@@ -150,12 +150,12 @@ const createPoll = async (title, duration_seconds, option_values) => {
     console.log(newPoll);
     try {
         const poll = await newPoll.save();
-        //logger.info(`Successfully created poll with id: ${poll._id}`);
+        logger.info(`Successfully created poll with id: ${poll._id}`);
         setTimeout(closePoll, duration_seconds * 1000, poll._id);
         return { id: poll._id };
     } catch (error) {
         console.log(error);
-        //logger.error(`Error creating poll: ${error}`);
+        logger.error(`Error creating poll: ${error}`);
         return { error: error.message };
     }
 }
