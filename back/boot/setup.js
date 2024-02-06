@@ -14,7 +14,6 @@ const verifyToken = require("../middleware/authentication");
 const validator = require("../middleware/validator");
 
 // ROUTES
-const usersRoutes = require("../routes/user.routes");
 const tweetsRoutes = require("../routes/tweets.routes");
 const followerRoutes = require("../routes/followers.routes");
 const bookmarksRoutes = require("../routes/bookmarks.routes");
@@ -64,20 +63,18 @@ const registerCoreMiddleWare = async () => {
     
     
     app.use(verifyToken);
-    
-    // Routes registration
-    app.use("/tweets", tweetsRoutes);
-    app.use("/followers", followerRoutes);
-    app.use("/bookmarks", bookmarksRoutes);
 
+    
     // Route registration
     app.use("/user", usersRoutes);
     app.use("/tweets", tweetsRoutes);
     app.use("/comments", commentsRoutes);
     app.use("/notifications", notificationRoutes);
+    app.use("/bookmarks", bookmarksRoutes);
+    app.use("/followers", followerRoutes);
 
     // 404 handling for not found
-    app.use(notFound);
+    // app.use(notFound);
 
     logger.http("Done registering all middlewares");
   } catch (err) {
