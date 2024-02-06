@@ -3,6 +3,7 @@ const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
+const ObjectId = require('mongoose').Types.ObjectId;
 
 const tweet_limit = 20;
 
@@ -22,6 +23,8 @@ const postTweet = async (req, res) => {
             logger.error(`Error creating poll: ${pollResult.error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
         }
+    } else {
+        pollResult = { id: null };
     }
     const newTweet = new tweetModel({
         author_email: req.user.email,
@@ -29,7 +32,7 @@ const postTweet = async (req, res) => {
         profile_img: req.body.profile_img,
         content: req.body.content,
         media: req.body.media ? req.body.media : null,
-        poll_id: pollResult.id ? pollResult.id : null,
+        poll_id: pollResult.id,
         retweet_id: req.body.retweet_id ? req.body.retweet_id : null,
         hashtags: req.body.hashtags ? req.body.hashtags : null,
         created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
@@ -220,11 +223,12 @@ const registerVote = async (req, res) => {
  */
 const getLiveTweets = async (req, res) => {
     if(req.body.last_tweet_id) {
-        last_tweet_id = req.body.last_tweet_id;
+        last_tweet_id = new ObjectId(req.body.last_tweet_id);
     } else {
         last_tweet_id = null;
     }
     if (last_tweet_id) {
+        console.log(last_tweet_id)
         try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
             const tweets = await tweetModel.aggregate([
@@ -237,8 +241,13 @@ const getLiveTweets = async (req, res) => {
                 { $lookup: { from: tweetModel.collection.name, localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
+
             logger.info(`Successfully fetched tweets from the database`);
-            return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+            if (tweets.length > 0) {
+                return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+            } else {
+                return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
+            }
         } catch (error) {
             console.log(error);
             logger.error("Error fetching tweets from the database:" + error);
@@ -279,7 +288,11 @@ const getLiveTweets = async (req, res) => {
  */
 const getFollowedTweets = async (req, res) => {
     user_email = req.user.email;
-    last_tweet_id = req.query.last_tweet_id;
+    if(req.body.last_tweet_id) {
+        last_tweet_id = new ObjectId(req.body.last_tweet_id);
+    } else {
+        last_tweet_id = null;
+    }
     followed_users = [];
     try {
         // Find the users that the current user follows
