@@ -219,8 +219,8 @@ const registerVote = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getLiveTweets = async (req, res) => {
-    if(req.query.last_tweet_id) {
-        last_tweet_id = req.query.last_tweet_id;
+    if(req.body.last_tweet_id) {
+        last_tweet_id = req.body.last_tweet_id;
     } else {
         last_tweet_id = null;
     }
@@ -278,7 +278,7 @@ const getLiveTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getFollowedTweets = async (req, res) => {
-    user_email = req.user;
+    user_email = req.user.email;
     last_tweet_id = req.query.last_tweet_id;
     followed_users = [];
     try {
