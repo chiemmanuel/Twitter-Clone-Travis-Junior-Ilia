@@ -8,7 +8,7 @@ router.put("/update", userServices.updateUser);
 router.put("/updatepassword", userServices.updatePassword);
 router.get("/get/:username", userServices.getUserbyUsername);
 router.get("/getme", userServices.getcurrentUser);
-router.get("/logout", userServices.logout);
+router.post("/logout", userServices.logout);
 
 
 module.exports = router;

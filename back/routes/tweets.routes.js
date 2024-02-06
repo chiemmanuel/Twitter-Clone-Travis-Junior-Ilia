@@ -4,10 +4,11 @@ const router = express.Router();
 const tweetsService = require('../services/tweets.services');
 
 router.get('/livefeed', tweetsService.getLiveTweets);
-router.get('/:id', tweetsService.getTweetById);
-router.put('/edit/:id', tweetsService.editTweetById);
-router.delete('/delete/:id', tweetsService.deleteTweetById);
-router.get('/followedfeed', tweetsService.getFollowedTweets);
+router.get('/:tweetId', tweetsService.getTweetById);
+router.put('/like/:tweetId', tweetsService.likeTweet);
+router.put('/edit/:tweetId', tweetsService.editTweetById);
+router.delete('/delete/:tweetId', tweetsService.deleteTweetById);
+router.get('/foryoupage', tweetsService.getFollowedTweets);
 router.post('/tweet', tweetsService.postTweet);
 router.put('/poll/vote', tweetsService.registerVote);
 

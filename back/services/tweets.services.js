@@ -4,7 +4,7 @@ const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
 
-const tweet_limit = 20;
+const tweet_limit = 5;
 
 /**
  * TODO: Add socket.io to emit a tweet-created event to active clients
@@ -22,18 +22,19 @@ const postTweet = async (req, res) => {
             logger.error(`Error creating poll: ${pollResult.error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
         }
+    }else{
+        pollResult = {id: null}
     }
+    console.log(req.user)
     const newTweet = new tweetModel({
         author_email: req.user.email,
-        author_name: req.body.author_name,
-        profile_img: req.body.profile_img,
+        author_name: req.user.username,
+        profile_img: req.body.profile_image,
         content: req.body.content,
         media: req.body.media ? req.body.media : null,
-        poll_id: pollResult.id ? pollResult.id : null,
+        poll_id: pollResult.id,
         retweet_id: req.body.retweet_id ? req.body.retweet_id : null,
         hashtags: req.body.hashtags ? req.body.hashtags : null,
-        created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        updated_at: null,
     });
     try {
         const tweet = await newTweet.save();
@@ -68,6 +69,37 @@ const getTweetById = async (req, res) => {
         return res.status(statusCodes.queryError).json({ message: 'Error fetching tweet' });
     }
 };
+/**
+ * This function likes a tweet by its ID
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message indicating the success or failure of the tweet like
+ */
+const likeTweet = async (req, res) => {
+    const tweetId = req.params.tweetId;
+
+    try {
+        // Find the tweet by its ID
+        const tweet = await tweetModel.findById(tweetId);
+        if (!tweet) {
+            // Return a not found status if the tweet is not found
+            return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
+        }
+
+        // Increment the number of likes for the tweet
+        tweet.num_likes += 1;
+
+        // Save the updated tweet
+        const updatedTweet = await tweet.save();
+
+        // Return a success status with the updated tweet
+        return res.status(statusCodes.success).json({ message: 'Tweet liked successfully', tweet: updatedTweet });
+    } catch (error) {
+        // Handle errors and return an error status
+        console.error("Error liking tweet:", error);
+        return res.status(statusCodes.queryError).json({ message: 'Failed to like tweet' });
+    }
+};
 
 /**
  * TODO: Add socket.io to emit a tweet-updated event to active clients
@@ -79,6 +111,7 @@ const getTweetById = async (req, res) => {
  */
 const editTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
+    console.log(tweetId);
     const { updatedContent, updatedMedia, updatedHashtags } = req.body;
 
     try {
@@ -219,8 +252,9 @@ const registerVote = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getLiveTweets = async (req, res) => {
-    if(req.query.last_tweet_id) {
-        last_tweet_id = req.query.last_tweet_id;
+    if(req.body.last_tweet_id) {
+        last_tweet_id = req.body.last_tweet_id;
+        console.log(last_tweet_id);
     } else {
         last_tweet_id = null;
     }
@@ -238,6 +272,7 @@ const getLiveTweets = async (req, res) => {
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
             logger.info(`Successfully fetched tweets from the database`);
+            console.log(tweets);
             return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
         } catch (error) {
             console.log(error);
@@ -278,7 +313,8 @@ const getLiveTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getFollowedTweets = async (req, res) => {
-    user_email = req.user;
+    user_email = req.user.email;
+    console.log(user_email);
     last_tweet_id = req.query.last_tweet_id;
     followed_users = [];
     try {
@@ -335,6 +371,7 @@ const getFollowedTweets = async (req, res) => {
 module.exports = {
     postTweet,
     getTweetById,
+    likeTweet,
     editTweetById,
     deleteTweetById,
     getLiveTweets,

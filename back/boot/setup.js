@@ -17,7 +17,7 @@ const validator = require("../middleware/validator");
 const tweetsRoutes = require("../routes/tweets.routes");
 const authRoutes = require("../routes/auth.routes");
 const usersRoutes = require("../routes/user.routes");
-const commentsRoutes = require("../routes/comment.routes");
+const commentsRoutes = require("../routes/comments.routes");
 
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");

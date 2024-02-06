@@ -10,8 +10,9 @@ const statusCodes = require('../constants/statusCodes'); // Provide the correct 
  */
 const postComment = async (req, res) => {
     const tweetId = req.params.tweetId;
+    const { author_name } = req.user.username;
 
-    const { author_name, profile_img, content } = req.body;
+    const { profile_img, content } = req.body;
 
     const newComment = new commentModel({
         tweet_id: mongoose.Types.ObjectId(tweetId),
