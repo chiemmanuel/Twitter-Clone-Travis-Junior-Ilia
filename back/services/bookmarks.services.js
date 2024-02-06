@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const logger = require("../middleware/winston");
+const { ObjectId } = require('mongodb');
+const logger = require('../middleware/winston');
 const statusCodes = require('../constants/statusCodes.js');
 const bookmarkModel = require("../models/bookmarkModel.js");
 
@@ -24,12 +24,12 @@ const addBookmark = async (req, res) => {
         const bookmarks = await bookmarkModel.findOne({ user_email: email }).exec();
 
         if (bookmarks) {
-            bookmarks.tweets.push(tweet_id);
+            bookmarks.tweets.push(new ObjectId(tweet_id));
             await bookmarks.save();
         } else {
             const bookmarks = new bookmarkModel({
                 user_email: email,
-                tweets: [mongoose.Types.ObjectId(tweet_id)],
+                tweets: [new ObjectId(tweet_id)],
             });
             await bookmarks.save();
         }
@@ -46,15 +46,15 @@ const deleteBookmark = async (req, res) => {
     const { email } = req.user;
 
     try {
-        bookmarkModel.updateOne(
+        await bookmarkModel.findOneAndUpdate(
             { user_email: email },
-            { $pull: { tweets: { _id: tweet_id } } }
+            { $pull: { tweets: new ObjectId(tweet_id) } }
         );
         return res.status(statusCodes.success).json({ message: 'Bookmark deleted' });
     
     } catch (error) {
         logger.error(`Error while deleting a bookmark: ${error}`);
-        res.status(statusCodes.queryError).send('Error while deleting a bookmark');
+        res.status(statusCodes.queryError).json({ error: 'Error while deleting a bookmark' });
     }
 };
 

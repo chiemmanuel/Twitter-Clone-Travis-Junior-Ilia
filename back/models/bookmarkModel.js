@@ -8,11 +8,6 @@ const bookmarkSchema = new mongoose.Schema({
     tweets: [{
         type: mongoose.Schema.Types.ObjectId,
     }],
-    },
-    { timestamps: {
-        createdAt: 'created_at',
-        updatedAt: 'updated_at',
-        },
-    });
+    },);
 
 module.exports = mongoose.model('Bookmark', bookmarkSchema);
