@@ -32,17 +32,104 @@ const postTweet = async (req, res) => {
         poll_id: pollResult.id ? pollResult.id : null,
         retweet_id: req.body.retweet_id ? req.body.retweet_id : null,
         hashtags: req.body.hashtags ? req.body.hashtags : null,
+        created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        updated_at: null,
     });
     try {
         const tweet = await newTweet.save();
-        //logger.info(`Successfully created tweet with id: ${tweet._id}`);
+        logger.info(`Successfully created tweet with id: ${tweet._id}`);
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
-        //logger.error(`Error creating tweet: ${error}`);
+        logger.error(`Error creating tweet: ${error}`);
         console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
     }
 }
+/**
+ * TODO: Add socket.io to emit a tweet-updated event to active clients
+ * 
+ * This function retrieves a tweet by its ID and returns it in the response
+ * @param {*} req: The request object with tweetId in params
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and the tweet in the message
+ */
+const getTweetById = async (req, res) => {
+    const tweetId = req.params.tweetId;
+
+    try {
+        const tweet = await tweetModel.findById(tweetId);
+        if (!tweet) {
+            return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
+        }
+
+        return res.status(statusCodes.success).json({ tweet: tweet });
+    } catch (error) {
+        console.log(error);
+        return res.status(statusCodes.queryError).json({ message: 'Error fetching tweet' });
+    }
+};
+
+/**
+ * TODO: Add socket.io to emit a tweet-updated event to active clients
+ * 
+ * This function updates a tweet by its ID based on the provided fields in the request body
+ * @param {*} req: The request object with tweetId in params and updated fields in the body
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message indicating the success or failure of the update
+ */
+const editTweetById = async (req, res) => {
+    const tweetId = req.params.tweetId;
+    const { updatedContent, updatedMedia, updatedHashtags } = req.body;
+
+    try {
+        const tweet = await tweetModel.findById(tweetId);
+        if (!tweet) {
+            return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
+        }
+
+        // Update only if the fields are provided in the request
+        if (updatedContent !== undefined) {
+            tweet.content = updatedContent;
+        }
+        if (updatedMedia !== undefined) {
+            tweet.media = updatedMedia;
+        }
+        if (updatedHashtags !== undefined) {
+            tweet.hashtags = updatedHashtags;
+        }
+
+        const updatedTweet = await tweet.save();
+
+        return res.status(statusCodes.success).json({ message: 'Tweet updated successfully', tweet: updatedTweet });
+    } catch (error) {
+        console.log(error);
+        return res.status(statusCodes.queryError).json({ message: 'Error updating tweet' });
+    }
+};
+
+/**
+ * TODO: Add socket.io to emit a tweet-deleted event to active clients
+ * 
+ * This function deletes a tweet by its ID
+ * @param {*} req: The request object with tweetId in params
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message indicating the success or failure of the deletion
+ */
+const deleteTweetById = async (req, res) => {
+    const tweetId = req.params.tweetId;
+
+    try {
+        const tweet = await tweetModel.findByIdAndDelete(tweetId);
+        if (!tweet) {
+            return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
+        }
+
+        return res.status(statusCodes.success).json({ message: 'Tweet deleted successfully' });
+    } catch (error) {
+        console.log(error);
+        return res.status(statusCodes.queryError).json({ message: 'Error deleting tweet' });
+    }
+};
 
 /**
  * This function creates a new poll and saves it to the database using the pollModel schema and values passed to it from the postTweet function
@@ -63,12 +150,12 @@ const createPoll = async (title, duration_seconds, option_values) => {
     console.log(newPoll);
     try {
         const poll = await newPoll.save();
-        //logger.info(`Successfully created poll with id: ${poll._id}`);
+        logger.info(`Successfully created poll with id: ${poll._id}`);
         setTimeout(closePoll, duration_seconds * 1000, poll._id);
         return { id: poll._id };
     } catch (error) {
         console.log(error);
-        //logger.error(`Error creating poll: ${error}`);
+        logger.error(`Error creating poll: ${error}`);
         return { error: error.message };
     }
 }
@@ -247,6 +334,9 @@ const getFollowedTweets = async (req, res) => {
 
 module.exports = {
     postTweet,
+    getTweetById,
+    editTweetById,
+    deleteTweetById,
     getLiveTweets,
     getFollowedTweets,
     registerVote,

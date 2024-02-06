@@ -18,6 +18,10 @@ const usersRoutes = require("../routes/user.routes");
 const tweetsRoutes = require("../routes/tweets.routes");
 const followerRoutes = require("../routes/followers.routes");
 const bookmarksRoutes = require("../routes/bookmarks.routes");
+const authRoutes = require("../routes/auth.routes");
+const usersRoutes = require("../routes/user.routes");
+const commentsRoutes = require("../routes/comment.routes");
+const notificationRoutes = require("../routes/notification.routes");
 
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");
@@ -49,7 +53,9 @@ const registerCoreMiddleWare = async () => {
 
     app.use(validator);
     app.use(healthCheck);
-    app.use("/user", usersRoutes);
+    app.use("/auth", authRoutes);
+    
+    
 
     // Errors handling
     // app.use(errors.notFoundError);
@@ -63,6 +69,15 @@ const registerCoreMiddleWare = async () => {
     app.use("/tweets", tweetsRoutes);
     app.use("/followers", followerRoutes);
     app.use("/bookmarks", bookmarksRoutes);
+
+    // Route registration
+    app.use("/user", usersRoutes);
+    app.use("/tweets", tweetsRoutes);
+    app.use("/comments", commentsRoutes);
+    app.use("/notifications", notificationRoutes);
+
+    // 404 handling for not found
+    app.use(notFound);
 
     logger.http("Done registering all middlewares");
   } catch (err) {
