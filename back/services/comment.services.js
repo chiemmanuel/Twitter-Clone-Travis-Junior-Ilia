@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const commentModel = require('../models/commentModel');
-const statusCodes = require('../constants/statusCodes'); // Provide the correct path to your status codes file
+const statusCodes = require('../constants/statusCodes'); 
+const tweetModel = require('../models/tweetModel');
 
 /**
  * This function creates a new comment and saves it to the database using the Comment model schema
@@ -10,21 +11,29 @@ const statusCodes = require('../constants/statusCodes'); // Provide the correct 
  */
 const postComment = async (req, res) => {
     const tweetId = req.params.tweetId;
-    const { author_name } = req.user.username;
+    const author_name  = req.user.username;
+    console.log("author_name:", author_name);
 
-    const { profile_img, content } = req.body;
+    const { profile_image, content } = req.body;
+
+    let media = req.body.media;
+    if (media === undefined) {
+        media = null;
+    }
 
     const newComment = new commentModel({
-        tweet_id: mongoose.Types.ObjectId(tweetId),
+        tweet_id: new mongoose.Types.ObjectId(tweetId),
         author_name,
-        profile_img,
+        profile_image,
         content,
-        created_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
-        updated_at: null,
+        media,
     });
 
     try {
         const comment = await newComment.save();
+        const tweet = await tweetModel.findById(tweetId);
+        tweet.num_comments += 1;
+        await tweet.save();
         return res.status(statusCodes.success).json({ message: 'Comment created successfully', comment });
     } catch (error) {
         console.error("Error creating comment:", error);
@@ -33,6 +42,7 @@ const postComment = async (req, res) => {
 };
 
 /**
+ * TODO/ Optional: Add possibility to update the media of the content if we implement  premium accounts
  * This function edits a comment by its ID
  * @param {*} req: The request object
  * @param {*} res: The response object
@@ -40,19 +50,16 @@ const postComment = async (req, res) => {
  */
 const editCommentById = async (req, res) => {
     const commentId = req.params.commentId;
-    const { updatedContent } = req.body;
+    const { updatedContent} = req.body;
 
     try {
         const comment = await commentModel.findById(commentId);
         if (!comment) {
             return res.status(statusCodes.notFound).json({ message: 'Comment not found' });
         }
-
         if (updatedContent !== undefined) {
             comment.content = updatedContent;
-            comment.updated_at = new Date().toISOString().slice(0, 19).replace('T', ' ');
         }
-
         const updatedComment = await comment.save();
 
         return res.status(statusCodes.success).json({ message: 'Comment updated successfully', comment: updatedComment });

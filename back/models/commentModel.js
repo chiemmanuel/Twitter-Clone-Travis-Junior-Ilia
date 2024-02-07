@@ -9,7 +9,7 @@ const commentSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    profile_img: {
+    profile_image: {
         type: String,
         required: true,
     },
@@ -17,6 +17,9 @@ const commentSchema = new mongoose.Schema({
         type: String,
         required: true,
         max: 140,
+    },
+    media: {
+        type: String,
     },
     num_likes: {
         type: Number,
