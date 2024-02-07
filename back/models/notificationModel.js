@@ -6,7 +6,7 @@ const notificationSchema = new mongoose.Schema({
         required: true,
     },
     content: {
-        type: Text,
+        type: String,
         required: true,
     },
     isRead: {
@@ -19,3 +19,5 @@ const notificationSchema = new mongoose.Schema({
         updatedAt: 'updated_at',
         },
     });
+
+ module.exports = mongoose.model('notifications', notificationSchema);

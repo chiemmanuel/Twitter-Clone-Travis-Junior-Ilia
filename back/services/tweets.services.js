@@ -3,6 +3,7 @@ const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
+const ObjectId = require('mongoose').Types.ObjectId;
 
 const tweet_limit = 5;
 
@@ -22,8 +23,6 @@ const postTweet = async (req, res) => {
             logger.error(`Error creating poll: ${pollResult.error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
         }
-    }else{
-        pollResult = {id: null}
     }
     console.log(req.user)
     const newTweet = new tweetModel({
@@ -252,13 +251,13 @@ const registerVote = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getLiveTweets = async (req, res) => {
-    if(req.body.last_tweet_id) {
-        last_tweet_id = req.body.last_tweet_id;
-        console.log(last_tweet_id);
+    if(req.query.last_tweet_id) {
+        last_tweet_id = req.query.last_tweet_id;
     } else {
         last_tweet_id = null;
     }
     if (last_tweet_id) {
+        console.log(last_tweet_id)
         try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
             const tweets = await tweetModel.aggregate([
@@ -271,8 +270,8 @@ const getLiveTweets = async (req, res) => {
                 { $lookup: { from: tweetModel.collection.name, localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
                 { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
             ]);
+
             logger.info(`Successfully fetched tweets from the database`);
-            console.log(tweets);
             return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
         } catch (error) {
             console.log(error);
@@ -313,8 +312,7 @@ const getLiveTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getFollowedTweets = async (req, res) => {
-    user_email = req.user.email;
-    console.log(user_email);
+    user_email = req.user;
     last_tweet_id = req.query.last_tweet_id;
     followed_users = [];
     try {

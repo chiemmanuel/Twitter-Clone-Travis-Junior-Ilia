@@ -8,16 +8,18 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const morgan = require("morgan");
 const logger = require("../middleware/winston");
-const notFound = require("../middleware/notFound");
+// const errors = require("../middleware/errors");
 const healthCheck = require("../middleware/healthCheck");
 const verifyToken = require("../middleware/authentication");
 const validator = require("../middleware/validator");
 
 // ROUTES
 const tweetsRoutes = require("../routes/tweets.routes");
+const followerRoutes = require("../routes/followers.routes");
+const bookmarksRoutes = require("../routes/bookmarks.routes");
 const authRoutes = require("../routes/auth.routes");
 const usersRoutes = require("../routes/user.routes");
-const commentsRoutes = require("../routes/comments.routes");
+const commentsRoutes = require("../routes/comment.routes");
 
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");
@@ -53,15 +55,25 @@ const registerCoreMiddleWare = async () => {
     
     
 
+    // Errors handling
+    // app.use(errors.notFoundError);
+    // app.use(errors.unauthorizedError);
+    // app.use(errors.internalServerError);
+    
+    
     app.use(verifyToken);
 
+    
     // Route registration
     app.use("/user", usersRoutes);
     app.use("/tweets", tweetsRoutes);
     app.use("/comments", commentsRoutes);
+    app.use("/notifications", notificationRoutes);
+    app.use("/bookmarks", bookmarksRoutes);
+    app.use("/followers", followerRoutes);
 
     // 404 handling for not found
-    app.use(notFound);
+    // app.use(notFound);
 
     logger.http("Done registering all middlewares");
   } catch (err) {
