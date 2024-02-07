@@ -3,6 +3,9 @@ const jwt = require("jsonwebtoken");
 const pool = require('../boot/database/mysql_db_connect');
 const statusCodes = require('../constants/statusCodes');
 const logger = require("../middleware/winston");
+const tweetModel = require('../models/tweetModel');
+const commentModel = require('../models/commentModel');
+const pollModelName = require('../models/pollModel').collection.name;
 
 /**
  * This function updates user information in the database based on the provided fields

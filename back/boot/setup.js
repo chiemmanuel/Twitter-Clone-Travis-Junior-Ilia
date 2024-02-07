@@ -19,7 +19,8 @@ const followerRoutes = require("../routes/followers.routes");
 const bookmarksRoutes = require("../routes/bookmarks.routes");
 const authRoutes = require("../routes/auth.routes");
 const usersRoutes = require("../routes/user.routes");
-const commentsRoutes = require("../routes/comments.routes");
+const commentsRoutes = require("../routes/comment.routes");
+const notificationRoutes = require("../routes/notification.routes");
 
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");
@@ -68,7 +69,7 @@ const registerCoreMiddleWare = async () => {
     app.use("/user", usersRoutes);
     app.use("/tweets", tweetsRoutes);
     app.use("/comments", commentsRoutes);
-    //app.use("/notifications", notificationRoutes);
+    app.use("/notifications", notificationRoutes);
     app.use("/bookmarks", bookmarksRoutes);
     app.use("/followers", followerRoutes);
 
