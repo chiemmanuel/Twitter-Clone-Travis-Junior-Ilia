@@ -141,11 +141,10 @@ const getcurrentUser = async (req, res) => {
             return res.status(statusCodes.badRequest).json({ message: "Invalid user object" });
         }
         console.log("here 2");
-        const { email } = req.session.user;
-        console.log(email);
+        const { _id } = req.session.user;
 
         // Fetch user information from the database based on the email
-        const user = await User.findOne({ email });
+        const user = await User.findById({ _id });
 
         console.log(user);
 

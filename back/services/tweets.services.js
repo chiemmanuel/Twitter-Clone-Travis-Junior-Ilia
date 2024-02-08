@@ -37,6 +37,10 @@ const postTweet = async (req, res) => {
     });
     try {
         const tweet = await newTweet.save();
+        if (req.body.retweet_id) {
+            // If it's a retweet, increment the retweet count for the original tweet
+            await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { retweet_count: 1 } });
+        }
         logger.info(`Successfully created tweet with id: ${tweet._id}`);
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
@@ -103,6 +107,49 @@ const editTweetById = async (req, res) => {
     } catch (error) {
         console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error updating tweet' });
+    }
+};
+
+/**
+ * TODO: Add socket.io to emit a tweet-deleted event to active clients
+ * 
+ * This function allows users to like or unlike a tweet by adding or removing their user ID from the liked_by list
+ * @param {*} req: The request object with tweetId in params
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message indicating the success or failure of the deletion
+ */
+const likeTweet = async (req, res) => {
+    const tweetId = req.params.tweetId;
+    const userId = req.user._id;
+
+    try {
+        const tweet = await tweetModel.findById(tweetId);
+
+        if (!tweet) {
+            return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
+        }
+
+        const userIndex = tweet.liked_by.indexOf(userId);
+
+        if (userIndex !== -1) {
+            // If user has already liked the tweet, remove them from the liked_by list
+            tweet.liked_by.splice(userIndex, 1);
+
+            const updatedTweet = await tweet.save();
+
+        return res.status(statusCodes.success).json({ message: 'unliked successfully', tweet: updatedTweet });
+        } else {
+            // If user has not liked the tweet, add them to the liked_by list
+            tweet.liked_by.push(userId);
+
+            const updatedTweet = await tweet.save();
+
+            return res.status(statusCodes.success).json({ message: 'liked successfully', tweet: updatedTweet });
+        }
+
+    } catch (error) {
+        console.log(error);
+        return res.status(statusCodes.queryError).json({ message: 'Error liking/unliking tweet' });
     }
 };
 
@@ -307,6 +354,7 @@ if (tweets.length > 0) {
 module.exports = {
     postTweet,
     getTweetById,
+    likeTweet,
     editTweetById,
     deleteTweetById,
     getLiveTweets,

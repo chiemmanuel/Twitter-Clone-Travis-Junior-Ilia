@@ -82,11 +82,11 @@ const login = async (req, res) => {
             return res.status(statusCodes.badRequest).json({ message: "Email or password don't match" });
         }
 
-        req.session.user = { username: user.username, email: user.email };
+        req.session.user = { _id: user._id, username: user.username, email: user.email };
         console.log(req.session.user);
 
         const token = jwt.sign(
-            { user: { username: user.username, email: user.email } },
+            { user: { _id: user._id, username: user.username, email: user.email } },
             process.env.JWT_SECRET_KEY,
             {
                 expiresIn: "1h",

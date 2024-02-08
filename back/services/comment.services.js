@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const commentModel = require('../models/commentModel');
 const statusCodes = require('../constants/statusCodes'); 
 const tweetModel = require('../models/tweetModel');
+const User = require('../models/userModel');
 
 /**
  * This function creates a new comment and saves it to the database using the Comment model schema
@@ -11,10 +12,12 @@ const tweetModel = require('../models/tweetModel');
  */
 const postComment = async (req, res) => {
     const tweetId = req.params.tweetId;
-    const author_name  = req.user.username;
-    console.log("author_name:", author_name);
+    const _id = req.user._id;
+    const user = await User.findById(_id);
+    const author_name = user.username;
+    const profile_image = user.profile_img;
 
-    const { profile_image, content } = req.body;
+    const { content } = req.body;
 
     let media = req.body.media;
     if (media === undefined) {
@@ -22,7 +25,7 @@ const postComment = async (req, res) => {
     }
 
     const newComment = new commentModel({
-        tweet_id: new mongoose.Types.ObjectId(tweetId),
+        tweet_id: tweetId,
         author_name,
         profile_image,
         content,
