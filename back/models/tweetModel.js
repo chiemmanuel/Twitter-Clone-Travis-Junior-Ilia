@@ -5,14 +5,6 @@ const tweetSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    author_name: {
-        type: String,
-        required: true,
-    },
-    profile_img: {
-        type: String,
-        required: true,
-    },
     content: {
         type: String,
         required: true,
