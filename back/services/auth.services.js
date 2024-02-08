@@ -18,13 +18,18 @@ const signup = async (req, res) => {
         }
 
         const existingUser = await User.findOne({ email });
+        const existingUsername = await User.findOne({ username });
+
+        if (existingUsername) {
+            return res.status(statusCodes.userAlreadyExists).json({ message: "User with this username already exists" });
+        }
 
         if (existingUser) {
             return res.status(statusCodes.userAlreadyExists).json({ message: "User with this email already exists" });
         }
 
         const hash = await bcrypt.hash(password, 10);
-        const profile_img = "default_silouhette_img.png";
+        const profile_img = "default_silouhette_img.png";// Add a default image for the user from cloudinary
 
         const newUser = new User({
             email,

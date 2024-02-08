@@ -7,6 +7,7 @@ const tweetModel = require('../models/tweetModel');
 const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
+const User = require('../models/userModel');
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -16,8 +17,9 @@ const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_fe
  */
 const updateUser = async (req, res) => {
     try {
+        console.log(req.session.user);
         const { email } = req.session.user;
-        const { username, bio, gender, dob, contact } = req.body;
+        const { username, profile_img, bio, gender, dob, contact } = req.body;
 
         // Parse the incoming date string
         const parsedDate = new Date(dob);
@@ -26,7 +28,7 @@ const updateUser = async (req, res) => {
         if (!isNaN(parsedDate)) {
             // Format the date to 'YYYY-MM-DD'
             const formattedDate = parsedDate.toISOString().split('T')[0];
-            // Now, `formattedDate` can be used to store in MySQL
+            // Now, `formattedDate` can be used to store in MongoDB
             console.log(formattedDate);
         } else {
             console.error("Invalid date format");
@@ -34,46 +36,47 @@ const updateUser = async (req, res) => {
             return res.status(statusCodes.badRequest).json({ error: "Invalid date format" });
         }
 
-        const updateValues = [];
-        const updateFields = [];
+        // Check if the desired username is already taken
+        const existingUsername = await User.findOne({ username });
 
+        if (existingUsername && existingUsername.email !== email) {
+            return res.status(statusCodes.badRequest).json({ error: "Username already exists" });
+        }
+
+        const updateValues = {};
+        
         if (username) {
-            updateFields.push('username');
-            updateValues.push(username);
+            updateValues.username = username;
 
             // Update session's username if changed
             req.session.user.username = username;
         }
+        if (profile_img) {
+            updateValues.profile_img = profile_img;
+        }
 
         if (bio) {
-            updateFields.push('bio_quote');
-            updateValues.push(bio);
+            updateValues.bio = bio;
         }
 
         if (gender) {
-            updateFields.push('gender');
-            updateValues.push(gender);
+            updateValues.gender = gender;
         }
 
         if (parsedDate) {
-            updateFields.push('dob');
-            updateValues.push(parsedDate);
+            updateValues.dob = parsedDate;
         }
 
         if (contact) {
-            updateFields.push('contact');
-            updateValues.push(contact);
+            updateValues.contact = contact;
         }
 
-        if (updateFields.length === 0) {
+        if (Object.keys(updateValues).length === 0) {
             return res.status(statusCodes.badRequest).json({ error: "No fields to update" });
         }
 
         // Update user information in the database
-        await pool.query(
-            `UPDATE users SET ${updateFields.map(field => `${field} = ?`).join(', ')} WHERE email = ?`,
-            [...updateValues, email]
-        );
+        await User.findOneAndUpdate({ email }, updateValues);
 
         return res.status(statusCodes.success).json({ message: "User information updated successfully" });
     } catch (error) {
@@ -102,8 +105,7 @@ const updatePassword = async (req, res) => {
         }
 
         // Fetch user information from the database
-        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-        const user = rows[0];
+        const user = await User.findOne({ email });
 
         if (!user) {
             return res.status(statusCodes.badRequest).json({ message: "User not found" });
@@ -116,12 +118,8 @@ const updatePassword = async (req, res) => {
 
         // Hash and update the new password
         const hash = bcrypt.hashSync(newPassword, 10);
-        await pool.query("UPDATE users SET password = ? WHERE email = ?", [hash, email], (updateErr) => {
-            if (updateErr) {
-                console.error("Error while updating password", updateErr);
-                return res.status(statusCodes.queryError).json({ error: "Failed to update password" });
-            }
-        });
+        await User.findOneAndUpdate({ email }, { password: hash });
+
         return res.status(statusCodes.success).json({ message: "Password updated successfully" });
     } catch (error) {
         console.error("Error in try-catch block", error.message);
@@ -147,9 +145,8 @@ const getcurrentUser = async (req, res) => {
         console.log(email);
 
         // Fetch user information from the database based on the email
-        const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+        const user = await User.findOne({ email });
 
-        const user = rows[0];
         console.log(user);
 
         if (!user) {
@@ -158,7 +155,7 @@ const getcurrentUser = async (req, res) => {
 
         return res.status(statusCodes.success).json(user);
     } catch (error) {
-        console.error("Error while getting user from DB", error.message);
+        console.error("Error while getting user from MongoDB", error.message);
         return res.status(statusCodes.queryError).json({ error: "Failed to get user" });
     }
 };
@@ -169,14 +166,13 @@ const getcurrentUser = async (req, res) => {
  * @param {*} res: The response object
  * @returns: The res object with a status code and the user information in the message
  */
-const getUserbyUsername = async (req, res) => {
+const getUserByUsername = async (req, res) => {
     try {
         const { username } = req.params;
         logger.info(`Fetching user with username: ${username}`);
 
         // Fetch user information from the database based on the username
-        const [rows] = await pool.query("SELECT * FROM users WHERE username = ?", [username]);
-        const user = rows[0];
+        const user = await User.findOne({ username });
 
         if (!user) {
             return res.status(statusCodes.badRequest).json({ message: "User not found" });
@@ -184,7 +180,7 @@ const getUserbyUsername = async (req, res) => {
 
         return res.status(statusCodes.success).json(user);
     } catch (error) {
-        console.error("Error while getting user from DB", error.message);
+        console.error("Error while getting user from MongoDB", error.message);
         return res.status(statusCodes.queryError).json({ error: "Failed to get user" });
     }
 };
@@ -279,7 +275,7 @@ module.exports = {
     updatePassword,
     getcurrentUser,
     logout,
-    getUserbyUsername,
+    getUserByUsername,
     getUserTweets,
     getUserComments
 };
