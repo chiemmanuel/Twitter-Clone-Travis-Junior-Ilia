@@ -1,20 +1,12 @@
-const pool = require('../boot/database/mysql_db_connect.js');
 const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
+const userModel = require('../models/userModel.js');
 const ObjectId = require('mongoose').Types.ObjectId;
+const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
 
-const tweet_limit = 5;
-const fetch_feed_query = [
-    { $sort: { _id: -1 } },
-    { $limit: tweet_limit },
-    // Join the tweets with the polls and retweets they reference
-    { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-    { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-    { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
-    { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
-];
+const tweet_limit = 20;
 
 /**
  * TODO: Add socket.io to emit a tweet-created event to active clients
@@ -38,8 +30,6 @@ const postTweet = async (req, res) => {
     console.log(req.user)
     const newTweet = new tweetModel({
         author_email: req.user.email,
-        author_name: req.user.username,
-        profile_img: req.body.profile_image,
         content: req.body.content,
         media: req.body.media ? req.body.media : null,
         poll_id: pollResult.id,
@@ -52,7 +42,6 @@ const postTweet = async (req, res) => {
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
-        console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
     }
 }
@@ -262,6 +251,7 @@ const registerVote = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getLiveTweets = async (req, res) => {
+    var tweets = [];
     if(req.body.last_tweet_id) {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
     } else {
@@ -270,25 +260,35 @@ const getLiveTweets = async (req, res) => {
     if (last_tweet_id) {
         console.log(last_tweet_id)
         try {
-            var query = fetch_feed_query;
-            query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
-            const tweets = await tweetModel.aggregate(query);
+            const tweets = await tweetModel.aggregate([
+                { $match: { _id: { $lt: last_tweet_id } } },
+                { $sort: { _id: -1 } },
+                { $limit: tweet_limit },
+                // Join the tweets with the polls and retweets they reference
+                { $lookup: { from: pollModel.collection.name, localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: tweetModel.collection.name, localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
+            ]);
+
             logger.info(`Successfully fetched tweets from the database`);
-            if (tweets.length > 0) {
-                return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
-            } else {
-                return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
-            }
         } catch (error) {
-            console.log(error);
-            logger.error("Error fetching tweets from the database:" + error);
+                        logger.error("Error fetching tweets from the database:" + error);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
     } else {
         try {
-            // If no last_tweet_id is provided, fetch the most recent tweets
-            const tweets = await tweetModel.aggregate(fetch_feed_query);
+            const tweets = await tweetModel.aggregate([
+                // If no last_tweet_id is provided, fetch the most recent tweets
+                { $sort: { _id: -1 } },
+                { $limit: tweet_limit },
+                // Join the tweets with the polls and retweets they reference
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
+            ]);
             if (tweets.length > 0) {
                 logger.info(`Successfully fetched tweets from the database`);
                 return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
@@ -302,6 +302,12 @@ const getLiveTweets = async (req, res) => {
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
     }
+    if (tweets.length > 0) 
+        {
+            return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+        } else {
+            return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
+        }
 }
 
 /**
@@ -312,30 +318,34 @@ const getLiveTweets = async (req, res) => {
  */
 const getFollowedTweets = async (req, res) => {
     user_email = req.user.email;
-    if(req.body.last_tweet_id) {
-        last_tweet_id = new ObjectId(req.body.last_tweet_id);
-    } else {
-        last_tweet_id = null;
-    }
-    followed_users = [];
+    var tweets = [];
+    var followed_users = [];
     try {
         // Find the users that the current user follows
-        const [followed] = await pool.query('SELECT following_id FROM follows WHERE follower_id = ?', [user_email]);
-        followed.forEach(user => {
-            followed_users.push(user.following_id);
-        });
+        const user = await userModel.findOne({ email: user_email });
+        followed_users = user.following;
+        logger.info(`Successfully fetched users that ${user_email} follows`);
     } catch (error) {
-        logger.error(`Error fetching followed users from the database: ${error}`);
-        return res.status(statusCodes.queryError).json({ message: 'Error fetching followed users from the database' });
+        logger.error(`Error fetching users that ${user_email} follows: ${error}`);
+        return res.status(statusCodes.queryError).json({ message: 'Error fetching users that the current user follows' });
     }
-    if (last_tweet_id) {
+    if(req.body.last_tweet_id) {
+        last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
             var query = fetch_feed_query;
             query.unshift({ $match: { author_email: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
-            const tweets = await tweetModel.aggregate(query);
+            const tweets = await tweetModel.aggregate([
+                { $match: { author_email: { $in: followed_users }, _id: { $lt: last_tweet_id } } },
+                { $sort: { _id: -1 } },
+                { $limit: tweet_limit },
+                // Join the tweets with the polls and retweets they reference
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
+            ]);
             logger.info(`Successfully fetched tweets from the database`);
-            return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
         } catch (error) {
             logger.error(`Error fetching tweets from the database: ${error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
@@ -345,13 +355,26 @@ const getFollowedTweets = async (req, res) => {
             var query = fetch_feed_query;
             query.unshift({ $match: { author_email: { $in: followed_users } } });
             // Find tweets from the users that the current user follows
-            const tweets = await tweetModel.aggregate(query);
+            const tweets = await tweetModel.aggregate([
+                { $match: { author_email: { $in: followed_users } } },
+                { $sort: { _id: -1 } },
+                { $limit: tweet_limit },
+                // Join the tweets with the polls and retweets they reference
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } }
+            ]);
             logger.info(`Successfully fetched tweets from the database`);
-            return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
         } catch (error) {
             logger.error(`Error fetching tweets from the database: ${error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
+    }
+if (tweets.length > 0) {
+        return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+    } else {
+        return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
     }
 }
 

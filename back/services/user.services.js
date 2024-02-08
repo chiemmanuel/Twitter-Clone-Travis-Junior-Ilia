@@ -5,7 +5,8 @@ const statusCodes = require('../constants/statusCodes');
 const logger = require("../middleware/winston");
 const tweetModel = require('../models/tweetModel');
 const commentModel = require('../models/commentModel');
-const pollModelName = require('../models/pollModel').collection.name;
+const ObjectId = require('mongoose').Types.ObjectId;
+const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -189,6 +190,62 @@ const getUserbyUsername = async (req, res) => {
 };
 
 /**
+ * This function fetches the tweets of a user based on the user's email
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
+ */
+const getUserTweets = async (req, res) => {
+    user_email = req.params.user_email;
+    var tweets = [];
+    var query = fetch_feed_query;
+    if(req.body.last_tweet_id) {
+        last_tweet_id = new ObjectId(req.body.last_tweet_id);
+        try {
+            query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
+            // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
+            tweets = await tweetModel.aggregate(query);
+            logger.info(`Successfully fetched tweets from the database`);
+        } catch (error) {
+            return {error: error};
+        }
+    } else {
+        try {
+            query.unshift({ $match: { author_email: user_email } });
+            // Find tweets from the user with email user_email
+            tweets = await tweetModel.aggregate(query);
+        } catch (error) {
+            return res.status(statusCodes.queryError).json({ error: error });
+        }
+    }
+    if (tweets.length > 0) {
+        return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
+    } else {
+        return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
+    }
+}
+
+/**
+ * This function fetches the comments of a given user
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns: A JSON object containing the fetched comments
+ */
+const getUserComments = async (req, res) => {
+    username = req.params.username;
+    var comments = [];
+    try {
+        // Find comments from the user with email user_email
+        comments = await commentModel.find({ author_name: username });
+        logger.info(`Successfully fetched comments from the database`);
+    } catch (error) {
+        return res.status(statusCodes.queryError).json({ error: error });
+    }
+    return res.status(statusCodes.success).json({comments: comments});
+}
+
+
+/**
  * This function logs the user out by destroying the session
  * @param {*} req: The request object
  * @param {*} res: The response object
@@ -223,4 +280,6 @@ module.exports = {
     getcurrentUser,
     logout,
     getUserbyUsername,
+    getUserTweets,
+    getUserComments
 };
