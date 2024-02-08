@@ -26,7 +26,10 @@ const tweetSchema = new mongoose.Schema({
         type: Number,
         default: 0,
     },
-    num_likes: {
+    liked_by:[{
+        type: mongoose.Schema.Types.ObjectId,
+    }],
+    num_bookmarks: {
         type: Number,
         default: 0,
     },
