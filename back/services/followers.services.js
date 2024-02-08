@@ -1,14 +1,15 @@
-const pool = require('../boot/database/mysql_db_connect.js');
 const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
+const userModel = require('../models/userModel');
+const ObjectID = require('mongoose').Types.ObjectId;
 
 const followUser = async (req, res) => {
-    const { followed_user } = req.params;
-    const { user_email } = req.user;
-    
+    const { followed_user_id } = req.params;
+    const user_id  = req.user.id;
     try {
-        await pool.query('INSERT INTO follows (follower_id, following_id) VALUES (?, ?)', [user_email, followed_user]);
-        logger.info(`User with email ${user_email} has followed user with email ${followed_user}`);
+        await userModel.findOneAndUpdate( { _id: user_id }, { $addToSet: { following: followed_user_id } });
+        await userModel.findOneAndUpdate( { _id: followed_user_id }, { $addToSet: { followers: user_id } });
+        logger.info(`User with id ${user_id} has followed user with id ${followed_user_id}`);
         res.status(statusCodes.success).send('User followed successfully');
     } catch (error) {
         logger.error(`Error following user: ${error}`);
@@ -17,12 +18,12 @@ const followUser = async (req, res) => {
 };
 
 const unfollowUser = async (req, res) => {
-    const { followed_user } = req.params;
-    const { user_email } = req.user;
-
+    const { followed_user_id } = req.params;
+    const  user_id  = req.user.id;
     try {
-        await pool.query('DELETE FROM follows WHERE follower_id = ? AND following_id = ?', [user_email, followed_user]);
-        logger.info(`User with email ${user_email} has unfollowed user with email ${followed_user}`);
+        await userModel.findOneAndUpdate( { _id: user_id }, { $pull: { following: followed_user_id } });
+        await userModel.findOneAndUpdate( { _id: followed_user_id }, { $pull: { followers: user_id } });
+        logger.info(`User with id ${user_id} has unfollowed user with id ${followed_user_id}`);
         res.status(statusCodes.success).send('User unfollowed successfully');
     } catch (error) {
         logger.error(`Error unfollowing user: ${error}`);
@@ -39,8 +40,32 @@ const unfollowUser = async (req, res) => {
 const getFollowers = async (req, res) => {
     const { user_email } = req.params;
     try {
-        const [followers] = await pool.query(`SELECT u.email, u.username, u.bio FROM users u INNER JOIN follows f ON f.follower_id = u.email AND f.following_id = ?`, [user_email]);
-        logger.info(`Retrieved followers for user with email ${user_email}`);
+        const [followers] = await userModel.aggregate([
+            {
+                $match: { email: user_email }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'followers',
+                    foreignField: '_id',
+                    as: 'followers'
+                }
+            },
+            {
+                $unwind: '$followers'
+            },
+            {
+                $project: {
+                    followers: 1,
+                    "followers.email": 1,
+                    "followers.username": 1,
+                    "followers.bio": 1,
+                    "followers.profile_img": 1,
+                }
+            }
+        ]);
+        logger.info(`Retrieved followers of user with id ${user_id}`);
         res.status(statusCodes.success).json(followers);
     } catch (error) {
         logger.error(`Error retrieving followers: ${error}`);
@@ -57,8 +82,32 @@ const getFollowers = async (req, res) => {
 const getFollowing = async (req, res) => {
     const { user_email } = req.params;
     try {
-        const [following] = await pool.query(`SELECT u.email, u.username, u.bio FROM users u INNER JOIN follows f ON f.following_id = u.email AND f.follower_id = ?`, [user_email]);
-        logger.info(`Retrieved users that user with email ${user_email} is following`);
+        const [following] = await userModel.aggregate([
+            {
+                $match: { email: user_email }
+            },
+            {
+                $lookup: {
+                    from: 'users',
+                    localField: 'following',
+                    foreignField: '_id',
+                    as: 'following'
+                }
+            },
+            {
+                $unwind: '$following'
+            },
+            {
+                $project: {
+                    following: 1,
+                    "following.email": 1,
+                    "following.username": 1,
+                    "following.bio": 1,
+                    "following.profile_img": 1,
+                }
+            }
+        ]);
+        logger.info(`Retrieved users that user with id ${user_id} is following`);
         res.status(statusCodes.success).json(following);
     } catch (error) {
         logger.error(`Error retrieving following: ${error}`);
