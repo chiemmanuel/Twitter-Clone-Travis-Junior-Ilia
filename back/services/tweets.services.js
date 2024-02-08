@@ -227,6 +227,8 @@ const getLiveTweets = async (req, res) => {
         const last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
+            var query = fetch_feed_query;
+            query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -272,6 +274,8 @@ const getFollowedTweets = async (req, res) => {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
+            var query = fetch_feed_query;
+            query.unshift({ $match: { author_email: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -281,6 +285,8 @@ const getFollowedTweets = async (req, res) => {
     } else {
         try {
             // Find tweets from the users that the current user follows
+            var query = fetch_feed_query;
+            query.unshift({ $match: { author_email: { $in: followed_users } } });
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {

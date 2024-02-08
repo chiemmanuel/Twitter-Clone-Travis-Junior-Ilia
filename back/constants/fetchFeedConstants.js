@@ -1,4 +1,3 @@
-
 const fetch_feed_query = [
     { $sort: { _id: -1 } },
     { $limit: 20 },
