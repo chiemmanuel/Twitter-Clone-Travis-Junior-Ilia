@@ -5,7 +5,7 @@ const tweetsService = require('../services/tweets.services');
 
 router.get('/livefeed', tweetsService.getLiveTweets);
 router.get('/:tweetId', tweetsService.getTweetById);
-router.put('/like/:tweetId', tweetsService.likeTweet);
+//router.put('/like/:tweetId', tweetsService.likeTweet);
 router.put('/edit/:tweetId', tweetsService.editTweetById);
 router.delete('/delete/:tweetId', tweetsService.deleteTweetById);
 router.get('/foryoupage', tweetsService.getFollowedTweets);
