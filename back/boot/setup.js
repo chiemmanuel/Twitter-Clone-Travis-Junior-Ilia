@@ -14,12 +14,13 @@ const verifyToken = require("../middleware/authentication");
 const validator = require("../middleware/validator");
 
 // ROUTES
-const tweetsRoutes = require("../routes/tweets.routes");
-const followerRoutes = require("../routes/followers.routes");
-const bookmarksRoutes = require("../routes/bookmarks.routes");
 const authRoutes = require("../routes/auth.routes");
 const usersRoutes = require("../routes/user.routes");
+const searchRoutes = require("../routes/search.routes");
+const tweetsRoutes = require("../routes/tweets.routes");
 const commentsRoutes = require("../routes/comments.routes");
+const followerRoutes = require("../routes/followers.routes");
+const bookmarksRoutes = require("../routes/bookmarks.routes");
 const notificationRoutes = require("../routes/notification.routes");
 
 try {
@@ -54,8 +55,6 @@ const registerCoreMiddleWare = async () => {
     app.use(healthCheck);
     app.use("/auth", authRoutes);
     
-    
-
     // Errors handling
     // app.use(errors.notFoundError);
     // app.use(errors.unauthorizedError);
@@ -67,14 +66,13 @@ const registerCoreMiddleWare = async () => {
     
     // Route registration
     app.use("/user", usersRoutes);
+    app.use("/search", searchRoutes);
     app.use("/tweets", tweetsRoutes);
     app.use("/comments", commentsRoutes);
-    app.use("/notifications", notificationRoutes);
-    app.use("/bookmarks", bookmarksRoutes);
     app.use("/followers", followerRoutes);
-
-    // 404 handling for not found
-    // app.use(notFound);
+    app.use("/bookmarks", bookmarksRoutes);
+    app.use("/notifications", notificationRoutes);
+    
 
     logger.http("Done registering all middlewares");
   } catch (err) {

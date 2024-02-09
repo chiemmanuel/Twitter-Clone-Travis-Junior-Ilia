@@ -1,14 +1,14 @@
-const { ObjectId } = require('mongodb');
 const logger = require('../middleware/winston');
 const statusCodes = require('../constants/statusCodes.js');
-const bookmarkModel = require("../models/bookmarkModel.js");
+const tweetModel = require('../models/tweetModel.js');
+const userModel = require("../models/userModel.js");
 
 const getBookmarks = async (req, res) => {
-    const { email } = req.user;
+    const userId = req.user._id;
 
     try {
-        const bookmarks = await bookmarkModel.findOne({ user_email: email} ).exec();
-        return res.status(statusCodes.success).json({ bookmarks: bookmarks });
+        const user = await userModel.findById(userId);
+        return res.status(statusCodes.success).json({ bookmarks: user.bookmarked_tweets });
 
     } catch (error) {
         logger.error(`Error while fetching bookmarks: ${error}`);
@@ -18,20 +18,19 @@ const getBookmarks = async (req, res) => {
 
 const addBookmark = async (req, res) => {
     const { tweet_id } = req.params;
-    const { email } = req.user;
+    const userId = req.user._id;
 
     try {
-        const bookmarks = await bookmarkModel.findOne({ user_email: email }).exec();
+        const user = await userModel.findById(userId);
+        const tweet = await tweetModel.findById(tweet_id);
 
-        if (bookmarks) {
-            bookmarks.tweets.push(new ObjectId(tweet_id));
-            await bookmarks.save();
+        if (user.bookmarked_tweets.includes(tweet_id)) {
+            res.status(statusCodes.success).json({ message: 'This tweet is already bookmarked' });
         } else {
-            const bookmarks = new bookmarkModel({
-                user_email: email,
-                tweets: [new ObjectId(tweet_id)],
-            });
-            await bookmarks.save();
+            user.bookmarked_tweets.push(tweet_id);
+            tweet.num_bookmarks += 1;
+            await user.save();
+            await tweet.save();
         }
         return res.status(statusCodes.success).json({ message: 'Added new bookmark' });
 
@@ -43,13 +42,17 @@ const addBookmark = async (req, res) => {
 
 const deleteBookmark = async (req, res) => {
     const { tweet_id } = req.params;
-    const { email } = req.user;
+    const userId = req.user._id;
 
     try {
-        await bookmarkModel.findOneAndUpdate(
-            { user_email: email },
-            { $pull: { tweets: new ObjectId(tweet_id) } }
-        );
+        const user = await userModel.findById(userId);
+        const tweet = await tweetModel.findById(tweet_id);
+
+        user.bookmarked_tweets.pull(tweet_id);
+        tweet.num_bookmarks -= 1;
+        await user.save();
+        await tweet.save();
+        
         return res.status(statusCodes.success).json({ message: 'Bookmark deleted' });
     
     } catch (error) {

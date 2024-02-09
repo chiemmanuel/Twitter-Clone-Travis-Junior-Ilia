@@ -354,4 +354,5 @@ module.exports = {
     getLiveTweets,
     getFollowedTweets,
     registerVote,
+    likeTweet,
 }
