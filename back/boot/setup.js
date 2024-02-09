@@ -2,6 +2,10 @@ const express = require("express");
 const PORT = 8080;
 const app = express();
 
+// SOCKET.IO
+const server = require('http').createServer(app);
+const { socketconnection } = require('./socketio/socketio_connection');
+
 const cors = require("cors");
 const helmet = require("helmet");
 const mongoose = require("mongoose");
@@ -23,12 +27,19 @@ const followerRoutes = require("../routes/followers.routes");
 const bookmarksRoutes = require("../routes/bookmarks.routes");
 const notificationRoutes = require("../routes/notification.routes");
 
+
 try {
   mongoose.connect("mongodb://localhost:27017/twitter-clone");
   logger.info("MongoDB Connected");
 } catch (error) {
   logger.error("Error connecting to MongoDB" + error);
 }
+
+
+server.listen(process.env.SOCKETIO_PORT || 3000 , () => {
+  logger.info('socket.io server is running on port 3000');
+});
+socketconnection(server);
 
 // MIDDLEWARE
 const registerCoreMiddleWare = async () => {

@@ -5,8 +5,8 @@ const pollModel = require('../models/pollModel.js');
 const userModel = require('../models/userModel.js');
 const ObjectId = require('mongoose').Types.ObjectId;
 const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
+const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 
-const tweet_limit = 20;
 
 /**
  * TODO: Add socket.io to emit a tweet-created event to active clients
@@ -42,12 +42,14 @@ const postTweet = async (req, res) => {
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { retweet_count: 1 } });
         }
         logger.info(`Successfully created tweet with id: ${tweet._id}`);
+        sendMessage(null, 'tweet-created', { tweet: tweet });
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
     }
 }
+
 /**
  * TODO: Add socket.io to emit a tweet-updated event to active clients
  * 
@@ -102,7 +104,7 @@ const editTweetById = async (req, res) => {
         }
 
         const updatedTweet = await tweet.save();
-
+        sendMessage(null, 'tweet-updated', { tweet: updatedTweet });
         return res.status(statusCodes.success).json({ message: 'Tweet updated successfully', tweet: updatedTweet });
     } catch (error) {
         console.log(error);
@@ -136,14 +138,14 @@ const likeTweet = async (req, res) => {
             tweet.liked_by.splice(userIndex, 1);
 
             const updatedTweet = await tweet.save();
-
+        sendMessage(null, 'tweet-updated', { tweet: updatedTweet });
         return res.status(statusCodes.success).json({ message: 'unliked successfully', tweet: updatedTweet });
         } else {
             // If user has not liked the tweet, add them to the liked_by list
             tweet.liked_by.push(userId);
 
             const updatedTweet = await tweet.save();
-
+            sendMessage(null, 'tweet-updated', { tweet: updatedTweet });
             return res.status(statusCodes.success).json({ message: 'liked successfully', tweet: updatedTweet });
         }
 
@@ -169,7 +171,7 @@ const deleteTweetById = async (req, res) => {
         if (!tweet) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }
-
+        sendMessage(null, 'tweet-deleted', { tweet_id: tweetId });
         return res.status(statusCodes.success).json({ message: 'Tweet deleted successfully' });
     } catch (error) {
         console.log(error);
@@ -207,7 +209,6 @@ const createPoll = async (title, duration_seconds, option_values) => {
 }
 
 /**
- * TODO: Add socket.io to emit a poll-created event to the client
  *
  * This function closes a poll by updating the isClosed field to true and emitting a poll-closed event to the client
  * @param {String} poll_id: The id of the poll to be closed
@@ -217,6 +218,7 @@ const closePoll = async (poll_id) => {
     try {
         const poll = await pollModel.findByIdAndUpdate(poll_id, { isClosed: true });
         logger.info(`Successfully closed poll with id: ${poll_id}`);
+        sendMessage(null, 'poll-closed', { poll_id: poll_id });
         return;
     } catch (error) {
         logger.error(`Error closing poll: ${error}`);
@@ -251,6 +253,7 @@ const registerVote = async (req, res) => {
         poll.options[option_index].voter_ids.push(user_email);
         await poll.save();
         logger.info(`Successfully registered vote for poll with id: ${poll_id}`);
+        sendMessage(null, 'poll-vote', { poll_id: poll_id, option_index: option_index});
         return res.status(statusCodes.success).json({ message: 'Successfully registered vote' });
     } catch (error) {
         logger.error(`Error registering vote: ${error}`);
@@ -275,13 +278,13 @@ const getLiveTweets = async (req, res) => {
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
-                        logger.error("Error fetching tweets from the database:" + error);
+            logger.error("Error fetching tweets from the database:" + error);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
     } else {
         try {
-                            // If no last_tweet_id is provided, fetch the most recent tweets
-                tweets = await tweetModel.aggregate(fetch_feed_query);
+            // If no last_tweet_id is provided, fetch the most recent tweets
+            tweets = await tweetModel.aggregate(fetch_feed_query);
         } catch (error) {
             console.log(error);
             logger.error("Error fetching tweets from the database:" + error);
