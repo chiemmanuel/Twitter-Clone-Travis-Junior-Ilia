@@ -8,7 +8,7 @@ const fetch_feed_query = [
     { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
     { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
     { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-    { $unwind: { path: '$retweet_author' } },
+    { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
     { $project: {
         "author_email": 1,
         "content": 1,

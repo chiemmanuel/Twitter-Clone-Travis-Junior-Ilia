@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const pool = require('../boot/database/mysql_db_connect');
 const statusCodes = require('../constants/statusCodes');
 const logger = require("../middleware/winston");
 const tweetModel = require('../models/tweetModel');

@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const tweetSchema = new mongoose.Schema({
+    author_id: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+    },
     author_email: {
         type: String,
         required: true,

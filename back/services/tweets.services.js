@@ -28,6 +28,7 @@ const postTweet = async (req, res) => {
         pollResult = { id: null };
     }
     const newTweet = new tweetModel({
+        author_id: req.user._id,
         author_email: req.user.email,
         content: req.body.content,
         media: req.body.media ? req.body.media : null,
@@ -318,12 +319,13 @@ const getFollowedTweets = async (req, res) => {
         logger.error(`Error fetching users that ${user_id} follows: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error fetching users that the current user follows' });
     }
+    console.log(followed_users);
     if(req.body.last_tweet_id) {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             var query = fetch_feed_query;
-            query.unshift({ $match: { author_email: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
+            query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -334,7 +336,7 @@ const getFollowedTweets = async (req, res) => {
         try {
             // Find tweets from the users that the current user follows
             var query = fetch_feed_query;
-            query.unshift({ $match: { author_email: { $in: followed_users } } });
+            query.unshift({ $match: { author_id: { $in: followed_users } } });
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
