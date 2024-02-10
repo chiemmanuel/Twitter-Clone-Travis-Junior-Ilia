@@ -306,16 +306,16 @@ const getLiveTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getFollowedTweets = async (req, res) => {
-    user_email = req.user.email;
+    user_id = req.user._id;
     var tweets = [];
     var followed_users = [];
     try {
         // Find the users that the current user follows
-        const user = await userModel.findOne({ email: user_email });
+        const user = await userModel.findOne({ _id: user_id });
         followed_users = user.following;
-        logger.info(`Successfully fetched users that ${user_email} follows`);
+        logger.info(`Successfully fetched users that ${user_id} follows`);
     } catch (error) {
-        logger.error(`Error fetching users that ${user_email} follows: ${error}`);
+        logger.error(`Error fetching users that ${user_id} follows: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error fetching users that the current user follows' });
     }
     if(req.body.last_tweet_id) {

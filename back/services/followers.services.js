@@ -1,11 +1,10 @@
 const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const userModel = require('../models/userModel');
-const ObjectID = require('mongoose').Types.ObjectId;
 
 const followUser = async (req, res) => {
     const { followed_user_id } = req.params;
-    const user_id  = req.user.id;
+    const user_id  = req.user._id;
     try {
         await userModel.findOneAndUpdate( { _id: user_id }, { $addToSet: { following: followed_user_id } });
         await userModel.findOneAndUpdate( { _id: followed_user_id }, { $addToSet: { followers: user_id } });
@@ -19,7 +18,7 @@ const followUser = async (req, res) => {
 
 const unfollowUser = async (req, res) => {
     const { followed_user_id } = req.params;
-    const  user_id  = req.user.id;
+    const  user_id  = req.user._id;
     try {
         await userModel.findOneAndUpdate( { _id: user_id }, { $pull: { following: followed_user_id } });
         await userModel.findOneAndUpdate( { _id: followed_user_id }, { $pull: { followers: user_id } });
