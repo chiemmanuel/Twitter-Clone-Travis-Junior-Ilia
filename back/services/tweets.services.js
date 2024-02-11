@@ -40,7 +40,7 @@ const postTweet = async (req, res) => {
         const tweet = await newTweet.save();
         if (req.body.retweet_id) {
             // If it's a retweet, increment the retweet count for the original tweet
-            await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { retweet_count: 1 } });
+            await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
         }
         logger.info(`Successfully created tweet with id: ${tweet._id}`);
         sendMessage(null, 'tweet-created', { tweet: tweet });
@@ -319,7 +319,6 @@ const getFollowedTweets = async (req, res) => {
         logger.error(`Error fetching users that ${user_id} follows: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error fetching users that the current user follows' });
     }
-    console.log(followed_users);
     if(req.body.last_tweet_id) {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {

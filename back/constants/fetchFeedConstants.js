@@ -17,7 +17,7 @@ const fetch_feed_query = [
         "retweet": 1,
         "hashtags": 1,
         "num_comments": 1,
-        "num_likes": 1,
+        "liked_by": 1,
         "num_retweets": 1,
         "num_views": 1,
         "created_at": 1,
