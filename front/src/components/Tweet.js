@@ -165,18 +165,29 @@ function Tweet({ tweet_object }) {
             <span>{num_comments}</span>
           </span>
           <span onClick={handleRetweetButton}>
-            <svg
+            <svg 
+              xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              className="tweet__footerIcon"
-            >
+              stroke="#000000"
+              stroke-width="1"
+              stroke-linecap="square"
+              stroke-linejoin="miter" 
+              fill="none" color="#000000"
+              className='tweet__footerIcon'
+            > 
+              <title id="retweetIconTitle">Retweet</title>
               <g>
-                <path d="M20 12v-2h-3c-.55 0-1-1.79-1-4 0-2.21-.45-4-1-4h-1v2h1c.55 0 1 1.79 1 4 0 2.21.45 4 1 4h-3v2l-5-3 5-3v2h3c.55 0 1 1.79 1 4 0 2.21.45 4 1 4h1v2h-1c-.55 0-1-1.79-1-4 0-2.21-.45-4-1-4h3z"></path>
-                </g>
+                <path d="M13 18L6 18L6 7"/>
+                <path d="M3 9L6 6L9 9"/>
+                <path d="M11 6L18 6L18 17"/>
+                <path d="M21 15L18 18L15 15"/>
+              </g>
             </svg>
             <span>{num_retweets}</span>
             </span>
             <span onClick={handleLike}>
             <svg
+              xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               className="tweet__footerIcon"
             >
@@ -187,12 +198,12 @@ function Tweet({ tweet_object }) {
             <span>{liked_by.length}</span>
             </span>
             <span onClick={handleBookmark}>
-            <svg
-              viewBox="0 0 24 24"
-              className="tweet__footerIcon"
-            >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 50 50"
+              className='tweet__footerIcon'>
                 <g>
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
+                  <path d="M 12.8125 2 C 12.335938 2.089844 11.992188 2.511719 12 3 L 12 47 C 11.996094 47.359375 12.1875 47.691406 12.496094 47.871094 C 12.804688 48.054688 13.1875 48.054688 13.5 47.875 L 25 41.15625 L 36.5 47.875 C 36.8125 48.054688 37.195313 48.054688 37.503906 47.871094 C 37.8125 47.691406 38.003906 47.359375 38 47 L 38 3 C 38 2.449219 37.550781 2 37 2 L 13 2 C 12.96875 2 12.9375 2 12.90625 2 C 12.875 2 12.84375 2 12.8125 2 Z M 14 4 L 36 4 L 36 45.25 L 25.5 39.125 C 25.191406 38.945313 24.808594 38.945313 24.5 39.125 L 14 45.25 Z"></path>
                 </g>
             </svg>
             <span>{num_bookmarks}</span>
