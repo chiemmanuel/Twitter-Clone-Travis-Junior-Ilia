@@ -11,44 +11,44 @@ import Poll from './Poll';
 
 
 function Tweet({ tweet_object }) {
-    const user_id = localStorage.getItem('user')._id;
+    const user = JSON.parse(localStorage.getItem('user'));
     const navigate = useNavigate();
 
     const { author, content, media, hashtags, num_views, created_at, updated_at, poll, retweet, retweet_author } = tweet_object;
     
     const [num_comments, setNumComments] = useState(tweet_object.num_comments);
     const [liked_by, setLikedBy] = useState(tweet_object.liked_by);
-    const [isLiked, setIsLiked] = useState(liked_by.includes(user_id));
+    const [isLiked, setIsLiked] = useState(liked_by.includes(user._id));
     const [num_bookmarks, setNumBookmarks] = useState(tweet_object.num_bookmarks);
-    const [isBookmarked, setIsBookmarked] = useState(localStorage.getItem('user').bookmarked_tweets.includes(tweet_object._id));
+    const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet_object._id));
     const [num_retweets, setNumRetweets] = useState(tweet_object.num_retweets);
 
     useEffect(() => {
-        const socket = socketIOClient(3000);
-        socket.on("like", data => {
-          if (data._id === tweet._id) {
-            setLikedBy(data.liked_by);
+      const socket = socketIOClient(3000);
+      socket.on("like", data => {
+        if (data._id === tweet_object._id) {
+          setLikedBy(data.liked_by);
+        }
+      });
+      socket.on("retweet", data => {
+        if (data._id === tweet_object._id) {
+          setNumRetweets(prevNumRetweets => prevNumRetweets + 1);
+        }
+      });
+      socket.on("bookmark", data => {
+          if (data._id === tweet_object._id) {
+              setNumBookmarks(prevNumBookmarks => prevNumBookmarks + 1);
           }
-        });
-        socket.on("retweet", data => {
-          if (data._id === tweet._id) {
-            setNumRetweets(num_retweets + 1);
+      });
+      socket.on("comment", data => {
+          if (data._id === tweet_object._id) {
+              setNumComments(prevNumComments => prevNumComments + 1);
           }
-        });
-        socket.on("bookmark", data => {
-            if (data._id === tweet._id) {
-                setNumBookmarks(num_bookmarks + 1);
-            }
-        });
-        socket.on("comment", data => {
-            if (data._id === tweet._id) {
-                setNumComments(num_comments + 1);
-            }
-        });
-    
-        // Cleanup on unmount
-        return () => socket.disconnect();
-      }, [tweet._id]);
+      });
+  
+      // Cleanup on unmount
+      return () => socket.disconnect();
+    }, [tweet_object._id]);
 
     const handleLike = () => {
         if (isLiked) {
@@ -56,14 +56,14 @@ function Tweet({ tweet_object }) {
             setIsLiked(false);
             // dispatch unlike tweet action
         } else {
-            setLikedBy([...liked_by, user_id]);
+            setLikedBy([...liked_by, user._id]);
             setIsLiked(true);
             // dispatch like tweet action
         }
         axios.put(requests.likeTweet + tweet_object._id, {
             headers: {
                 Authorization: `Bearer ${
-                  JSON.parse(localStorage.getItem("user")).token
+                  user.token
                 }`,
               },
         }).catch(err => console.log(err));
@@ -77,7 +77,7 @@ function Tweet({ tweet_object }) {
             axios.post(requests.deleteBookmark + tweet_object._id, {
                 headers: {
                     Authorization: `Bearer ${
-                      JSON.parse(localStorage.getItem("user")).token
+                      user.token
                     }`,
                   },
             }).catch(err => console.log(err));
@@ -88,7 +88,7 @@ function Tweet({ tweet_object }) {
             axios.post(requests.bookmarkTweet + tweet_object._id, {
                 headers: {
                     Authorization: `Bearer ${
-                      JSON.parse(localStorage.getItem("user")).token
+                      user.token
                     }`,
                   },
             }).catch(err => console.log(err));
