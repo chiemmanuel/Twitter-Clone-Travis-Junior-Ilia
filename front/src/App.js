@@ -1,6 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
-import { socket } from './socket';
+import socket from './socket';
 import { useEffect, useState } from 'react';
 import useAppStateContext from './hooks/useAppStateContext';
 import PrivateRoute from './routes/PrivateRoute';

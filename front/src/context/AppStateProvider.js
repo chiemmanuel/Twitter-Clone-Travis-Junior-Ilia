@@ -1,6 +1,6 @@
 import { createContext, useReducer } from "react";
 import AppStateReducer from "./AppStateReducer";
-import { socket } from "../socket";
+import  socket  from "../socket.js";
 
 const INITIAL_STATE = {
   isAuthenticated: localStorage.getItem("user") ? true : false,
