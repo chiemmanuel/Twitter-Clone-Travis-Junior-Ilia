@@ -8,8 +8,6 @@ import '../styles/Tweet.css';
 
 import Poll from './Poll';
 
-
-
 function Tweet({ tweet_object }) {
     const user = JSON.parse(localStorage.getItem('user'));
     const navigate = useNavigate();
@@ -23,9 +21,10 @@ function Tweet({ tweet_object }) {
     const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet_object._id));
     const [num_retweets, setNumRetweets] = useState(tweet_object.num_retweets);
 
+    const socket = socketIOClient(3000);
+    
     useEffect(() => {
-      const socket = socketIOClient(3000);
-      socket.on("like", data => {
+      socket.on("update-likes", data => {
         if (data._id === tweet_object._id) {
           setLikedBy(data.liked_by);
         }
@@ -165,23 +164,16 @@ function Tweet({ tweet_object }) {
             <span>{num_comments}</span>
           </span>
           <span onClick={handleRetweetButton}>
-            <svg 
+            <svg
+              className='tweet__footerIcon'
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              stroke="#000000"
-              stroke-width="1"
+              stroke="#000"
               stroke-linecap="square"
-              stroke-linejoin="miter" 
-              fill="none" color="#000000"
-              className='tweet__footerIcon'
-            > 
-              <title id="retweetIconTitle">Retweet</title>
-              <g>
-                <path d="M13 18L6 18L6 7"/>
-                <path d="M3 9L6 6L9 9"/>
-                <path d="M11 6L18 6L18 17"/>
-                <path d="M21 15L18 18L15 15"/>
-              </g>
+              fill="none" color="#000">
+              <path d="M13 18H6V7"/>
+              <path d="m3 9 3-3 3 3m2-3h7v11"/>
+              <path d="m21 15-3 3-3-3"/>
             </svg>
             <span>{num_retweets}</span>
             </span>

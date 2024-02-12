@@ -18,14 +18,15 @@ module.exports.socketconnection = (server) => {
     });
 };
 
-module.exports.sendMessage = (roomId, eventName, message) => {
+module.exports.sendMessage = (roomId, eventName, message, exclude_roomId = false) => {
     try {
-        if (roomId === null || roomId === undefined) {
+        if ( roomId === null || roomId === undefined ) {
             io.emit(eventName, message);
             return true;
         }
-        if (users[roomId]) {
-            io.to(users[roomId]).emit(eventName, message);
+        roomId = users[roomId] || roomId;
+        if (exclude_roomId) {
+            io.except(roomId).emit(eventName, message);
             return true;
         }
         io.to(roomId).emit(eventName, message);

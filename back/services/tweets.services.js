@@ -139,14 +139,14 @@ const likeTweet = async (req, res) => {
             tweet.liked_by.splice(userIndex, 1);
 
             const updatedTweet = await tweet.save();
-        sendMessage(null, 'tweet-updated', { tweet: updatedTweet });
+        sendMessage(userId, 'update-likes', { tweet: updatedTweet }, true);
         return res.status(statusCodes.success).json({ message: 'unliked successfully', tweet: updatedTweet });
         } else {
             // If user has not liked the tweet, add them to the liked_by list
             tweet.liked_by.push(userId);
 
             const updatedTweet = await tweet.save();
-            sendMessage(null, 'tweet-updated', { tweet: updatedTweet });
+            sendMessage(userId, 'update-likes', { tweet: updatedTweet }, true);
             return res.status(statusCodes.success).json({ message: 'liked successfully', tweet: updatedTweet });
         }
 
@@ -236,7 +236,7 @@ const closePoll = async (poll_id) => {
 const registerVote = async (req, res) => {
     poll_id = req.body.poll_id;
     option_index = req.body.option_index;
-    user_email = req.user;
+    user_id = req.user._id;
     try {
         const poll = await pollModel.findById(poll_id);
         if (poll.isClosed) {
@@ -245,16 +245,16 @@ const registerVote = async (req, res) => {
         }
         // Check if the user has already voted for an option in the poll
         for (let i = 0; i < poll.options.length; i++) {
-            if (poll.options[i].voter_ids.includes(user_email)) {
-                logger.error(`Error registering vote: User with email ${user_email} has already voted for an option in poll with id ${poll_id}`);
+            if (poll.options[i].voter_ids.includes(user_id)) {
+                logger.error(`Error registering vote: User with id ${user_id} has already voted for an option in poll with id ${poll_id}`);
                 return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: User has already voted for an option in this poll' });
             }
         }
         poll.options[option_index].num_votes += 1;
-        poll.options[option_index].voter_ids.push(user_email);
+        poll.options[option_index].voter_ids.push(user_id);
         await poll.save();
         logger.info(`Successfully registered vote for poll with id: ${poll_id}`);
-        sendMessage(null, 'poll-vote', { poll_id: poll_id, option_index: option_index});
+        sendMessage(user_id, 'poll-vote', { poll_id: poll_id, option_index: option_index, voter_id: user_id}, true);
         return res.status(statusCodes.success).json({ message: 'Successfully registered vote' });
     } catch (error) {
         logger.error(`Error registering vote: ${error}`);

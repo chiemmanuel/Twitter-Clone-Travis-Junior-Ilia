@@ -6,4 +6,5 @@ export const requests = {
     deleteTweet: '/tweets/delete/',
     bookmarkTweet: '/bookmarks/add/',
     deleteBookmark: '/bookmarks/delete/',
+    voteOnPoll: '/tweets/poll/vote',
 };

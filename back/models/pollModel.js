@@ -25,13 +25,18 @@ const pollSchema = new mongoose.Schema({
             default: 0,
         },
         voter_ids: [{
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
             }],
         }],
         required: true,
         validate: [assertMinOptions, 'Polls must have at least 2 options'],
         validate: [assertMaxOptions, 'Polls must have at most 4 options'],
     }, 
+    }, {
+    timestamps: {
+        createdAt: 'created_at',
+        updatedAt: 'updated_at',
+    }
     });
 
 function assertMaxOptions(value) {
