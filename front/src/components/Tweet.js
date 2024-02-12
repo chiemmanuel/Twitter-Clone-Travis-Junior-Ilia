@@ -22,7 +22,7 @@ function Tweet({ tweet_object }) {
     const [num_retweets, setNumRetweets] = useState(tweet_object.num_retweets);
 
     const socket = socketIOClient(3000);
-    
+
     useEffect(() => {
       socket.on("update-likes", data => {
         if (data._id === tweet_object._id) {
@@ -121,7 +121,7 @@ function Tweet({ tweet_object }) {
         <p>{content}</p>
         <img src={media} alt="media" />
         {/* if poll exists, render poll component with poll object */}
-        {poll && <Poll poll={poll} />}
+        {poll && <Poll poll_object={poll} />}
         {/* if retweet exists, display retweet author and body with no footer */}
         {retweet && (
           <div className="tweet__retweet" onClick={handleRetweetOnClick}>
