@@ -3,7 +3,11 @@ const users = {};
 let io;
 
 module.exports.socketconnection = (server) => {
-    io = require('socket.io')(server);
+    const io = require('socket.io')(server, {
+        cors: {
+            origin: "http://localhost:8080",
+        }
+    });
     io.on('connection', (socket) => {
     logger.info('a user is connected to the socket');
     socket.on('userLogin', email => {

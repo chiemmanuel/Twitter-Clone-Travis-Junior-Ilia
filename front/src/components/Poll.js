@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../constants/axios';
 import requests from '../constants/requests';
-import SocketIOClient from "socket.io-client";
+import { socket } from '../socket';
 import '../styles/Poll.css';
 
 function Poll({ poll_object }) {
     const user = JSON.parse(localStorage.getItem('user'));
+
     const has_voted = poll_object.options.some(option => option.voter_ids.includes(user._id));
     const { title, duration_seconds, created_at } = poll_object;
     const [isClosed, setIsClosed] = useState(has_voted ? true : poll_object.isClosed);
     const [options, setOptions] = useState(poll_object.options);
     const closing_time_in_ms = new Date(created_at).getTime() + duration_seconds * 1000;
 
-    const socket = SocketIOClient(3000);
-
     useEffect(() => {
+
         socket.on("poll-vote", data => {
             if (data.poll_id === poll_object._id) {
                 setOptions(prevOptions => {
@@ -32,7 +32,10 @@ function Poll({ poll_object }) {
             }
         });
 
-        return () => socket.disconnect();
+        return () => {
+            socket.off("poll-vote");
+            socket.off("poll-close");
+        };
     }, [poll_object._id]);
 
     const handleVote = (option_index) => {

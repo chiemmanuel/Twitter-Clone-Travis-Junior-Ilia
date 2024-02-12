@@ -139,14 +139,14 @@ const likeTweet = async (req, res) => {
             tweet.liked_by.splice(userIndex, 1);
 
             const updatedTweet = await tweet.save();
-        sendMessage(userId, 'update-likes', { tweet: updatedTweet }, true);
+        sendMessage(roomId=req.user.email, eventname='update-likes', message={ tweet: updatedTweet }, exclude_roomId=true);
         return res.status(statusCodes.success).json({ message: 'unliked successfully', tweet: updatedTweet });
         } else {
             // If user has not liked the tweet, add them to the liked_by list
             tweet.liked_by.push(userId);
 
             const updatedTweet = await tweet.save();
-            sendMessage(userId, 'update-likes', { tweet: updatedTweet }, true);
+            sendMessage(roomId=req.user.email, eventName='update-likes', message={ tweet: updatedTweet }, exclude_roomId=true);
             return res.status(statusCodes.success).json({ message: 'liked successfully', tweet: updatedTweet });
         }
 
@@ -237,6 +237,7 @@ const registerVote = async (req, res) => {
     poll_id = req.body.poll_id;
     option_index = req.body.option_index;
     user_id = req.user._id;
+    user_email = req.user.email;
     try {
         const poll = await pollModel.findById(poll_id);
         if (poll.isClosed) {
@@ -254,7 +255,7 @@ const registerVote = async (req, res) => {
         poll.options[option_index].voter_ids.push(user_id);
         await poll.save();
         logger.info(`Successfully registered vote for poll with id: ${poll_id}`);
-        sendMessage(user_id, 'poll-vote', { poll_id: poll_id, option_index: option_index, voter_id: user_id}, true);
+        sendMessage(user_email, 'poll-vote', { poll_id: poll_id, option_index: option_index, voter_id: user_id}, true);
         return res.status(statusCodes.success).json({ message: 'Successfully registered vote' });
     } catch (error) {
         logger.error(`Error registering vote: ${error}`);

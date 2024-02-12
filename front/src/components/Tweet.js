@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { useState } from 'react';
 import axios from '../constants/axios';
 import requests from '../constants/requests';
 import { useNavigate } from 'react-router-dom';
-import socketIOClient from "socket.io-client";
+import { socket } from '../socket';
 import '../styles/Tweet.css';
 
 import Poll from './Poll';
@@ -21,7 +21,6 @@ function Tweet({ tweet_object }) {
     const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet_object._id));
     const [num_retweets, setNumRetweets] = useState(tweet_object.num_retweets);
 
-    const socket = socketIOClient(3000);
 
     useEffect(() => {
       socket.on("update-likes", data => {
@@ -46,7 +45,12 @@ function Tweet({ tweet_object }) {
       });
   
       // Cleanup on unmount
-      return () => socket.disconnect();
+      return () => {
+        socket.off("update-likes");
+        socket.off("retweet");
+        socket.off("bookmark");
+        socket.off("comment");
+      };
     }, [tweet_object._id]);
 
     const handleLike = () => {
