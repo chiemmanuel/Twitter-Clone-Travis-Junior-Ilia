@@ -13,7 +13,7 @@ const signup = async (req, res) => {
     try {
         const { username, email, password, bio, gender, dob, contact } = req.body;
 
-        if (!username || !password || !email || !bio || !gender || !dob || !contact) {
+        if (!username || !password || !email || !dob) {
             return res.status(statusCodes.badRequest).json({ error: "Missing information" });
         }
 
@@ -34,12 +34,12 @@ const signup = async (req, res) => {
         const newUser = new User({
             email,
             username,
-            profile_img,
+            profile_img: profile_img || "",
             password: hash,
-            bio,
-            gender,
+            bio: bio || "",
+            gender: gender || "",
             dob,
-            contact,
+            contact: contact || "",
             followers: [],
             following: [],
             bookmarked_tweets: [],

@@ -134,12 +134,6 @@ const updatePassword = async (req, res) => {
  */
 const getcurrentUser = async (req, res) => {
     try {
-        console.log("here");
-        console.log(req.session.user);
-        if (!req.session.user || typeof req.session.user !== 'object') {
-            return res.status(statusCodes.badRequest).json({ message: "Invalid user object" });
-        }
-        console.log("here 2");
         const { _id } = req.session.user;
 
         // Fetch user information from the database based on the email
@@ -218,6 +212,30 @@ const getUserTweets = async (req, res) => {
         return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
     }
 }
+/**
+ * This function finds all the tweets liked by a user based on the user's _id from the request
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns {Object} A JSON object containing the liked tweets or an empty array
+ */
+const getUserLikedTweets = async (req, res) => {
+    const { _id } = req.params;
+
+    try {
+        // Find tweets where the given user _id is present in the liked_by array
+        const likedTweets = await tweetModel.find({ liked_by: _id });
+
+        if (likedTweets.length > 0) {
+            return res.status(statusCodes.success).json({ status: 'success', likedTweets: likedTweets });
+        } else {
+            return res.status(statusCodes.success).json({ status: 'success', likedTweets: [] });
+        }
+    } catch (error) {
+        // Log the error and return an error response
+        console.error('Error finding liked tweets:', error);
+        return res.status(statusCodes.serverError).json({ status: 'error', error: error });
+    }
+};
 
 /**
  * This function fetches the comments of a given user
@@ -237,7 +255,6 @@ const getUserComments = async (req, res) => {
     }
     return res.status(statusCodes.success).json({comments: comments});
 }
-
 
 /**
  * This function logs the user out by destroying the session
@@ -267,13 +284,42 @@ const logout = (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
+/**
+ * This function deletes the current user from the database
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message indicating success or failure
+ */
+const deleteCurrentUser = async (req, res) => {
+    try {
+        const { _id } = req.session.user;
+
+        // Check if the user exists before attempting to delete
+        const existingUser = await User.findById({ _id });
+        if (!existingUser) {
+            return res.status(statusCodes.badRequest).json({ message: "User not found" });
+        }
+
+        // Perform the user deletion
+        await User.findByIdAndDelete({ _id });
+
+        return res.status(statusCodes.success).json({ message: "User deleted successfully" });
+    } catch (error) {
+        console.error("Error while deleting user from MongoDB", error.message);
+        return res.status(statusCodes.serverError).json({ error: "Failed to delete user" });
+    }
+};
+
+
 
 module.exports = {
     updateUser,
     updatePassword,
     getcurrentUser,
     logout,
+    deleteCurrentUser,
     getUserByUsername,
     getUserTweets,
+    getUserLikedTweets,
     getUserComments
 };
