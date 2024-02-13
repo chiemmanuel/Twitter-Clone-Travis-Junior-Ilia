@@ -7,7 +7,7 @@
 
 .read .notification {
   background-color: #e8f5fe;
-  
+
 }
 
 .notification__content {
@@ -17,6 +17,12 @@
 
 .notification__content p {
   margin: 8px 0;
+}
+
+.notification__timestamp {
+  color: #657786;
+  font-size: 12px;
+  margin-top: 8px;
 }
 
 .notification__content button {
