@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../constants/axios';
-import requests from '../constants/requests';
-import { socket } from '../socket';
+import { requests } from '../constants/requests';
+import socket from '../socket';
 import '../styles/Poll.css';
 
 function Poll({ poll_object }) {
@@ -55,13 +55,14 @@ function Poll({ poll_object }) {
             });
         });
         setIsClosed(true);
-        axios.post(requests.voteOnPoll, {
+        axios.put(requests.voteOnPoll, {
             headers: {
                 Authorization: `Bearer ${user.token}`,
             },
             poll_id: poll_object._id,
             option_index,
-        }).catch(err => console.log(err));
+        }).then(res => console.log(res))
+        .catch(err => console.log(err));
     }
 
     return (
@@ -70,7 +71,7 @@ function Poll({ poll_object }) {
             <ul className='poll__options'>
                 {options.map((option, index) => (
                     isClosed ? (
-                        <li key={index} className='poll__option' {...option.voter_ids.includes(user._id) ? (className = 'poll__selected_option') : ""}>
+                        <li key={index} className={option.voter_ids.includes(user._id) ? ('poll__selected_option') : "poll__option" }>
                             <p>{option.option_value}</p>
                             <p>{option.num_votes}</p>
                         </li>

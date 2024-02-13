@@ -8,5 +8,5 @@ export const requests = {
     liveFeed: '/tweets/livefeed',
     bookmarkTweet: '/bookmarks/add/',
     deleteBookmark: '/bookmarks/delete/',
-    voteOnPoll: '/tweets/poll/vote',
+    voteOnPoll: '127.0.0.1:8080/tweets/poll/vote',
 };

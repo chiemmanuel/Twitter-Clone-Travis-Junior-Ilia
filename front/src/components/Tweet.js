@@ -1,9 +1,9 @@
 import React, { useContext, useEffect } from 'react'
 import { useState } from 'react';
 import axios from '../constants/axios';
-import requests from '../constants/requests';
+import { requests } from '../constants/requests';
 import { useNavigate } from 'react-router-dom';
-import { socket } from '../socket';
+import socket from '../socket';
 import '../styles/Tweet.css';
 
 import Poll from './Poll';
@@ -55,7 +55,7 @@ function Tweet({ tweet_object }) {
 
     const handleLike = () => {
         if (isLiked) {
-            setLikedBy(liked_by.filter(id => id !== user_id));
+            setLikedBy(liked_by.filter(id => id !== user._id));
             setIsLiked(false);
             // dispatch unlike tweet action
         } else {
