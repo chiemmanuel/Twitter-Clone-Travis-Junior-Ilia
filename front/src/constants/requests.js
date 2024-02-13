@@ -1,5 +1,6 @@
 export const requests = {
     login: '/auth/login',
+    logout: '/user/logout',
     signup: '/auth/signup',
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
