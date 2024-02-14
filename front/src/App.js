@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
+import BasePage from './pages/BasePage';
 import socket from './socket';
 import { useEffect, useState } from 'react';
 import useAppStateContext from './hooks/useAppStateContext';
@@ -31,7 +32,8 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path='/' element={<HomePage />} />
+        <Route path='/Home' element={<HomePage />} />
+        <Route path='/' element={<BasePage />} />
       </Routes>
     </>
   );
