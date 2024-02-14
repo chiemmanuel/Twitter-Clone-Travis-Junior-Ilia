@@ -5,6 +5,8 @@ import useAppStateContext from '../hooks/useAppStateContext';
 import socket from '../socket';
 import Tweet from '../components/Tweet';
 import { useState } from 'react';
+import axios from '../constants/axios';
+import { requests } from '../constants/requests';
 
 const HomePage = () => {
   const { dispatch } = useAppStateContext();
@@ -12,22 +14,74 @@ const HomePage = () => {
   const [tweets, setTweets] = useState([]);
 
   function test_login() {
-    dispatch({
-      type: "Login",
-      payload: {
-        token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7Il9pZCI6IjY1Yzc2MDhjMWJlNDdkZWI5MDMxZjAzYyIsInVzZXJuYW1lIjoidXNlcjMiLCJlbWFpbCI6InVzZXIzQGdtYWlsLmNvbSJ9LCJpYXQiOjE3MDc4NjM3MzYsImV4cCI6MTcwNzg2NzMzNn0.uhEZ-pkO6GoUXGw2E4qBk7geQAlRHHL1C-5DOxiJnZs",
-        email: "user3@gmail.com",
-        username: "user3",
-        bookmarked_tweets: [],
-      },
-    });
+    axios.post(requests.login, {
+      email: "user4@gmail.com",
+      password: "password",
+    }).then((response) => {
+      const { token } = response.data;
+      dispatch({
+        type: "Login",
+        payload: {
+          token: token,
+          email: "user4@gmail.com",
+          username: "user4",
+          bookmarked_tweets: [],
+          _id: "65ccbd673854547c5ae94d06"
+        },
+        });
+      }).catch((error) => {
+        console.log('error', error);
+      });
     socket.connect();
     }
 
-    socket.on('tweet-created', data => {
-        console.log('tweet-created', data);
-        setTweets(prevTweets => [data, ...prevTweets]);
+  function test_post_tweet() {
+    axios.post(requests.postTweet, {
+        content: "this is test tweet",
+        retweet_id: "65c75f47edbf6c380e41dbcd",
+        media: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fclipart-library.com%2Frandom-cliparts.html&psig=AOvVaw18dmIDkbOaKJzSrJTbTvvB&ust=1707322096129000&source=images&cd=vfe&opi=89978449&ved=0CBMQjRxqFwoTCMjKgsuMl4QDFQAAAAAdAAAAABAI",
+        poll:{"title": "test poll",
+        duration_seconds: 60,
+        options: ["1", "2"]},
+        hashtags: ["first hastag", "second hashtag"]
+    }, {
+      headers: {
+        'Authorization': `Bearer ${JSON.parse(localStorage.getItem('user')).token}`
+    }
+    }).then((response) => {
+      console.log('response', response);
+    }).catch((error) => {
+      console.log('error', error);
     });
+  }
+
+    useEffect(() => {
+      const handleNewTweet = (data) => {
+        const { tweet } = data;
+        // check if tweet with that id already exists
+        // if not, add to tweets
+        if (!tweets.some(t => t._id === tweet._id)) {
+          setTweets(prevTweets => [tweet, ...prevTweets]);
+        }
+      };
+
+      const handleTweetUpdate = (data) => {
+        console.log('tweet update', data);
+        const { tweet } = data;
+        setTweets(prevTweets => prevTweets.map(t => t._id === tweet._id ? tweet : t));
+      };
+
+
+    
+      socket.on('tweet-created', handleNewTweet);
+      socket.on('tweet-updated', handleTweetUpdate);
+    
+      // Clean up the effect by removing the listener when the component unmounts
+      return () => {
+        socket.off('tweet-created', handleNewTweet);
+        socket.off('tweet-updated', handleTweetUpdate);
+      }
+    }, [tweets]);
         
   
   return (
@@ -37,8 +91,12 @@ const HomePage = () => {
       </div>
       <div className='main'>
         <button onClick={test_login}>Test Login</button>
-        {tweets.map(tweet => (
-            <Tweet tweet_object={tweet} />
+        <button onClick={test_post_tweet}>Test Post Tweet</button>
+        { console.log('tweets', tweets) }
+        {
+        tweets.map((tweet) => (
+
+          <Tweet key={tweet._id} tweet={tweet} />
         ))}
       </div>
 

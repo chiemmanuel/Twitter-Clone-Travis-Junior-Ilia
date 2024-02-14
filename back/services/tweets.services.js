@@ -4,7 +4,7 @@ const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
 const userModel = require('../models/userModel.js');
 const ObjectId = require('mongoose').Types.ObjectId;
-const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
+const { fetch_feed_query, fetch_tweet_query }  = require ('../constants/fetchFeedConstants.js');
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 
 
@@ -38,14 +38,17 @@ const postTweet = async (req, res) => {
         liked_by: [],
     });
     try {
-        const tweet = await newTweet.save();
+        const result = await newTweet.save();
+        const tweet_id = result._id;
         if (req.body.retweet_id) {
             // If it's a retweet, increment the retweet count for the original tweet
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
+            sendMessage(null, 'retweeted', { tweet_id: req.body.retweet_id});
         }
-        logger.info(`Successfully created tweet with id: ${tweet._id}`);
-        sendMessage(null, 'tweet-created', { tweet: tweet });
-        logger.info(`${tweet}`)
+        logger.info(`Successfully created tweet with id: ${tweet_id}`);
+        const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: tweet_id });
+        sendMessage(null, 'tweet-created', { tweet: tweet[0] });
+        logger.info(`${tweet[0]}`)
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
@@ -106,8 +109,10 @@ const editTweetById = async (req, res) => {
             tweet.hashtags = updatedHashtags;
         }
 
-        const updatedTweet = await tweet.save();
-        sendMessage(null, 'tweet-updated', { tweet: updatedTweet });
+        await tweet.save();
+        const updatedTweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: new ObjectId(tweetId) });
+        console.log(updatedTweet);
+        sendMessage(null, 'tweet-updated', { tweet: updatedTweet[0] });
         return res.status(statusCodes.success).json({ message: 'Tweet updated successfully', tweet: updatedTweet });
     } catch (error) {
         console.log(error);
@@ -141,14 +146,20 @@ const likeTweet = async (req, res) => {
             tweet.liked_by.splice(userIndex, 1);
 
             const updatedTweet = await tweet.save();
-        sendMessage(roomId=req.user.email, eventname='update-likes', message={ tweet: updatedTweet });
+        logger.info("roomId: ", req.user.email);
+        console.log("eventName: ", 'update-likes');
+        logger.info("message: ", { tweet: updatedTweet });
+        sendMessage(null, 'update-likes', { tweet_id: tweetId, user_id: userId, dislike: true});
         return res.status(statusCodes.success).json({ message: 'unliked successfully', tweet: updatedTweet });
         } else {
             // If user has not liked the tweet, add them to the liked_by list
             tweet.liked_by.push(userId);
 
             const updatedTweet = await tweet.save();
-            sendMessage(roomId=req.user.email, eventName='update-likes', message={ tweet: updatedTweet });
+            logger.info("roomId: ", req.user.email);
+            console.log("eventName: ", 'update-likes');
+            logger.info("message: ", { tweet: updatedTweet });
+            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_id: userId, dislike: false});
             return res.status(statusCodes.success).json({ message: 'liked successfully', tweet: updatedTweet });
         }
 
@@ -221,7 +232,7 @@ const closePoll = async (poll_id) => {
     try {
         const poll = await pollModel.findByIdAndUpdate(poll_id, { isClosed: true });
         logger.info(`Successfully closed poll with id: ${poll_id}`);
-        sendMessage(null, 'poll-closed', { poll_id: poll_id });
+        sendMessage(null, 'poll-close', { poll_id: poll_id });
         return;
     } catch (error) {
         logger.error(`Error closing poll: ${error}`);
@@ -260,7 +271,7 @@ const registerVote = async (req, res) => {
         poll.options[option_index].voter_ids.push(user_id);
         await poll.save();
         logger.info(`Successfully registered vote for poll with id: ${poll_id}`);
-        sendMessage(user_email, 'poll-vote', { poll_id: poll_id, option_index: option_index, voter_id: user_id});
+        sendMessage(null, 'poll-vote', { poll_id: poll_id, option_index: option_index, voter_id: user_id});
         return res.status(statusCodes.success).json({ message: 'Successfully registered vote' });
     } catch (error) {
         logger.error(`Error registering vote: ${error}`);

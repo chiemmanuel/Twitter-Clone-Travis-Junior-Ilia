@@ -6,7 +6,7 @@ import socket from "../socket";
 const PrivateRoute = () => {
   const { appState } = useAppStateContext();
 
-    if (appState?.isAuthenticated && appState?.user && !appState?.isSocketConnected) {
+    if (appState?.isAuthenticated && appState?.user && !socket.connected) {
         socket.connect();
     }
 

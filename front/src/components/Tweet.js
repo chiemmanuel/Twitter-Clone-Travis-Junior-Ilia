@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
@@ -8,38 +8,47 @@ import '../styles/Tweet.css';
 
 import Poll from './Poll';
 
-function Tweet({ tweet_object }) {
+function Tweet({ tweet }) {
     const user = JSON.parse(localStorage.getItem('user'));
     const navigate = useNavigate();
 
-    const { author, content, media, hashtags, num_views, created_at, updated_at, poll, retweet, retweet_author } = tweet_object;
+    const { author, content, media, hashtags, num_views, created_at, updated_at, poll, retweet, retweet_author } = tweet;
     
-    const [num_comments, setNumComments] = useState(tweet_object.num_comments);
-    const [liked_by, setLikedBy] = useState(tweet_object.liked_by);
+    const [num_comments, setNumComments] = useState(tweet.num_comments);
+    const [liked_by, setLikedBy] = useState(tweet.liked_by);
     const [isLiked, setIsLiked] = useState(liked_by.includes(user._id));
-    const [num_bookmarks, setNumBookmarks] = useState(tweet_object.num_bookmarks);
-    const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet_object._id));
-    const [num_retweets, setNumRetweets] = useState(tweet_object.num_retweets);
+    const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
+    const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet._id));
+    const [num_retweets, setNumRetweets] = useState(tweet.num_retweets);
 
 
     useEffect(() => {
       socket.on("update-likes", data => {
-        if (data._id === tweet_object._id) {
-          setLikedBy(data.liked_by);
+        const { tweet_id, user_id, dislike } = data;
+        if (user_id === user._id) {
+          console.log('skipped', user_id, user._id);
+          return;
+        }
+        console.log('not skipped', user_id, user._id);
+        if (tweet_id === tweet._id && dislike) {
+          setLikedBy( prevLikedBy => prevLikedBy.filter(id => id !== user_id));
+        } else if (tweet_id === tweet._id && !dislike) {
+          setLikedBy( prevLikedBy => [...prevLikedBy, user_id]);
         }
       });
-      socket.on("retweet", data => {
-        if (data._id === tweet_object._id) {
+      socket.on("retweeted", data => {
+        if (data.tweet_id === tweet._id) {
           setNumRetweets(prevNumRetweets => prevNumRetweets + 1);
         }
       });
       socket.on("bookmark", data => {
-          if (data._id === tweet_object._id) {
-              setNumBookmarks(prevNumBookmarks => prevNumBookmarks + 1);
+          if (data._id === tweet._id && user._id !== data.user_id) {
+              let value = data.deleted ? -1 : 1;
+              setNumBookmarks(prevNumBookmarks => prevNumBookmarks + value);
           }
       });
       socket.on("comment", data => {
-          if (data._id === tweet_object._id) {
+          if (data._id === tweet._id && user._id !== data.user_id) {
               setNumComments(prevNumComments => prevNumComments + 1);
           }
       });
@@ -51,25 +60,22 @@ function Tweet({ tweet_object }) {
         socket.off("bookmark");
         socket.off("comment");
       };
-    }, [tweet_object._id]);
+    }, [tweet._id, user]);
 
     const handleLike = () => {
         if (isLiked) {
             setLikedBy(liked_by.filter(id => id !== user._id));
             setIsLiked(false);
-            // dispatch unlike tweet action
         } else {
             setLikedBy([...liked_by, user._id]);
             setIsLiked(true);
-            // dispatch like tweet action
         }
-        axios.put(requests.likeTweet + tweet_object._id, {
-            headers: {
-                Authorization: `Bearer ${
-                  user.token
-                }`,
-              },
-        }).catch(err => console.log(err));
+        axios.put(requests.likeTweet + tweet._id, {}, {
+          headers: {
+              Authorization: `Bearer ${user.token}`,
+          },
+      }).then(res => console.log(res))
+      .catch(err => console.log(err));
     };
 
     const handleBookmark = () => {
@@ -77,33 +83,35 @@ function Tweet({ tweet_object }) {
             setNumBookmarks(num_bookmarks - 1);
             setIsBookmarked(false);
             // dispatch delete bookmark action
-            axios.post(requests.deleteBookmark + tweet_object._id, {
+            axios.post(requests.deleteBookmark + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
                       user.token
                     }`,
                   },
-            }).catch(err => console.log(err));
+            }).then(res => console.log(res))
+            .catch(err => console.log(err));
         } else {
             setNumBookmarks(num_bookmarks + 1);
             setIsBookmarked(true);
             // dispatch add bookmark action
-            axios.post(requests.bookmarkTweet + tweet_object._id, {
+            axios.post(requests.bookmarkTweet + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
                       user.token
                     }`,
                   },
-            }).catch(err => console.log(err));
+            }).then(res => console.log(res))
+            .catch(err => console.log(err));
         }
     };
 
     const handleComment = () => {
-        navigate(`/view_tweet/${tweet_object._id}`);
+        navigate(`/view_tweet/${tweet._id}`);
     };
 
     const handleRetweetButton = () => {
-        navigate(`/post_tweet/?retweet_id=${tweet_object._id}`);
+        navigate(`/post_tweet/?retweet_id=${tweet._id}`);
     }
 
     const handleRetweetOnClick = () => {
@@ -207,9 +215,9 @@ function Tweet({ tweet_object }) {
         </div>
         </div>
         <div className="tweet__footer">
-            {hashtags.map(hashtag => (
-                <span className="tweet__footerHashtag">{hashtag}</span>
-            ))}
+        {hashtags.map((hashtag, index) => (
+          <span key={index} className="tweet__footerHashtag">{hashtag}</span>
+        ))}
         </div>
     </div>
   )

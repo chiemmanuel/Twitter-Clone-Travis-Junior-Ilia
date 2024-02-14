@@ -3,6 +3,7 @@ const commentModel = require('../models/commentModel');
 const statusCodes = require('../constants/statusCodes'); 
 const tweetModel = require('../models/tweetModel');
 const User = require('../models/userModel');
+const { sendMessage } = require('../boot/socketio/socketio_connection');
 
 /**
  * This function creates a new comment and saves it to the database using the Comment model schema
@@ -37,6 +38,7 @@ const postComment = async (req, res) => {
         const tweet = await tweetModel.findById(tweetId);
         tweet.num_comments += 1;
         await tweet.save();
+        sendMessage( null, 'comment', { _id: tweetId, user_id: _id})
         return res.status(statusCodes.success).json({ message: 'Comment created successfully', comment });
     } catch (error) {
         console.error("Error creating comment:", error);

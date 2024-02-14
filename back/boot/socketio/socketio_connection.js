@@ -36,7 +36,6 @@ module.exports.sendMessage = (roomId, eventName, message) => {
         }
         roomId = users[roomId] || roomId;
         io.to(roomId).emit(eventName, message);
-        logger.info('roomId, message:', roomId, message);
         return true;
     }
     catch (error) {
