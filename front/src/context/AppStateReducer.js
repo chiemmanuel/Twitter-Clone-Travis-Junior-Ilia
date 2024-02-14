@@ -5,6 +5,7 @@ const AppStateReducer = (state, action) => {
         "user",
         JSON.stringify({ ...action.payload, isAuthenticated: true })
       );
+      console.log("Login", action.payload);
 
       return {
         ...state,
@@ -23,20 +24,6 @@ const AppStateReducer = (state, action) => {
     }
     default:
       return state;
-
-    case "Connect": {
-        return {
-            ...state,
-            isSocketConnected: true,
-        };
-        }
-
-    case "Disconnect": {
-        return {
-            ...state,
-            isSocketConnected: false,
-        };
-    }
 }
 };
 

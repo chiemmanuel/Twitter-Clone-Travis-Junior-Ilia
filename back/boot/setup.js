@@ -36,8 +36,8 @@ try {
 }
 
 
-server.listen(process.env.SOCKETIO_PORT || 3000 , () => {
-  logger.info('socket.io server is running on port 3000');
+server.listen(process.env.SOCKETIO_PORT || 4000 , () => {
+  logger.info('socket.io server is running on port 4000');
 });
 socketconnection(server);
 

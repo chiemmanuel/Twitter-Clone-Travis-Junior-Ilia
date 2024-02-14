@@ -2,6 +2,7 @@ const logger = require('../middleware/winston');
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const userModel = require("../models/userModel.js");
+const { sendMessage } = require('../boot/socketio/socketio_connection');
 
 const getBookmarks = async (req, res) => {
     const userId = req.user._id;
@@ -32,6 +33,7 @@ const addBookmark = async (req, res) => {
             await user.save();
             await tweet.save();
         }
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: false})
         return res.status(statusCodes.success).json({ message: 'Added new bookmark' });
 
     } catch (error) {
@@ -53,6 +55,7 @@ const deleteBookmark = async (req, res) => {
         await user.save();
         await tweet.save();
         
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: false})
         return res.status(statusCodes.success).json({ message: 'Bookmark deleted' });
     
     } catch (error) {
