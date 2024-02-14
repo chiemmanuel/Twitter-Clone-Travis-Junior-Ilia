@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from '../constants/axios';
-import requests from '../constants/requests';
-import { socket } from '../socket';
+import { requests } from '../constants/requests';
+import socket from '../socket';
 import '../styles/Poll.css';
 
 function Poll({ poll_object }) {
@@ -13,10 +13,14 @@ function Poll({ poll_object }) {
     const [options, setOptions] = useState(poll_object.options);
     const closing_time_in_ms = new Date(created_at).getTime() + duration_seconds * 1000;
 
+
+    const optionsRef = useRef(options);
+    optionsRef.current = options;
+
     useEffect(() => {
 
         socket.on("poll-vote", data => {
-            if (data.poll_id === poll_object._id) {
+            if (data.poll_id === poll_object._id && !optionsRef.some(option => option.voter_ids.includes(data.voter_id))){
                 setOptions(prevOptions => {
                     let temp_options = [...prevOptions];
                     temp_options[data.option_index].num_votes += 1;
@@ -27,6 +31,7 @@ function Poll({ poll_object }) {
         });
 
         socket.on("poll-close", data => {
+            console.log('poll-close', data);
             if (data.poll_id === poll_object._id) {
                 setIsClosed(true);
             }
@@ -55,13 +60,14 @@ function Poll({ poll_object }) {
             });
         });
         setIsClosed(true);
-        axios.post(requests.voteOnPoll, {
+        axios.put(requests.voteOnPoll, {
             headers: {
                 Authorization: `Bearer ${user.token}`,
             },
             poll_id: poll_object._id,
             option_index,
-        }).catch(err => console.log(err));
+        }).then(res => console.log(res))
+        .catch(err => console.log(err));
     }
 
     return (
@@ -70,7 +76,7 @@ function Poll({ poll_object }) {
             <ul className='poll__options'>
                 {options.map((option, index) => (
                     isClosed ? (
-                        <li key={index} className='poll__option' {...option.voter_ids.includes(user._id) ? (className = 'poll__selected_option') : ""}>
+                        <li key={index} className={option.voter_ids.includes(user._id) ? ('poll__selected_option') : "poll__option" }>
                             <p>{option.option_value}</p>
                             <p>{option.num_votes}</p>
                         </li>

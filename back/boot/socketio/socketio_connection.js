@@ -1,11 +1,16 @@
+const logger = require("../../middleware/winston");
+
+
 // SOCKET.IO
 const users = {};
 let io;
 
+
 module.exports.socketconnection = (server) => {
-    const io = require('socket.io')(server, {
+    io = require('socket.io')(server, {
         cors: {
-            origin: "http://localhost:8080",
+            origin: "*",
+
         }
     });
     io.on('connection', (socket) => {
@@ -14,7 +19,7 @@ module.exports.socketconnection = (server) => {
         users[email] = socket.id;
         logger.info('socket.io users:', users);
     });
-    socket.on('disconnect', socket, email => {
+    socket.on('disconnect', email => {
         logger.info('user disconnected');
         delete users[email];
         logger.info('socket.io users:', users);
@@ -22,17 +27,14 @@ module.exports.socketconnection = (server) => {
     });
 };
 
-module.exports.sendMessage = (roomId, eventName, message, exclude_roomId = false) => {
+module.exports.sendMessage = (roomId, eventName, message) => {
     try {
         if ( roomId === null || roomId === undefined ) {
             io.emit(eventName, message);
+            logger.info('Message sent to all users:', message);
             return true;
         }
         roomId = users[roomId] || roomId;
-        if (exclude_roomId) {
-            io.except(roomId).emit(eventName, message);
-            return true;
-        }
         io.to(roomId).emit(eventName, message);
         return true;
     }
