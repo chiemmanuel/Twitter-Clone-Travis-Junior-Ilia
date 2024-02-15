@@ -47,8 +47,8 @@ function Tweet({ tweet }) {
               setNumBookmarks(prevNumBookmarks => prevNumBookmarks + value);
           }
       });
-      socket.on("comment", data => {
-          if (data._id === tweet._id && user._id !== data.user_id) {
+      socket.on("comment-added", data => {
+          if (data.tweet_id === tweet._id && user._id !== data.author_id) {
               setNumComments(prevNumComments => prevNumComments + 1);
           }
       });
@@ -111,11 +111,11 @@ function Tweet({ tweet }) {
     };
 
     const handleRetweetButton = () => {
-        navigate(`/post_tweet/?retweet_id=${tweet._id}`);
+        navigate(`/post_tweet/${tweet._id}`);
     }
 
     const handleRetweetOnClick = () => {
-        navigate(`/view_tweet/${retweet._id}`);
+        navigate(`/view_tweet/?id=${retweet._id}`);
     }
     
   return (

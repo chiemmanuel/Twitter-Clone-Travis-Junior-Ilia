@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const ObjectId = require('mongoose').Types.ObjectId;
 const commentModel = require('../models/commentModel');
 const statusCodes = require('../constants/statusCodes'); 
 const tweetModel = require('../models/tweetModel');
@@ -27,6 +27,7 @@ const postComment = async (req, res) => {
 
     const newComment = new commentModel({
         tweet_id: tweetId,
+        author_id: _id,
         author_name,
         profile_image,
         content,
@@ -38,7 +39,7 @@ const postComment = async (req, res) => {
         const tweet = await tweetModel.findById(tweetId);
         tweet.num_comments += 1;
         await tweet.save();
-        sendMessage( null, 'comment', { _id: tweetId, user_id: _id})
+        sendMessage( null, 'comment-added', { comment: comment })
         return res.status(statusCodes.success).json({ message: 'Comment created successfully', comment });
     } catch (error) {
         console.error("Error creating comment:", error);
@@ -122,9 +123,28 @@ const likeComment = async (req, res) => {
     }
 };
 
+/**
+ * This function fetchs all comments for a tweet by its ID
+ * @param {*} req: The request object
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and the comments for the tweet
+ */
+const fetchCommentsByTweetId = async (req, res) => {
+    const tweetId = new ObjectId(req.params.tweetId);
+
+    try {
+        const comments = await commentModel.find({ tweet_id: tweetId });
+        return res.status(statusCodes.success).json({ comments });
+    } catch (error) {
+        console.error("Error fetching comments:", error);
+        return res.status(statusCodes.queryError).json({ message: 'Failed to fetch comments' });
+    }
+}
+
 module.exports = {
     postComment,
     editCommentById,
     deleteCommentById,
     likeComment,
+    fetchCommentsByTweetId,
 };

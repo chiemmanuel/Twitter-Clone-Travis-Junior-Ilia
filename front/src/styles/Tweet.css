@@ -52,12 +52,18 @@
 
 .tweet__footer {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
   margin-top: 16px;
+  justify-content: space-evenly;
 }
 
 .tweet__footerViews {
+  display: flex;
+  align-items: center;
+}
+
+.tweet__footerIcons {
   display: flex;
   align-items: center;
 }

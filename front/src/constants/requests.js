@@ -5,9 +5,11 @@ export const requests = {
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
     deleteTweet: '/tweets/delete/',
+    postTweet: '/tweets/tweet',
+    getTweet: '/tweets/fetch/',
     liveFeed: '/tweets/livefeed',
     bookmarkTweet: '/bookmarks/add/',
     deleteBookmark: '/bookmarks/delete/',
     voteOnPoll: '127.0.0.1:8080/tweets/poll/vote',
-    postTweet: '/tweets/tweet',
+    getTweetComments: '/comments/get/',
 };
