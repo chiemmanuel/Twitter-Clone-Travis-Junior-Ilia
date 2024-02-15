@@ -1,0 +1,46 @@
+/* BasePage.css */
+
+.base-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 20px;
+  background-color: #f4f4f4;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.base-page h1 {
+  color: #333;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.form-switch {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.login-button, .register-button {
+  flex: 1;
+  background-color: #1da1f2;
+  color: #fff;
+  padding: 15px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+}
+
+.login-button:hover, .register-button:hover {
+  background-color: #0c87c6;
+}
+
+.form-container {
+  width: 100%;
+  max-width: 600px; /* Adjust the max-width for larger forms */
+}

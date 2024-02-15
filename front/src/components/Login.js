@@ -1,12 +1,14 @@
-import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// LoginForm.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import instance from "../constants/axios";
 import { requests } from "../constants/requests";
 import useAppStateContext from "../hooks/useAppStateContext";
+import { faEye, faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import "../styles/Login.css";
 
-const LoginForm = () => {
+const LoginForm = ({ onClose, showSignUpForm }) => {
   const { dispatch } = useAppStateContext();
   const navigate = useNavigate();
 
@@ -14,15 +16,29 @@ const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const togglePassword = (event) => {
     event.preventDefault();
     setShowPass(!showPass);
   };
 
-  const authentication = (event) => {
-    event.preventDefault();
-  
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (password) {
+      setPassword("");
+    }
+  };
+
+  const handleNextClick = () => {
+    if (currentStep === 1 && email.trim() !== "") {
+      setCurrentStep(2);
+    } else if (currentStep === 2 && password.trim() !== "") {
+      authenticate();
+    }
+  };
+
+  const authenticate = () => {
     if (!email || !password) {
       setMessage("Please fill all required fields");
     } else {
@@ -33,8 +49,7 @@ const LoginForm = () => {
         })
         .then((response) => {
           const token = response.data.token;
-          console.log("server response", response.data);
-  
+
           if (token) {
             dispatch({
               type: "Login",
@@ -51,9 +66,6 @@ const LoginForm = () => {
           }
         })
         .catch((error) => {
-          console.log(error);
-  
-          // Check if error.response is available
           if (error.response) {
             setMessage(error.response.data.message || "An unexpected error occurred");
           } else {
@@ -61,26 +73,29 @@ const LoginForm = () => {
           }
         });
     }
-  };  
+  };
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-    if (password) {
-      setPassword("");
-    }
+  const handleSignUpClick = () => {
+    onClose();
+    showSignUpForm();
   };
 
   return (
     <div className="login-container">
-      <label className="email">Email</label>
-      <input
-        type="text"
-        className="email-input"
-        value={email}
-        onChange={(e) => handleEmailChange(e)}
-      />
-      {email && (
-        <React.Fragment>
+      {currentStep === 1 && (
+        <>
+          <label className="email">Email</label>
+          <input
+            type="text"
+            className="email-input"
+            value={email}
+            onChange={(e) => handleEmailChange(e)}
+          />
+        </>
+      )}
+
+      {currentStep === 2 && (
+        <>
           <label className="password">Password</label>
           <input
             type={showPass ? "text" : "password"}
@@ -97,18 +112,21 @@ const LoginForm = () => {
               )}
             </span>
           </span>
-        </React.Fragment>
+        </>
       )}
-      <button className="submit" onClick={(e) => authentication(e)}>
-        Next
+
+      <button className="submit" onClick={handleNextClick}>
+        {currentStep === 1 ? "Next" : "Sign In"}
       </button>
-      <a href="/signup" className="signup-link">
+      <span className="signup-link" onClick={handleSignUpClick}>
         Sign Up
-      </a>
-      <span className="error-message">
-        {message}
+      </span>
+      <span className="error-message">{message}</span>
+      <span className="close-button" onClick={onClose}>
+        &#10006;
       </span>
     </div>
   );
 };
+
 export default LoginForm;

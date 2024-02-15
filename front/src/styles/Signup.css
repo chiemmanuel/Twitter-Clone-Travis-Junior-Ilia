@@ -1,6 +1,6 @@
+/* Signup.css */
 
-
-.login-container {
+.signup-container {
   width: 300px;
   margin: auto;
   padding: 20px;
@@ -9,14 +9,14 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-label {
+.signup-container label {
   display: block;
   margin-bottom: 8px;
   color: #333;
   font-weight: bold;
 }
 
-input {
+.signup-container input {
   width: 100%;
   padding: 8px;
   margin-bottom: 16px;
@@ -25,7 +25,7 @@ input {
   box-sizing: border-box;
 }
 
-.toggle-password {
+.signup-container .toggle-password {
   position: absolute;
   right: 10px;
   top: 50%;
@@ -33,27 +33,30 @@ input {
   cursor: pointer;
 }
 
-.submit {
+.signup-container .signup-next,
+.signup-container .signup-submit {
   width: 100%;
   padding: 10px;
-  background-color: #4caf50;
+  background-color: #1da1f2;
   color: #fff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  margin-bottom: 16px;
+  transition: background-color 0.3s ease;
 }
 
-.signup-link {
-  display: block;
-  text-align: center;
-  margin-top: 16px;
-  color: #333;
-  text-decoration: none;
-}
-.login-container {
-  position: relative;
+.signup-container .signup-next:disabled,
+.signup-container .signup-submit:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
 }
 
+.signup-container .error-message {
+  color: #f44336;
+  font-size: 14px;
+  margin-top: 8px;
+}
 .close-button {
   position: absolute;
   top: 10px;
@@ -70,7 +73,7 @@ input {
 
 /* Add media queries for responsiveness if needed */
 @media (max-width: 600px) {
-  .login-container {
+  .signup-container {
     width: 100%;
   }
 }

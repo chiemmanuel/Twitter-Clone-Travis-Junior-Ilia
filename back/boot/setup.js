@@ -3,8 +3,8 @@ const PORT = 8080;
 const app = express();
 
 // SOCKET.IO
-//const server = require('http').createServer(app);
-//const { socketconnection } = require('./socketio/socketio_connection');
+const server = require('http').createServer(app);
+const { socketconnection } = require('./socketio/socketio_connection');
 
 const cors = require("cors");
 const helmet = require("helmet");
@@ -39,7 +39,7 @@ try {
 server.listen(process.env.SOCKETIO_PORT || 4000 , () => {
   logger.info('socket.io server is running on port 4000');
 });
-socketconnection(server);*/
+socketconnection(server);
 
 // MIDDLEWARE
 const registerCoreMiddleWare = async () => {
