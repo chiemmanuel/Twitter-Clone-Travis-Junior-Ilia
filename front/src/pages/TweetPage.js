@@ -14,7 +14,8 @@ const ViewTweetPage = () => {
     const { id } = useParams()
     const user = JSON.parse(localStorage.getItem('user'))
     const [tweet, setTweet] = useState({})
-    const [tweetAuthor, setTweetAuthor] = useState('')
+    const [tweetAuthorUsername, setTweetAuthorUsername] = useState('')
+    const [tweetAuthorEmail, setTweetAuthorEmail] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
     const [comments, setComments] = useState([])
@@ -29,8 +30,8 @@ const ViewTweetPage = () => {
         })
             .then((response) => {
                 setTweet(response.data.tweet)
-                setTweetAuthor(response.data.tweet.author.username)
-                console.log('tweet', response.data.tweet.author.username)
+                setTweetAuthorUsername(response.data.tweet.author.username)
+                setTweetAuthorEmail(response.data.tweet.author_email)
                 setLoading(false)
             })
             .catch((error) => {
@@ -61,7 +62,7 @@ const ViewTweetPage = () => {
             }})
 
         return () => {
-            socket.off('comment')
+            socket.off('comment-added')
         }
     }, [id, user.token])
 
@@ -83,7 +84,7 @@ const ViewTweetPage = () => {
                 {loading && <p>Loading comments...</p>}
                 {error && <p>Error fetching comments</p>}
                 {!loading && !error && 
-                <PostCommentForm tweet_id={id} tweet_author={tweetAuthor} />}
+                <PostCommentForm tweet_id={id} tweetAuthorUsername={tweetAuthorUsername} tweetAuthorEmail={tweetAuthorEmail} />}
             </div>
             <div className='comments_container'>
             {!loading && !error &&  comments.length > 0 && comments.map((comment) => {

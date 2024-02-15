@@ -40,6 +40,7 @@ const postComment = async (req, res) => {
         tweet.num_comments += 1;
         await tweet.save();
         sendMessage( null, 'comment-added', { comment: comment })
+        sendMessage(null, 'increment-comment-count', { tweetId: tweetId })
         return res.status(statusCodes.success).json({ message: 'Comment created successfully', comment });
     } catch (error) {
         console.error("Error creating comment:", error);

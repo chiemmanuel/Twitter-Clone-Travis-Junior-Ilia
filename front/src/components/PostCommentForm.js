@@ -1,11 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 import '../styles/PostCommentForm.css';
 
 
 function PostCommentForm(props) {
-    const { tweet_id, tweet_author } = props
+    const { tweet_id, tweetAuthorUsername, tweetAuthorEmail } = props
+    console.log('props', props)
     const user = JSON.parse(localStorage.getItem('user'))
     const [commentText, setCommentText] = useState('')
     const [commentMedia, setCommentMedia] = useState(null)
@@ -36,6 +37,16 @@ function PostCommentForm(props) {
         setCommentMedia(null)
         setMessage('')
         console.log(response)
+        axios.post(requests.postNotification,{
+          recipient_email: tweetAuthorEmail,
+          content: `New comment from ${user.username} on your <a href="/view_tweet/${tweet_id}">tweet</a>`
+        } , {
+          headers: {
+            'Authorization' : `Bearer ${
+              user.token
+            }`,
+          },
+        })
       })
       .catch((error) => {
         console.error('Error posting comment', error)
@@ -45,7 +56,7 @@ function PostCommentForm(props) {
 
   return (
     <div className='post-comment'>
-      <p className='post-comment-author-name'>Replying to {tweet_author}</p>
+      <p className='post-comment-author-name'>Replying to {tweetAuthorUsername}</p>
       <form className="post-comment-form" onSubmit={handleCommentSubmit}>
         <textarea
           className="comment-text"
