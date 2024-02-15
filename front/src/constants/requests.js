@@ -12,4 +12,5 @@ export const requests = {
     deleteBookmark: '/bookmarks/delete/',
     voteOnPoll: '127.0.0.1:8080/tweets/poll/vote',
     getTweetComments: '/comments/get/',
+    postComment: '/comments/',
 };

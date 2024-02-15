@@ -6,6 +6,7 @@ import axios from '../constants/axios';
 import socket from '../socket';
 import PlaceholderComment from '../components/PlaceholderComment';
 import Navbar from '../components/Navbar';
+import PostCommentForm from '../components/PostCommentForm';
 import '../styles/TweetPage.css'
 
 
@@ -13,6 +14,7 @@ const ViewTweetPage = () => {
     const { id } = useParams()
     const user = JSON.parse(localStorage.getItem('user'))
     const [tweet, setTweet] = useState({})
+    const [tweetAuthor, setTweetAuthor] = useState('')
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(false)
     const [comments, setComments] = useState([])
@@ -27,6 +29,8 @@ const ViewTweetPage = () => {
         })
             .then((response) => {
                 setTweet(response.data.tweet)
+                setTweetAuthor(response.data.tweet.author.username)
+                console.log('tweet', response.data.tweet.author.username)
                 setLoading(false)
             })
             .catch((error) => {
@@ -59,7 +63,7 @@ const ViewTweetPage = () => {
         return () => {
             socket.off('comment')
         }
-    }, [id])
+    }, [id, user.token])
 
 
 
@@ -74,6 +78,12 @@ const ViewTweetPage = () => {
             {error && <p>Error fetching tweet</p>}
             <div className='tweet_container'>
             {!loading && !error && <Tweet tweet={tweet} />}
+            </div>
+            <div className='post_comment_container'>
+                {loading && <p>Loading comments...</p>}
+                {error && <p>Error fetching comments</p>}
+                {!loading && !error && 
+                <PostCommentForm tweet_id={id} tweet_author={tweetAuthor} />}
             </div>
             <div className='comments_container'>
             {!loading && !error &&  comments.length > 0 && comments.map((comment) => {
