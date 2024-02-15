@@ -25,17 +25,25 @@
   box-sizing: border-box;
 }
 
-.signup-container .toggle-password {
+.signup-container .password-container {
+  position: relative;
+}
+
+.password-container .toggle-password {
   position: absolute;
-  right: 10px;
-  top: 50%;
+  right: -30px;
+  bottom: 10px;
   transform: translateY(-50%);
   cursor: pointer;
 }
 
+.signup-buttons {
+  display: flex;
+  justify-content: space-between;
+}
 .signup-container .signup-next,
-.signup-container .signup-submit {
-  width: 100%;
+.signup-container .signup-back {
+  width: 50%;
   padding: 10px;
   background-color: #1da1f2;
   color: #fff;
@@ -46,8 +54,17 @@
   transition: background-color 0.3s ease;
 }
 
+.signup-next {
+  margin-left: 10px;
+}
+
+.signup-back {
+  margin-right: 10px;
+}
+
+
 .signup-container .signup-next:disabled,
-.signup-container .signup-submit:disabled {
+.signup-container .signup-back:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }

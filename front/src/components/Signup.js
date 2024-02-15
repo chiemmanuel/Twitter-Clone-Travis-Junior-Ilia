@@ -78,12 +78,19 @@ const SignUp = ({ onClose, showLoginForm }) => {
 
   const handleNext = (event) => {
     event.preventDefault();
+    setMessage("");
 
     // Validate required fields based on the step
-    if (step === 1 && (!fields.email || !fields.username || !fields.dob)) {
-      setMessage("Please fill all required fields");
+    if (step === 1 && !fields.email ) {
+      setMessage("Please enter your email");
       return;
-    } else if (step === 2 && !fields.password) {
+    } else if (step === 2 && !fields.username) {
+      setMessage("Please enter your username");
+      return;
+    } else if (step === 3 && !fields.password) {
+      setMessage("Please enter your password");
+      return;
+    } else if (step === 4 && !fields.dob) {
       setMessage("Please fill all required fields");
       return;
     }
@@ -133,6 +140,7 @@ const SignUp = ({ onClose, showLoginForm }) => {
 
       {step === 3 && (
         <>
+        <div className="password-container">
           <label>Password</label>
           <input
             type={showPass ? "text" : "password"}
@@ -143,6 +151,7 @@ const SignUp = ({ onClose, showLoginForm }) => {
           <span onClick={togglePassword} className="toggle-password">
             <FontAwesomeIcon icon={showPass ? faEye : faEyeSlash} className="customIcon" />
           </span>
+        </div>
         </>
       )}
 
@@ -194,9 +203,14 @@ const SignUp = ({ onClose, showLoginForm }) => {
         </>
       )}
 
-      <button className="signup-next" onClick={handleNext} disabled={step === 8}>
+      <div className="signup-buttons">
+      <button className="signup-back" onClick={() => setStep((prevStep) => prevStep - 1)} disabled={step == 1}>
+        Previous
+      </button>
+      <button className="signup-next" onClick={step < 7 ? handleNext : handleSignUp} >
         {step === 7 ? "Sign Up" : "Next"}
       </button>
+      </div>
       <span className="login-link" onClick={handleLoginClick}>
         Login
       </span>
