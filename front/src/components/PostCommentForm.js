@@ -6,7 +6,6 @@ import '../styles/PostCommentForm.css';
 
 function PostCommentForm(props) {
     const { tweet_id, tweetAuthorUsername, tweetAuthorEmail } = props
-    console.log('props', props)
     const user = JSON.parse(localStorage.getItem('user'))
     const [commentText, setCommentText] = useState('')
     const [commentMedia, setCommentMedia] = useState(null)
