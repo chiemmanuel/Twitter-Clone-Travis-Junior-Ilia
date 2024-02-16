@@ -13,14 +13,10 @@ function Poll({ poll_object }) {
     const [options, setOptions] = useState(poll_object.options);
     const closing_time_in_ms = new Date(created_at).getTime() + duration_seconds * 1000;
 
-
-    const optionsRef = useRef(options);
-    optionsRef.current = options;
-
     useEffect(() => {
 
         socket.on("poll-vote", data => {
-            if (data.poll_id === poll_object._id && !optionsRef.some(option => option.voter_ids.includes(data.voter_id))){
+            if (data.poll_id === poll_object._id && !options.some(option => option.voter_ids.includes(data.voter_id))){
                 setOptions(prevOptions => {
                     let temp_options = [...prevOptions];
                     temp_options[data.option_index].num_votes += 1;
@@ -41,7 +37,7 @@ function Poll({ poll_object }) {
             socket.off("poll-vote");
             socket.off("poll-close");
         };
-    }, [poll_object._id]);
+    }, [poll_object._id, options]);
 
     const handleVote = (option_index) => {
         if (isClosed) {
@@ -61,11 +57,12 @@ function Poll({ poll_object }) {
         });
         setIsClosed(true);
         axios.put(requests.voteOnPoll, {
+            poll_id: poll_object._id,
+            option_index: option_index,
+        }, {
             headers: {
                 Authorization: `Bearer ${user.token}`,
             },
-            poll_id: poll_object._id,
-            option_index,
         }).then(res => console.log(res))
         .catch(err => console.log(err));
     }

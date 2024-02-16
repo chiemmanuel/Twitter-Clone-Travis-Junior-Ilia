@@ -209,7 +209,6 @@ const createPoll = async (title, duration_seconds, option_values) => {
             return { option_value: option, num_votes: 0, voter_ids: [] };
         }),
     });
-    console.log(newPoll);
     try {
         const poll = await newPoll.save();
         logger.info(`Successfully created poll with id: ${poll._id}`);
@@ -251,11 +250,11 @@ const registerVote = async (req, res) => {
     option_index = req.body.option_index;
     logger.info(`Registering vote for poll with id: ${poll_id}`)
     logger.info(`Option index: ${option_index}`)
-    logger.info(req.body)
     user_id = req.user._id;
     user_email = req.user.email;
     try {
         const poll = await pollModel.findById(poll_id);
+        console.log(poll);
         if (poll.isClosed) {
             logger.error(`Error registering vote: Poll with id ${poll_id} is closed`);
             return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: Poll is closed' });
