@@ -10,7 +10,13 @@ const HomePage = () => {
       </div>
 
       <div className='main'>
-        LIVE FEED
+        <div className='livefeed'>
+
+        </div>
+
+        <div className=''>
+
+        </div>
       </div>
     </div>
   );
