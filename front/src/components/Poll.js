@@ -73,9 +73,9 @@ function Poll({ poll_object }) {
             <ul className='poll__options'>
                 {options.map((option, index) => (
                     isClosed ? (
-                        <li key={index} className={option.voter_ids.includes(user._id) ? ('poll__selected_option') : "poll__option" }>
-                            <p>{option.option_value}</p>
-                            <p>{option.num_votes}</p>
+                        <li key={index} className={option.voter_ids.includes(user._id) ? ('poll__option poll__selected_option') : "poll__option" }>
+                            <p className='poll__option__value'>{option.option_value}</p>
+                            <p className='poll__option__votes'>{option.num_votes}</p>
                         </li>
                     ) : (
                         <li key={index} className='poll__option' onClick={() => handleVote(index)}>

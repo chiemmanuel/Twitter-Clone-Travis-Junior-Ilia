@@ -16,7 +16,7 @@ const HomePage = () => {
   const [tweets, setTweets] = useState([]);
 
   const handleTweetUpdate = (tweet) => {
-    console.log('handleTweetUpdate', tweet);
+    console.log('handleTweetUpdate for tweet_id', tweet._id, 'with tweet:', tweet);
     setTweets(prevTweets => prevTweets.map(t => t._id === tweet._id ? tweet : t));
   };
 
@@ -79,10 +79,9 @@ const HomePage = () => {
       <div className='main'>
         <button onClick={test_login}>Test Login</button>
         <PostTweetForm />
-        { console.log('tweets', tweets) }
         {tweets.length > 0 &&
-        tweets.map((tweet, index) => (
-          <Tweet key={index} tweet={tweet} onTweetUpdate={handleTweetUpdate} />
+        tweets.map((tweet) => (
+          <Tweet key={tweet._id} tweet={tweet} onTweetUpdate={handleTweetUpdate} />
         ))}
       </div>
 

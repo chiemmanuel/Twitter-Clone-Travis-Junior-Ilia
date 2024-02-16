@@ -27,28 +27,26 @@ function Tweet( props ) {
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet._id));
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
+    console.log('tweet_id', tweet._id, 'tweet.num_retweets', tweet.num_retweets);
 
       useEffect(() => {
+        console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
         if ( onTweetUpdate !== undefined ) {
           var updated_tweet = tweet;
           updated_tweet.num_comments = num_comments;
           updated_tweet.liked_by = liked_by;
           updated_tweet.num_bookmarks = num_bookmarks;
           updated_tweet.num_retweets = numRetweets;
-          console.log('calling onTweetUpdate')
+
+          console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
           onTweetUpdate(updated_tweet);
         }
 
-      }, [num_comments, liked_by, num_bookmarks, numRetweets, tweet]);
+      }, [num_comments, liked_by, num_bookmarks, numRetweets]);
 
       useEffect(() => {
       socket.on("update-likes", data => {
         const { tweet_id, user_id, dislike } = data;
-        if (user_id === user._id) {
-          console.log('skipped', user_id, user._id);
-          return;
-        }
-        console.log('not skipped', user_id, user._id);
         if (tweet_id === tweet._id && dislike) {
           setLikedBy( prevLikedBy => prevLikedBy.filter(id => id !== user_id));
         } else if (tweet_id === tweet._id && !dislike) {
@@ -86,10 +84,8 @@ function Tweet( props ) {
 
     const handleLike = () => {
         if (isLiked) {
-            setLikedBy(liked_by.filter(id => id !== user._id));
             setIsLiked(false);
         } else {
-            setLikedBy([...liked_by, user._id]);
             setIsLiked(true);
         }
         axios.put(requests.likeTweet + tweet._id, {}, {
@@ -150,7 +146,7 @@ function Tweet( props ) {
       </div>
       <div className="tweet__body">
         <p>{content}</p>
-        { media !== "" && media !== null && <img src={media} alt="media" />}
+        { media ? (<img src={media} alt="media" />) : null}
         {/* if poll exists, render poll component with poll object */}
         {poll && <Poll poll_object={poll} />}
         {retweet && (
@@ -171,7 +167,7 @@ function Tweet( props ) {
             </div>
             <div className="tweet__body">
               <p>{retweet.content}</p>
-              <img src={retweet.media} alt="media" />
+              {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
               {retweet.poll && <Poll poll={retweet.poll} />}
             </div>
           </div> 
@@ -200,6 +196,7 @@ function Tweet( props ) {
               <path d="m3 9 3-3 3 3m2-3h7v11"/>
               <path d="m21 15-3 3-3-3"/>
             </svg>
+            {console.log('tweet_id', tweet._id, 'num_retweets', numRetweets)}
             <span>{numRetweets}</span>
             </span>
             <span onClick={handleLike}>

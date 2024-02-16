@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 import ReactModal from 'react-modal';
-import Tweet from './Tweet';
+import Poll from './Poll';
 import '../styles/PostTweetForm.css';
 function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
@@ -14,14 +14,19 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
     const [tweetMedia, setTweetMedia] = useState(null)
     const [displayPoll, setDisplayPoll] = useState(false)
     const [pollTitle, setPollTitle] = useState('')
-    const [pollOptions, setPollOptions] = useState([])
+    const [pollOptions, setPollOptions] = useState(['', ''])
     const [pollHours, setPollHours] = useState(0)
     const [pollMinutes, setPollMinutes] = useState(0)
     const [message, setMessage] = useState('')
     const user = JSON.parse(localStorage.getItem('user'))
 
     const handleTweetTextChange = (e) => {
-        var words = e.target.value.split(' ')
+        setTweetText(e.target.value)
+    }
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        var words = tweetText.split(/[\s#]+/);
         // use reduce to split words into two arrays, one for hashtags and one for the rest of the tweet
         var splitWords = words.reduce((acc, word) => {
             if (word[0] === '#') {
@@ -33,12 +38,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         }, {hashtags: [],text: []})
         setTweetText(splitWords.text.join(' '))
         setTweetHashTags(splitWords.hashtags)
-    }
 
-
-
-    const handleSubmit = (e) => {
-        e.preventDefault()
         if (tweetText === '' && tweetMedia === null && !displayPoll) {
             setMessage('Please enter a tweet, attach media or create a poll')
             return
@@ -99,10 +99,11 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         <ReactModal
           isOpen={isOpen}
           onRequestClose={closeModal}
-          contentLabel="Retweet Modal"
-          className="retweet-modal"
+          contentLabel="Post Tweet Modal"
+          className="tweet-modal"
+          overlayClassName="tweet-modal-overlay"
         >
-        <div className='post_tweet_form'>
+        <div className='post-tweet-container'>
             <form className="post-tweet-form" onSubmit={handleSubmit}>
                 <textarea
                     className="tweet-text"
@@ -110,25 +111,48 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                     value={tweetText}
                     onChange={(e) => handleTweetTextChange(e)}
                 />
-                {/* {isRetweet && (
-                    <Tweet tweet={retweet} />
-                )} */}
-                {!displayPoll && (
-                <input
-                    type="file"
-                    className="tweet-media"
-                    onChange={(e) => setTweetMedia(e.target.files[0])}
-                />)}
-
-                {!isRetweet && (
-                <button
-                    type="button"
-                    className="tweet-poll"
-                    onClick={() => setDisplayPoll(!displayPoll)}
-                    disabled={ isRetweet || tweetMedia !== null}
-                >
-                    {displayPoll ? 'Remove Poll' : 'Create Poll'}
-                </button>)}
+                {isRetweet ? (
+                        <div className="tweet">
+                        <div className="tweet__header">
+                          <img src={retweet.author.profile_img} alt="profile" />
+                          <div className="tweet__headerText">
+                            <h3>
+                              {retweet.author.username}{" "}
+                            </h3>
+                            <p>{new Date(retweet.created_at).toUTCString()}</p>
+                          </div>
+                        </div>
+                        <div className="tweet__body">
+                          <p>{retweet.content}</p>
+                          { retweet.media !== "" && retweet.media !== null && <img src={retweet.media} alt="media" />}
+                          {/* if poll exists, render poll component with poll object */}
+                          {retweet.poll && <Poll poll_object={retweet.poll} />}
+                          {retweet.retweet ? (
+                            <div className="tweet__retweet" >
+                              <div className="tweet__header">
+                                <img src={retweet.retweet_author.profile_img} alt="profile" />
+                                <div className="tweet__headerText">
+                                  <h3>
+                                    {retweet.retweet_author.username}{" "}
+                                  </h3>
+                                  {new Date(retweet.created_at).toUTCString() !== new Date(retweet.updated_at).toUTCString() ? (
+                                      <p>Edited: {new Date(retweet.updated_at).toUTCString()}</p>
+                                  ) : (
+                                      <p>{new Date(retweet.created_at).toUTCString()}</p>
+                                  )
+                                  }
+                                </div>
+                              </div>
+                              <div className="tweet__body">
+                                <p>{retweet.content}</p>
+                                <img src={retweet.media} alt="media" />
+                                {retweet.poll && <Poll poll={retweet.poll} />}
+                              </div>
+                            </div> 
+                          ) : null}
+                        </div>
+                        </div>
+                ) : null}
                 {displayPoll && (
                     <div className="poll-form">
                         <input
@@ -189,12 +213,40 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                         </div>
                     </div>
                 )}
-                <button
-                    type="submit"
-                    className="tweet-submit"
-                >
-                    Tweet
-                </button>
+                <div className="tweet-options">
+                    <div className="tweet-options-left">
+                        <input
+                            type="file"
+                            className="tweet-media"
+                            onChange={(e) => setTweetMedia(e.target.files[0])}
+                            disabled={displayPoll}
+                        />
+                        {!isRetweet && (
+                        <button
+                            type="button"
+                            className="tweet-poll tweet-option"
+                            onClick={() => setDisplayPoll(!displayPoll)}
+                            disabled={ isRetweet || tweetMedia !== null}
+                        >
+                            {displayPoll ? 'Remove Poll' : 'Create Poll'}
+                        </button>)}
+                    </div>
+                    <div className="tweet-options-right">
+                        <button
+                            type="submit"
+                            className="tweet-submit tweet-option"
+                        >
+                            Tweet
+                        </button>
+                        <button
+                        type="button"
+                        className="tweet-close tweet-option"
+                        onClick={closeModal}
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
                 <p className="message">{message}</p>
 
             </form>
