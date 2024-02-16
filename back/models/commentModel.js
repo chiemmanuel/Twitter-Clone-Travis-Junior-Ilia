@@ -21,10 +21,9 @@ const commentSchema = new mongoose.Schema({
     media: {
         type: String,
     },
-    num_likes: {
-        type: Number,
-        default: 0,
-    },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+    }],
     },
     { timestamps: {
         createdAt: 'created_at',
