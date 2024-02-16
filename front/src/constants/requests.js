@@ -14,4 +14,6 @@ export const requests = {
     getTweetComments: '/comments/get/',
     postComment: '/comments/',
     postNotification: '/notifications/create',
+    postTweet: '/tweets/tweet',
+    likeComment: '/comments/like/',
 };

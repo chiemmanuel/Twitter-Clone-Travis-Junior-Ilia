@@ -106,18 +106,25 @@ const deleteCommentById = async (req, res) => {
  */
 const likeComment = async (req, res) => {
     const commentId = req.params.commentId;
+    const userId = req.user._id;
 
     try {
         const comment = await commentModel.findById(commentId);
         if (!comment) {
             return res.status(statusCodes.notFound).json({ message: 'Comment not found' });
         }
+        if (comment.likes.includes(userId)) {
+            comment.likes.pull(userId);
+            sendMessage( null, 'update-comment-likes', { comment_id: commentId, dislike: true})
+            message = 'Comment disliked successfully';
+        } else {
+            sendMessage( null, 'update-comment-likes', { comment_id: commentId, dislike: false})
+            comment.likes.push(userId);
+            message = 'Comment liked successfully';
+        }
+        await comment.save();
 
-        comment.num_likes += 1;
-
-        const updatedComment = await comment.save();
-
-        return res.status(statusCodes.success).json({ message: 'Comment liked successfully', comment: updatedComment });
+        return res.status(statusCodes.success).json({ message: message});
     } catch (error) {
         console.error("Error liking comment:", error);
         return res.status(statusCodes.queryError).json({ message: 'Failed to like comment' });

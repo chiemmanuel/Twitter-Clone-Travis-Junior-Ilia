@@ -7,6 +7,8 @@ import socket from '../socket';
 import '../styles/Tweet.css';
 
 import Poll from './Poll';
+import comment_icon from '../icons/comment_icon.svg';
+import like_icon from '../icons/like_icon.svg';
 
 function Tweet({ tweet }) {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -160,14 +162,7 @@ function Tweet({ tweet }) {
         <p className="tweet__footerViews">{num_views} views</p>
         <div className="tweet__footerIcons">
           <span onClick={handleComment}>
-            <svg
-              viewBox="0 0 24 24"
-              className="tweet__footerIcon"
-            >
-              <g>
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17v-7h-4v-2h4V7l5 5-5 5z"></path>
-              </g>
-            </svg>
+            <img src={comment_icon} alt="comment" className='tweet__footerIcon'/>
             <span>{num_comments}</span>
           </span>
           <span onClick={handleRetweetButton}>
@@ -185,15 +180,7 @@ function Tweet({ tweet }) {
             <span>{num_retweets}</span>
             </span>
             <span onClick={handleLike}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="tweet__footerIcon"
-            >
-                <g>
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
-                </g>
-            </svg>
+            <img src={like_icon} alt="like" className='tweet__footerIcon'/>
             <span>{liked_by.length}</span>
             </span>
             <span onClick={handleBookmark}>
