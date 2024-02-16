@@ -15,6 +15,7 @@
   padding: 0;
   margin-left: 25px;
   margin-top: 10px;
+  margin-bottom: 25px;
 
   border: 0;
   border-radius: 100px;
@@ -57,4 +58,13 @@
   display: flex;
   padding: 0 25px;
   align-items: center;
+}
+
+.navbar .user {
+  width: unset;
+  margin-left: 10px;
+}
+
+.navbar .displayname .username {
+  max-width: 120px;
 }

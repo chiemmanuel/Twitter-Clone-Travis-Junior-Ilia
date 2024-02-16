@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import '../styles/Navbar.css';
 import NavbarLink from './NavbarLink';
+import User from './User';
 
 import home_icon from '../icons/home_icon.svg';
 import search_icon from '../icons/search_icon.svg';
@@ -39,6 +40,7 @@ const Navbar = () => {
           </div>
         </div>
       )}
+      <User displayname='Display name' username='username'/>
     </div>
   );
 }

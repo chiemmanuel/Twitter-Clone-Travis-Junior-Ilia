@@ -1,0 +1,52 @@
+.user {
+  width: calc(100% - 30px);
+  height: 60px;
+
+  padding: 0 15px;
+
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.user:hover {
+  border-radius: 100px;
+  background-color: lightgray;
+}
+
+.user-photo {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  border-radius: 50%;
+
+  background-color: grey;
+}
+
+.displayname, .username {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.info {
+  width: 120px;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.action {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.action img {
+  margin: 0;
+  width: 24px;
+  height: 24px;
+}
