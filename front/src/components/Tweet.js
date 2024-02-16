@@ -7,6 +7,8 @@ import socket from '../socket';
 import '../styles/Tweet.css';
 
 import Poll from './Poll';
+import comment_icon from '../icons/comment_icon.svg';
+import like_icon from '../icons/like_icon.svg';
 
 function Tweet({ tweet }) {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -47,18 +49,17 @@ function Tweet({ tweet }) {
               setNumBookmarks(prevNumBookmarks => prevNumBookmarks + value);
           }
       });
-      socket.on("comment", data => {
-          if (data._id === tweet._id && user._id !== data.user_id) {
+      socket.on("increment-comment-count", data => {
+        const tweetId = data.tweetId;
+          if (tweetId === tweet._id) {
               setNumComments(prevNumComments => prevNumComments + 1);
           }
       });
-  
-      // Cleanup on unmount
       return () => {
         socket.off("update-likes");
         socket.off("retweet");
         socket.off("bookmark");
-        socket.off("comment");
+        socket.off("increment-comment-count");
       };
     }, [tweet._id, user]);
 
@@ -111,11 +112,11 @@ function Tweet({ tweet }) {
     };
 
     const handleRetweetButton = () => {
-        navigate(`/post_tweet/?retweet_id=${tweet._id}`);
+        navigate(`/post_tweet/${tweet._id}`);
     }
 
     const handleRetweetOnClick = () => {
-        navigate(`/view_tweet/${retweet._id}`);
+        navigate(`/view_tweet/?id=${retweet._id}`);
     }
     
   return (
@@ -132,9 +133,7 @@ function Tweet({ tweet }) {
       <div className="tweet__body">
         <p>{content}</p>
         <img src={media} alt="media" />
-        {/* if poll exists, render poll component with poll object */}
         {poll && <Poll poll_object={poll} />}
-        {/* if retweet exists, display retweet author and body with no footer */}
         {retweet && (
           <div className="tweet__retweet" onClick={handleRetweetOnClick}>
             <div className="tweet__header">
@@ -143,7 +142,6 @@ function Tweet({ tweet }) {
                 <h3>
                   {retweet_author.username}{" "}
                 </h3>
-                {/* if updated_at is different from created_at, display updated_at instead of created_at*/}
                 {new Date(created_at).toUTCString() !== new Date(updated_at).toUTCString() ? (
                     <p>Edited: {new Date(updated_at).toUTCString()}</p>
                 ) : (
@@ -155,7 +153,6 @@ function Tweet({ tweet }) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               <img src={retweet.media} alt="media" />
-              {/* if poll exists, render poll component with poll object */}
               {retweet.poll && <Poll poll={retweet.poll} />}
             </div>
           </div> 
@@ -165,14 +162,7 @@ function Tweet({ tweet }) {
         <p className="tweet__footerViews">{num_views} views</p>
         <div className="tweet__footerIcons">
           <span onClick={handleComment}>
-            <svg
-              viewBox="0 0 24 24"
-              className="tweet__footerIcon"
-            >
-              <g>
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17v-7h-4v-2h4V7l5 5-5 5z"></path>
-              </g>
-            </svg>
+            <img src={comment_icon} alt="comment" className='tweet__footerIcon'/>
             <span>{num_comments}</span>
           </span>
           <span onClick={handleRetweetButton}>
@@ -190,15 +180,7 @@ function Tweet({ tweet }) {
             <span>{num_retweets}</span>
             </span>
             <span onClick={handleLike}>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              className="tweet__footerIcon"
-            >
-                <g>
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
-                </g>
-            </svg>
+            <img src={like_icon} alt="like" className='tweet__footerIcon'/>
             <span>{liked_by.length}</span>
             </span>
             <span onClick={handleBookmark}>
@@ -216,7 +198,7 @@ function Tweet({ tweet }) {
         </div>
         <div className="tweet__footer">
         {hashtags.map((hashtag, index) => (
-          <span key={index} className="tweet__footerHashtag">{hashtag}</span>
+          <span key={index} className="tweet__footerHashtag">{'#' + hashtag}</span>
         ))}
         </div>
     </div>
