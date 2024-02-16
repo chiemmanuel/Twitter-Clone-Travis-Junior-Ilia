@@ -4,7 +4,7 @@ import Tweet from '../components/Tweet'
 import { requests } from '../constants/requests'
 import axios from '../constants/axios';
 import socket from '../socket';
-import PlaceholderComment from '../components/PlaceholderComment';
+import Comment from '../components/Comment';
 import Navbar from '../components/Navbar';
 import PostCommentForm from '../components/PostCommentForm';
 import '../styles/TweetPage.css'
@@ -88,7 +88,7 @@ const ViewTweetPage = () => {
             </div>
             <div className='comments_container'>
             {!loading && !error &&  comments.length > 0 && comments.map((comment) => {
-                return <PlaceholderComment key={comment._id} className='comment'/>
+                return <Comment key={comment._id} comment={comment} className='comment'/>
             })}
             </div>
         </div>
