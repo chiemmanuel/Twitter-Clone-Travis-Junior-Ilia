@@ -5,7 +5,6 @@ export const requests = {
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
     deleteTweet: '/tweets/delete/',
-    postTweet: '/tweets/tweet',
     getTweet: '/tweets/fetch/',
     liveFeed: '/tweets/livefeed',
     bookmarkTweet: '/bookmarks/add/',
