@@ -1,0 +1,42 @@
+.post-comment {
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.post-comment-author-name {
+    font-size: 14px;
+    color: #657786;
+    margin-bottom: 10px;
+}
+
+.post-comment-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-text {
+    padding: 10px;
+    border: 1px solid #e6ecf0;
+    border-radius: 4px;
+    resize: none;
+    margin-bottom: 10px;
+}
+
+.comment-media {
+    margin-bottom: 10px;
+}
+
+.comment-submit {
+    background-color: #1da1f2;
+    color: #fff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 9999px;
+    cursor: pointer;
+}
+
+.comment-message {
+    font-size: 12px;
+    color: red;
+    margin-top: 10px;
+}

@@ -68,12 +68,12 @@ const getTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
 
     try {
-        const tweet = await tweetModel.findById(tweetId);
+        const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: new ObjectId(tweetId) });
         if (!tweet) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }
 
-        return res.status(statusCodes.success).json({ tweet: tweet });
+        return res.status(statusCodes.success).json({ tweet: tweet[0] });
     } catch (error) {
         console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error fetching tweet' });
