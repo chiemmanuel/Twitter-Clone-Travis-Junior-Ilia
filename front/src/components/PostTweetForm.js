@@ -234,9 +234,9 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                 <div className="tweet-options">
                     <div className="tweet-options-left">
                         <input
-                            type="file"
+                            type="Text"
                             className="tweet-media"
-                            onChange={(e) => setTweetMedia(e.target.files[0])}
+                            onChange={(e) => setTweetMedia(e.target.value)}
                             disabled={displayPoll}
                         />
                         {!isRetweet && (

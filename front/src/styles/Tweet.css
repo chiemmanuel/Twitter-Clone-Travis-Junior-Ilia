@@ -61,6 +61,7 @@
 .tweet__footerViews {
   display: flex;
   align-items: center;
+  margin-right: 16px;
 }
 
 .tweet__footerIcons {

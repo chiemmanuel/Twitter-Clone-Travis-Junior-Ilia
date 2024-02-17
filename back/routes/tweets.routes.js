@@ -11,5 +11,6 @@ router.delete('/delete/:tweetId', tweetsService.deleteTweetById);
 router.get('/foryoupage', tweetsService.getFollowedTweets);
 router.post('/tweet', tweetsService.postTweet);
 router.put('/poll/vote', tweetsService.registerVote);
+router.put('/increment-views/:tweetId', tweetsService.incrementViews);
 
 module.exports = router;

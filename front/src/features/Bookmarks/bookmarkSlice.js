@@ -4,6 +4,7 @@ import { requests } from '../../constants/requests';
 
 const initialState = {
     bookmarks: [],
+    bookmarked_tweets: [],
     status: 'idle',
     error: null,
 };
@@ -23,10 +24,12 @@ export const bookmarkSlice = createSlice({
     initialState,
     reducers: {
         addBookmark: (state, action) => {
-            state.bookmarks.push(action.payload);
+            state.bookmarks.push(action.payload._id);
+            state.bookmarked_tweets.push(action.payload);
         },
         removeBookmark: (state, action) => {
             state.bookmarks = state.bookmarks.filter(bookmark => bookmark !== action.payload);
+            state.bookmarked_tweets = state.bookmarked_tweets.filter(tweet => tweet._id !== action.payload);
         },
     },
     extraReducers: (builder) => {
@@ -38,6 +41,7 @@ export const bookmarkSlice = createSlice({
                 state.status = 'succeeded';
                 console.log('fetchBookmarks', action.payload);
                 state.bookmarks = action.payload.bookmarks;
+                state.bookmarked_tweets = action.payload.bookmarked_tweets;
             })
             .addCase(fetchBookmarks.rejected, (state, action) => {
                 state.status = 'failed';
@@ -49,6 +53,7 @@ export const bookmarkSlice = createSlice({
 export default bookmarkSlice.reducer;
 export const { addBookmark, removeBookmark } = bookmarkSlice.actions;
 export const selectBookmarks = state => state.bookmarks.bookmarks;
+export const selectBookmarkedTweets = state => state.bookmarks.bookmarked_tweets;
 export const selectBookmarksStatus = state => state.bookmarks.status;
 export const selectBookmarksError = state => state.bookmarks.error;
 

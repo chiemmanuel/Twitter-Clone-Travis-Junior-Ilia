@@ -9,6 +9,7 @@ import BasePage from './pages/BasePage';
 import TestPage from './pages/TestPage';
 import ViewTweetPage from './pages/TweetPage.js';
 import NotificationPage from './pages/NotificationPage.js';
+import BookmarkPage from './pages/BookmarksPage.js';
 
 import { useDispatch } from 'react-redux';
 import { addNotification } from './features/Notifications/notificationSlice.js';
@@ -81,7 +82,7 @@ function App() {
         <Route element={<PrivateRoute />}>
           <Route path='/view_tweet/:id' element={<ViewTweetPage />} />
           <Route path='/notifications' element={<NotificationPage />} />
-
+          <Route path='/bookmarks' element={<BookmarkPage />} />
         </Route>
           
       </Routes>

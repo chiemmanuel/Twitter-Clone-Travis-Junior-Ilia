@@ -16,7 +16,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import '../styles/NotificationPage.css';
 
 function NotificationPage() {
-    const user = JSON.parse(localStorage.getItem('user'));
     const dispatch = useDispatch();
     const notificationsStatus = useSelector(selectNotificationsStatus);
     const notifications = useSelector(selectNotifications);
