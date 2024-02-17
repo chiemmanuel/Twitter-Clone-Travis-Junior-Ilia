@@ -1,6 +1,7 @@
 const logger  = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const notificationModel = require('../models/notificationModel');
+const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 
 /**
  * This function creates a notification in the database based on the provided recipient_email and content fields
@@ -17,6 +18,7 @@ const createNotification = async (req, res) => {
     try {
         await newNotification.save();
         logger.info(`Notification created for ${recipient_email}`);
+        sendMessage(recipient_email, 'notification', newNotification);
         res.status(statusCodes.success).send('Notification created successfully');
     } catch (error) {
         logger.error(`Error creating notification: ${error}`);

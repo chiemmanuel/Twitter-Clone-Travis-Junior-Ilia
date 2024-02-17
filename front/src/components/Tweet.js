@@ -3,6 +3,13 @@ import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 import { useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import {
+  fetchBookmarks,
+  selectBookmarks,
+  selectBookmarksStatus,
+  selectBookmarksError,
+} from '../features/Bookmarks/bookmarkSlice';
 import socket from '../socket';
 import '../styles/Tweet.css';
 
@@ -11,13 +18,17 @@ import PostTweetForm from './PostTweetForm';
 import comment_icon from '../icons/comment_icon.svg';
 import like_icon from '../icons/like_icon.svg';
 
+
 function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);
     const openRetweetModal = () => setIsRetweetModalOpen(true);
+    const bookmarkStatus = useSelector(selectBookmarksStatus);
+    const bookmarks = useSelector(selectBookmarks);
 
     const { author, content, media, hashtags, num_views, created_at, updated_at, poll, retweet, retweet_author } = tweet;
     
@@ -25,9 +36,15 @@ function Tweet( props ) {
     const [liked_by, setLikedBy] = useState(tweet.liked_by);
     const [isLiked, setIsLiked] = useState(liked_by.includes(user._id));
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
-    const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet._id));
+    const [isBookmarked, setIsBookmarked] = useState(bookmarks ? bookmarks.includes(tweet._id) : false);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
     console.log('tweet_id', tweet._id, 'tweet.num_retweets', tweet.num_retweets);
+
+     useEffect(() => {
+        if (bookmarkStatus === 'idle') {
+            dispatch(fetchBookmarks());
+        }
+    }, [bookmarkStatus, dispatch]);
 
       useEffect(() => {
         console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
@@ -101,27 +118,31 @@ function Tweet( props ) {
             setNumBookmarks(num_bookmarks - 1);
             setIsBookmarked(false);
 
-            // dispatch delete bookmark action
             axios.post(requests.deleteBookmark + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
                       user.token
                     }`,
                   },
-            }).then(res => console.log(res))
+            }).then(
+              res => {
+              console.log(res);
+              })
             .catch(err => console.log(err));
         } else {
             setNumBookmarks(num_bookmarks + 1);
             setIsBookmarked(true);
-            // dispatch add bookmark action
             axios.post(requests.bookmarkTweet + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
                       user.token
                     }`,
                   },
-            }).then(res => console.log(res))
-            .catch(err => console.log(err));
+                }).then(
+                  res => {
+                  console.log(res);
+                  })
+                .catch(err => console.log(err));
         }
     };
 
