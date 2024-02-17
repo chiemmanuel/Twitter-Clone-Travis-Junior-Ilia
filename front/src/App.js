@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import HomePage from './pages/HomePage';
 import BasePage from './pages/BasePage';
+import ProfilePage from './pages/ProfilePage';
 import TestPage from './pages/TestPage';
 import socket from './socket';
 import { useEffect } from 'react';
@@ -38,6 +39,7 @@ function App() {
       <Routes>
         <Route path='/' element={<BasePage />} />
         <Route path='/Home' element={<HomePage />} />
+        <Route path='/profile' element={<ProfilePage />} />
         <Route path='/test' element={<TestPage />} />
       </Routes>
     </AppStateProvider>

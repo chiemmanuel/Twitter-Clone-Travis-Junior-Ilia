@@ -16,24 +16,10 @@ const User = require('../models/userModel');
  */
 const updateUser = async (req, res) => {
     try {
-        console.log(req.session.user);
-        const { email } = req.session.user;
+        console.log(req.user);
+        const { email } = req.user;
         const { username, profile_img, bio, gender, dob, contact } = req.body;
-
-        // Parse the incoming date string
-        const parsedDate = new Date(dob);
-
-        // Check if the parsed date is a valid date
-        if (!isNaN(parsedDate)) {
-            // Format the date to 'YYYY-MM-DD'
-            const formattedDate = parsedDate.toISOString().split('T')[0];
-            // Now, `formattedDate` can be used to store in MongoDB
-            console.log(formattedDate);
-        } else {
-            console.error("Invalid date format");
-            // Handle the case where the incoming date is invalid
-            return res.status(statusCodes.badRequest).json({ error: "Invalid date format" });
-        }
+        console.log("Updating user information");
 
         // Check if the desired username is already taken
         const existingUsername = await User.findOne({ username });
@@ -48,7 +34,7 @@ const updateUser = async (req, res) => {
             updateValues.username = username;
 
             // Update session's username if changed
-            req.session.user.username = username;
+            req.user.username = username;
         }
         if (profile_img) {
             updateValues.profile_img = profile_img;
@@ -62,7 +48,21 @@ const updateUser = async (req, res) => {
             updateValues.gender = gender;
         }
 
-        if (parsedDate) {
+        if (dob) {
+            // Parse the incoming date string if it exists
+            const parsedDate = new Date(dob);
+
+        // Check if the parsed date is a valid date
+        if (!isNaN(parsedDate)) {
+            // Format the date to 'YYYY-MM-DD'
+            const formattedDate = parsedDate.toISOString().split('T')[0];
+            // Now, `formattedDate` can be used to store in MongoDB
+            console.log(formattedDate);
+        } else {
+            console.error("Invalid date format");
+            // Handle the case where the incoming date is invalid
+            return res.status(statusCodes.badRequest).json({ error: "Invalid date format" });
+        }
             updateValues.dob = parsedDate;
         }
 
@@ -92,15 +92,22 @@ const updateUser = async (req, res) => {
  */
 const updatePassword = async (req, res) => {
     try {
-        const { email } = req.session.user;
+        const { email } = req.user;
+        console.log(req.user);
+        console.log(email);
+        console.log(req.body);
+
         const { oldPassword, newPassword } = req.body;
+        console.log("Updating password");
 
         if (!oldPassword || !newPassword) {
             return res.status(statusCodes.badRequest).json({ error: "Missing information" });
+            console.log("Missing information");
         }
 
         if (oldPassword === newPassword) {
             return res.status(statusCodes.badRequest).json({ error: "Old and new passwords cannot be the same" });
+            console.log("Old and new passwords cannot be the same");
         }
 
         // Fetch user information from the database
@@ -108,11 +115,13 @@ const updatePassword = async (req, res) => {
 
         if (!user) {
             return res.status(statusCodes.badRequest).json({ message: "User not found" });
+            console.log("User not found");
         }
 
         // Compare old password with the stored hashed password
         if (!bcrypt.compareSync(oldPassword, user.password)) {
             return res.status(statusCodes.badRequest).json({ message: "Old password is incorrect" });
+            console.log("Old password is incorrect");
         }
 
         // Hash and update the new password
@@ -123,6 +132,7 @@ const updatePassword = async (req, res) => {
     } catch (error) {
         console.error("Error in try-catch block", error.message);
         return res.status(statusCodes.queryError).json({ error: "Internal server error" });
+
     }
 };
 
@@ -134,7 +144,8 @@ const updatePassword = async (req, res) => {
  */
 const getcurrentUser = async (req, res) => {
     try {
-        const { _id } = req.session.user;
+        console.log("getting current user")
+        const { _id } = req.user;
 
         // Fetch user information from the database based on the email
         const user = await User.findById({ _id });
@@ -185,6 +196,7 @@ const getUserByUsername = async (req, res) => {
  */
 const getUserTweets = async (req, res) => {
     user_email = req.params.user_email;
+    console.log(user_email);
     var tweets = [];
     var query = fetch_feed_query;
     if(req.body.last_tweet_id) {
@@ -209,6 +221,7 @@ const getUserTweets = async (req, res) => {
     if (tweets.length > 0) {
         return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
     } else {
+        console.log('No tweets found');
         return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
     }
 }
@@ -220,7 +233,7 @@ const getUserTweets = async (req, res) => {
  */
 const getUserLikedTweets = async (req, res) => {
     const { _id } = req.params;
-
+    console.log(_id);
     try {
         // Find tweets where the given user _id is present in the liked_by array
         const likedTweets = await tweetModel.find({ liked_by: _id });
@@ -228,6 +241,7 @@ const getUserLikedTweets = async (req, res) => {
         if (likedTweets.length > 0) {
             return res.status(statusCodes.success).json({ status: 'success', likedTweets: likedTweets });
         } else {
+            console.log('No liked tweets found');
             return res.status(statusCodes.success).json({ status: 'success', likedTweets: [] });
         }
     } catch (error) {

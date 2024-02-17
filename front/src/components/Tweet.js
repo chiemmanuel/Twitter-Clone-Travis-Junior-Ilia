@@ -16,9 +16,9 @@ function Tweet({ tweet }) {
     
     const [num_comments, setNumComments] = useState(tweet.num_comments);
     const [liked_by, setLikedBy] = useState(tweet.liked_by);
-    const [isLiked, setIsLiked] = useState(liked_by.includes(user._id));
+    const [isLiked, setIsLiked] = useState((liked_by && liked_by.includes(user._id)) || false);
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
-    const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets.includes(tweet._id));
+    const [isBookmarked, setIsBookmarked] = useState(user.bookmarked_tweets?.includes(tweet._id) || false);
     const [num_retweets, setNumRetweets] = useState(tweet.num_retweets);
 
 
@@ -121,44 +121,43 @@ function Tweet({ tweet }) {
   return (
     <div className="tweet">
       <div className="tweet__header">
-        <img src={author.profile_img} alt="profile" />
+        {author && author.profile_img && (
+          <img src={author.profile_img} alt="profile" />
+        )}
         <div className="tweet__headerText">
-          <h3>
-            {author.username}{" "}
-          </h3>
+          {author && author.username && (
+            <h3>{author.username} </h3>
+          )}
           <p>{new Date(created_at).toUTCString()}</p>
         </div>
       </div>
       <div className="tweet__body">
         <p>{content}</p>
-        <img src={media} alt="media" />
-        {/* if poll exists, render poll component with poll object */}
+        {media && <img src={media} alt="media" />}
         {poll && <Poll poll_object={poll} />}
-        {/* if retweet exists, display retweet author and body with no footer */}
         {retweet && (
           <div className="tweet__retweet" onClick={handleRetweetOnClick}>
             <div className="tweet__header">
-              <img src={retweet_author.profile_img} alt="profile" />
+              {retweet_author && retweet_author.profile_img && (
+                <img src={retweet_author.profile_img} alt="profile" />
+              )}
               <div className="tweet__headerText">
-                <h3>
-                  {retweet_author.username}{" "}
-                </h3>
-                {/* if updated_at is different from created_at, display updated_at instead of created_at*/}
+                {retweet_author && retweet_author.username && (
+                  <h3>{retweet_author.username} </h3>
+                )}
                 {new Date(created_at).toUTCString() !== new Date(updated_at).toUTCString() ? (
-                    <p>Edited: {new Date(updated_at).toUTCString()}</p>
+                  <p>Edited: {new Date(updated_at).toUTCString()}</p>
                 ) : (
-                    <p>{new Date(created_at).toUTCString()}</p>
-                )
-                }
+                  <p>{new Date(created_at).toUTCString()}</p>
+                )}
               </div>
             </div>
             <div className="tweet__body">
               <p>{retweet.content}</p>
-              <img src={retweet.media} alt="media" />
-              {/* if poll exists, render poll component with poll object */}
+              {retweet.media && <img src={retweet.media} alt="media" />}
               {retweet.poll && <Poll poll={retweet.poll} />}
             </div>
-          </div> 
+          </div>
         )}
       </div>
       <div className="tweet__footer">
@@ -199,7 +198,7 @@ function Tweet({ tweet }) {
                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path>
                 </g>
             </svg>
-            <span>{liked_by.length}</span>
+            <span>{liked_by && liked_by.length}</span>
             </span>
             <span onClick={handleBookmark}>
             <svg 
@@ -215,8 +214,8 @@ function Tweet({ tweet }) {
         </div>
         </div>
         <div className="tweet__footer">
-        {hashtags.map((hashtag, index) => (
-          <span key={index} className="tweet__footerHashtag">{hashtag}</span>
+        {hashtags && hashtags.map((hashtag, index) => (
+        <span key={index} className="tweet__footerHashtag">{hashtag}</span>
         ))}
         </div>
     </div>

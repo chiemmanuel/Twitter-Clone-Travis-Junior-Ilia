@@ -2,6 +2,12 @@ export const requests = {
     login: '/auth/login',
     logout: '/user/logout',
     signup: '/auth/signup',
+    currentUser: '/user/getme',
+    userTweet: '/user/getTweets/',
+    userLikedTweets: '/user/getlikedTweets/',
+    userComments: '/user/getComments/',
+    editPassword: '/user/updatepassword',
+    editProfile: '/user/update',
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
     deleteTweet: '/tweets/delete/',
@@ -11,3 +17,4 @@ export const requests = {
     voteOnPoll: '127.0.0.1:8080/tweets/poll/vote',
     postTweet: '/tweets/tweet',
 };
+ 
