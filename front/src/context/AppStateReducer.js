@@ -3,8 +3,11 @@ const AppStateReducer = (state, action) => {
     case "Login": {
       localStorage.setItem(
         "user",
-        JSON.stringify({ ...action.payload, isAuthenticated: true })
-      );
+        JSON.stringify({ ...action.payload,
+          isAuthenticated: true,
+        })
+        );
+
       console.log("Login", action.payload);
 
       return {
@@ -22,6 +25,7 @@ const AppStateReducer = (state, action) => {
         user: null,
       };
     }
+
     default:
       return state;
 }

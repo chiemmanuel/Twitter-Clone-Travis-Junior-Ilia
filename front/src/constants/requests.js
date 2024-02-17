@@ -9,10 +9,12 @@ export const requests = {
     liveFeed: '/tweets/livefeed',
     bookmarkTweet: '/bookmarks/add/',
     deleteBookmark: '/bookmarks/delete/',
+    getBookmarks: '/bookmarks/',
     voteOnPoll: '/tweets/poll/vote',
     getTweetComments: '/comments/get/',
     postComment: '/comments/',
     postNotification: '/notifications/create',
+    getNotifications: '/notifications/',
     postTweet: '/tweets/tweet',
     likeComment: '/comments/like/',
 };

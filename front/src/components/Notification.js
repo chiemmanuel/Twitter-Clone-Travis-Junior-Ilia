@@ -2,20 +2,16 @@ import React from 'react'
 import '../styles/Notification.css';
 
 
-function Notification(notification_object) {
+function Notification({notification_object, handleReadOnClick}) {
     const { content, created_at } = notification_object; 
-    const [isRead, setIsRead] = useState(notification_object.isRead);
-
-    const handleReadOnClick = () => {
-        setIsRead(true);
-    }
+    const isRead = notification_object.isRead;
 
   return (
     <div className={isRead ? "read notification" : "notification"}>
-        <div classname="notification__content">
-            <p>{content}</p>
-            <p className='notification__timestamp'>{new Date(created_at).toUTCString()}</p>
-            <button onClick={handleReadOnClick}>Mark as Read</button>
+        <div className="notification__content">
+        <p dangerouslySetInnerHTML={{ __html: content }} />            
+        <p className='notification__timestamp'>{new Date(created_at).toUTCString()}</p>
+          {!isRead && (<button onClick={handleReadOnClick(notification_object)}>Mark as Read</button>)}
         </div>
     </div>
   )

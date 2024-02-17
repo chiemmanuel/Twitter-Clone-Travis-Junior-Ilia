@@ -15,6 +15,7 @@ const PrivateRoute = () => {
   return appState?.isAuthenticated && appState?.user ? (
     <Outlet />
   ) : (
+    console.log('redirecting to login, appState: ', appState),
     <Navigate to="/" />
   );
 };
