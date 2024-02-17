@@ -97,7 +97,7 @@ const login = async (req, res) => {
             }
         );
 
-        return res.status(statusCodes.success).json({ "token": token });
+        return res.status(statusCodes.success).json({ "token": token, "_id": user._id, "username": user.username, "email": user.email});
     } catch (error) {
         console.error("Error while getting user from MongoDB", error.message);
         return res.status(statusCodes.queryError).json({ message: "Failed to get user" });

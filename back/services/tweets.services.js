@@ -49,7 +49,7 @@ const postTweet = async (req, res) => {
         const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: tweet_id });
         sendMessage(null, 'tweet-created', { tweet: tweet[0] });
         logger.info(`${tweet[0]}`)
-        return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
+        return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });
@@ -68,12 +68,12 @@ const getTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
 
     try {
-        const tweet = await tweetModel.findById(tweetId);
+        const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: new ObjectId(tweetId) });
         if (!tweet) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }
 
-        return res.status(statusCodes.success).json({ tweet: tweet });
+        return res.status(statusCodes.success).json({ tweet: tweet[0] });
     } catch (error) {
         console.log(error);
         return res.status(statusCodes.queryError).json({ message: 'Error fetching tweet' });
@@ -209,7 +209,6 @@ const createPoll = async (title, duration_seconds, option_values) => {
             return { option_value: option, num_votes: 0, voter_ids: [] };
         }),
     });
-    console.log(newPoll);
     try {
         const poll = await newPoll.save();
         logger.info(`Successfully created poll with id: ${poll._id}`);
@@ -251,11 +250,11 @@ const registerVote = async (req, res) => {
     option_index = req.body.option_index;
     logger.info(`Registering vote for poll with id: ${poll_id}`)
     logger.info(`Option index: ${option_index}`)
-    logger.info(req.body)
     user_id = req.user._id;
     user_email = req.user.email;
     try {
         const poll = await pollModel.findById(poll_id);
+        console.log(poll);
         if (poll.isClosed) {
             logger.error(`Error registering vote: Poll with id ${poll_id} is closed`);
             return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: Poll is closed' });

@@ -29,18 +29,19 @@ module.exports.socketconnection = (server) => {
 
 module.exports.sendMessage = (roomId, eventName, message) => {
     try {
+        console.log(eventName)
         if ( roomId === null || roomId === undefined ) {
             io.emit(eventName, message);
             logger.info('Message sent to all users:', message);
-            return true;
+            return;
         }
         roomId = users[roomId] || roomId;
         io.to(roomId).emit(eventName, message);
-        return true;
+        return;
     }
     catch (error) {
         logger.error('Error sending message:', error);
-        return false;
+        return;
     }
 };
 

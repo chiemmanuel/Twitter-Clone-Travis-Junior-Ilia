@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import '../styles/Home.css';
 import Navbar from '../components/Navbar';
 import useAppStateContext from '../hooks/useAppStateContext';
 import socket from '../socket';
@@ -8,10 +7,16 @@ import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 
+import '../styles/Home.css';
 const HomePage = () => {
   const { dispatch } = useAppStateContext();
 
   const [tweets, setTweets] = useState([]);
+
+  const handleTweetUpdate = (tweet) => {
+    console.log('handleTweetUpdate for tweet_id', tweet._id, 'with tweet:', tweet);
+    setTweets(prevTweets => prevTweets.map(t => t._id === tweet._id ? tweet : t));
+  };
 
   function test_login() {
     axios.post(requests.login, {
@@ -35,51 +40,31 @@ const HomePage = () => {
     socket.connect();
     }
 
-  function test_post_tweet() {
-    axios.post(requests.postTweet, {
-        content: "this is test tweet",
-        retweet_id: "65c75f47edbf6c380e41dbcd",
-        media: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fclipart-library.com%2Frandom-cliparts.html&psig=AOvVaw18dmIDkbOaKJzSrJTbTvvB&ust=1707322096129000&source=images&cd=vfe&opi=89978449&ved=0CBMQjRxqFwoTCMjKgsuMl4QDFQAAAAAdAAAAABAI",
-        poll:{"title": "test poll",
-        duration_seconds: 60,
-        options: ["1", "2"]},
-        hashtags: ["first hastag", "second hashtag"]
-    }, {
-      headers: {
-        'Authorization': `Bearer ${JSON.parse(localStorage.getItem('user')).token}`
-    }
-    }).then((response) => {
-      console.log('response', response);
-    }).catch((error) => {
-      console.log('error', error);
-    });
-  }
-
     useEffect(() => {
       const handleNewTweet = (data) => {
         const { tweet } = data;
-        // check if tweet with that id already exists
-        // if not, add to tweets
+        console.log('Socket Tweet', tweet);
         if (!tweets.some(t => t._id === tweet._id)) {
           setTweets(prevTweets => [tweet, ...prevTweets]);
         }
       };
 
-      const handleTweetUpdate = (data) => {
-        console.log('tweet update', data);
+      const handleSocketUpdate = (data) => {
+        console.log('Socket Tweet Update', data);
         const { tweet } = data;
         setTweets(prevTweets => prevTweets.map(t => t._id === tweet._id ? tweet : t));
       };
 
 
-    
+      console.log('useEffect');
+      console.log('tweets', tweets);
       socket.on('tweet-created', handleNewTweet);
-      socket.on('tweet-updated', handleTweetUpdate);
+      socket.on('tweet-updated', handleSocketUpdate);
     
       // Clean up the effect by removing the listener when the component unmounts
       return () => {
         socket.off('tweet-created', handleNewTweet);
-        socket.off('tweet-updated', handleTweetUpdate);
+        socket.off('tweet-updated', handleSocketUpdate);
       }
     }, [tweets]);
         
@@ -89,14 +74,17 @@ const HomePage = () => {
       <div className='header'>
         <Navbar />
       </div>
-      <div className='main'>
-        <button onClick={test_login}>Test Login</button>
-        <button onClick={test_post_tweet}>Test Post Tweet</button>
-        { console.log('tweets', tweets) }
+      <div className='main' style={
         {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }
+      }>
+        {tweets.length > 0 &&
         tweets.map((tweet) => (
-
-          <Tweet key={tweet._id} tweet={tweet} />
+          <Tweet key={tweet._id} tweet={tweet} onTweetUpdate={handleTweetUpdate} />
         ))}
       </div>
 
