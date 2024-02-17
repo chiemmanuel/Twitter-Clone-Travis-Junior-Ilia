@@ -1,0 +1,39 @@
+.notification {
+  background-color: #f5f8fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.read .notification {
+  background-color: #e8f5fe;
+
+}
+
+.notification__content {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification__content p {
+  margin: 8px 0;
+}
+
+.notification__timestamp {
+  color: #657786;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.notification__content button {
+  background-color: #1da1f2;
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.notification__content button:hover {
+  background-color: #0c8de4;
+}
