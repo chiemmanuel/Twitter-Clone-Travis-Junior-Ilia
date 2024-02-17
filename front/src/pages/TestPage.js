@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import '../styles/Home.css';
 import Navbar from '../components/Navbar';
 import useAppStateContext from '../hooks/useAppStateContext';
 import socket from '../socket';
@@ -8,8 +7,7 @@ import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 
-import PostTweetForm from '../components/PostTweetForm';
-
+import '../styles/Home.css';
 const HomePage = () => {
   const { dispatch } = useAppStateContext();
 
@@ -76,9 +74,14 @@ const HomePage = () => {
       <div className='header'>
         <Navbar />
       </div>
-      <div className='main'>
-        <button onClick={test_login}>Test Login</button>
-        <PostTweetForm />
+      <div className='main' style={
+        {
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }
+      }>
         {tweets.length > 0 &&
         tweets.map((tweet) => (
           <Tweet key={tweet._id} tweet={tweet} onTweetUpdate={handleTweetUpdate} />
