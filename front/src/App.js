@@ -75,7 +75,7 @@ function App() {
     <>
       <Routes>
         <Route path='/' element={<BasePage />} />
-        <Route path='/Home' element={<HomePage />} />
+        <Route path='/home' element={<HomePage />} />
         <Route element={<PublicRoute />}>
           <Route path='/test' element={<TestPage />} />
         </Route>
