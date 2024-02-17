@@ -30,10 +30,11 @@ export const notificationSlice = createSlice({
             }
         },
         removeNotification: (state, action) => {
-            if (state.notifications.unread.includes(action.payload)) {
-            state.notifications.unread = state.notifications.unread.filter(notification => notification !== action.payload);
+            console.log('removeNotification', action.payload);
+            if (action.payload.isRead) {
+                state.notifications.read = state.notifications.read.filter(n => n._id !== action.payload.notification_id);
             } else {
-            state.notifications.read = state.notifications.read.filter(notification => notification !== action.payload);
+                state.notifications.unread = state.notifications.unread.filter(n => n._id !== action.payload.notification_id);
             }
         },
         updateNotifications: (state, action) => {
@@ -47,7 +48,10 @@ export const notificationSlice = createSlice({
             let index_to_update = state.notifications.unread.findIndex(n => n._id === action.payload);
             state.notifications.read.unshift(state.notifications.unread[index_to_update]);
             state.notifications.unread = state.notifications.unread.filter((n, index) => index !== index_to_update);
-        }
+        },
+        removeAllRead: (state, action) => {
+            state.notifications.read = [];
+        },
 
 
     },
@@ -68,7 +72,7 @@ export const notificationSlice = createSlice({
 });
 
 export default notificationSlice.reducer;
-export const { addNotification, removeNotification, markAllAsRead, markOneAsRead } = notificationSlice.actions;
+export const { addNotification, removeNotification, markAllAsRead, markOneAsRead, removeAllRead } = notificationSlice.actions;
 export const selectNotifications = state => state.notifications.notifications;
 export const selectNotificationsStatus = state => state.notifications.status;
 export const selectNotificationsError = state => state.notifications.error;

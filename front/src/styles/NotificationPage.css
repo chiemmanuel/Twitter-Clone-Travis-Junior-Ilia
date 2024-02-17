@@ -1,4 +1,31 @@
+.page {
+    height: 100vh;
 
+    
+}
+
+.header {
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 25%;
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    padding-top: 30px;
+    border-right: solid 1px lightgray;
+    width: 300px;
+  }
+  
+  .main {
+    flex-grow: 1;
+    flex-shrink: 0;
+    flex-basis: 75%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-left: 300px;
+  }
 
 h1 {
   font-size: 24px;
@@ -9,11 +36,45 @@ h1 {
 .notifications {
   display: flex;
   justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  width: 500px;
 }
 
 .unread__notifications,
 .read__notifications {
-  flex: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    height: fit-content;
+    overflow-y: auto;
+}
+
+.notifications__header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.notifications__header h2 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.notifications__header button {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #1da1f2;
+  color: white;
+  cursor: pointer;
 }
 
 h2 {

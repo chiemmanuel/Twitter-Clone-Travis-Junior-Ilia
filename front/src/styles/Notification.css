@@ -25,15 +25,46 @@
   margin-top: 8px;
 }
 
-.notification__content button {
+.notification__buttons {
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  flex-direction: row;
+  margin-top: 16px;
+}
+
+.mark_as_read {
+  display: flex;
+  justify-content: flex-start;
+} 
+
+.mark_as_read button {
   background-color: #1da1f2;
   color: #fff;
   border: none;
-  border-radius: 9999px;
   padding: 8px 16px;
+  border-radius: 9999px;
   cursor: pointer;
+
 }
 
-.notification__content button:hover {
-  background-color: #0c8de4;
+.delete_div {
+  display: flex;
+  justify-content: flex-end;
 }
+
+.notification__actions button:hover {
+  background-color: #e8f5fe;
+}
+
+.delete_button {
+  color: #ff0000;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  cursor: pointer;
+  width: 50px;
+}
+
+
+

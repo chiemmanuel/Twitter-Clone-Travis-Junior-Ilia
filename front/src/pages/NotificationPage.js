@@ -7,10 +7,13 @@ import {
     markAllAsRead,
     markOneAsRead,
     selectNotifications,
+    removeAllRead,
     selectNotificationsStatus,
     selectNotificationsError,
   } from '../features/Notifications/notificationSlice';
 import { useSelector, useDispatch } from 'react-redux';
+
+import '../styles/NotificationPage.css';
 
 function NotificationPage() {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -34,10 +37,18 @@ function NotificationPage() {
         dispatch(markAllAsRead());
     }
 
+    const handleRemoveAllRead = () => {
+        dispatch(removeAllRead());
+    }
+
+    const handleRemoveNotification = (notification_id, isRead) => {
+        dispatch(removeNotification({notification_id, isRead}));
+    }
+
 
 
   return (
-    <div>
+    <div className='page'>
     <div className="header">
       <Navbar />
     </div>
@@ -45,13 +56,18 @@ function NotificationPage() {
         <h1>Notifications</h1>
         <div className='notifications'>
             <div className='unread__notifications'>
+                <div className='notifications__header'>
                 <h2>{notifications.unread.length} Unread Notification(s)</h2>
                 <button onClick={handleMarkAllAsRead}>Mark All As Read</button>
-                {notifications.unread.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} isRead={false} />)}
+            </div>
+                {notifications.unread.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} isRead={false} handleRemoveOnClick={() => handleRemoveNotification(n._id, false)} />)}
             </div>
             <div className='read__notifications'>
+                <div className='notifications__header'>
                 <h2>Read</h2>
-                {notifications.read.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} isRead={true} />)}
+                <button onClick={handleRemoveAllRead}>Clear all</button>
+            </div>
+                {notifications.read.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} isRead={true} handleRemoveOnClick={() => handleRemoveNotification(n._id, true)} />)}
             </div>
         </div>
       </div>
