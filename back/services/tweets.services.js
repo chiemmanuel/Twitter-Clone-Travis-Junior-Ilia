@@ -27,6 +27,9 @@ const postTweet = async (req, res) => {
     } else {
         pollResult = { id: null };
     }
+
+    console.log(req.body);
+
     const newTweet = new tweetModel({
         author_id: req.user._id,
         author_email: req.user.email,
