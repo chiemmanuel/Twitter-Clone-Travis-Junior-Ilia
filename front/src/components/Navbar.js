@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import PostTweetForm from './PostTweetForm';
 import '../styles/Navbar.css';
 import NavbarLink from './NavbarLink';
+import User from './User';
 
 import home_icon from '../icons/home_icon.svg';
 import search_icon from '../icons/search_icon.svg';
@@ -28,6 +29,7 @@ const Navbar = () => {
       <PostTweetForm 
         isOpen={isPostModalOpen}
         setIsOpen={setIsPostModalOpen} />
+      <User displayname='Display name' username='username'/>
     </div>
   );
 }
