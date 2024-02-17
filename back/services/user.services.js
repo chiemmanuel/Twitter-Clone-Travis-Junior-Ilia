@@ -190,7 +190,12 @@ const getUserTweets = async (req, res) => {
     if(req.body.last_tweet_id) {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
-            query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
+            if (query[0].$match) {
+                query[0].$match.author_email = user_email;
+                query[0].$match._id.$lt = last_tweet_id;
+            } else {
+                query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
+            }
             // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
@@ -224,7 +229,11 @@ const getUserLikedTweets = async (req, res) => {
     try {
         // Find tweets where the given user _id is present in the liked_by array
         var query = fetch_tweet_query;
-        query.unshift({ $match: { liked_by: _id } });
+        if (query[0].$match) {
+            query[0].$match.liked_by = _id;
+        } else {
+            query.unshift({ $match: { liked_by: _id } });
+        }
         const likedTweets = await tweetModel.aggregate(query);
 
         if (likedTweets.length > 0) {

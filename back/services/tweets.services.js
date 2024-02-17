@@ -40,13 +40,20 @@ const postTweet = async (req, res) => {
     try {
         const result = await newTweet.save();
         const tweet_id = result._id;
+        console.log(result);
         if (req.body.retweet_id) {
             // If it's a retweet, increment the retweet count for the original tweet
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
             sendMessage(null, 'retweeted', { tweet_id: req.body.retweet_id});
         }
+        var query = [...fetch_tweet_query]
+        if (query[0].$match) {
+            query[0].$match._id = new ObjectId(tweet_id);
+        } else {
+            query.unshift({ $match: { _id: new ObjectId(tweet_id) } });
+        }
+        const tweet = await tweetModel.aggregate(query);
         logger.info(`Successfully created tweet with id: ${tweet_id}`);
-        const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: tweet_id });
         sendMessage(null, 'tweet-created', { tweet: tweet[0] });
         logger.info(`${tweet[0]}`)
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
@@ -66,13 +73,21 @@ const postTweet = async (req, res) => {
  */
 const getTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
-
+    logger.info(`Fetching tweet with id: ${tweetId}`)
     try {
-        const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: new ObjectId(tweetId) });
-        if (!tweet) {
+        console.log(fetch_tweet_query)
+        var query = [...fetch_tweet_query]
+        if (query[0].$match) {
+            query[0].$match._id = new ObjectId(tweetId);
+        } else {
+            query.unshift({ $match: { _id: new ObjectId(tweetId) } });
+        }
+        const tweet = await tweetModel.aggregate(query);
+        console.log(fetch_tweet_query)
+        if (tweet.length === 0) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }
-
+        logger.info(`fetched tweet: ${tweet}`)
         return res.status(statusCodes.success).json({ tweet: tweet[0] });
     } catch (error) {
         console.log(error);
@@ -110,7 +125,13 @@ const editTweetById = async (req, res) => {
         }
 
         await tweet.save();
-        const updatedTweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: new ObjectId(tweetId) });
+        var query = [...fetch_tweet_query]
+        if (query[0].$match) {
+            query[0].$match._id = new ObjectId(tweet_id);
+        } else {
+            query.unshift({ $match: { _id: new ObjectId(tweet_id) } });
+        }
+        const updatedTweet = await tweetModel.aggregate(query);
         console.log(updatedTweet);
         sendMessage(null, 'tweet-updated', { tweet: updatedTweet[0] });
         return res.status(statusCodes.success).json({ message: 'Tweet updated successfully', tweet: updatedTweet });
@@ -293,7 +314,11 @@ const getLiveTweets = async (req, res) => {
             try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
             var query = fetch_feed_query;
-            query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
+            if (query[0].$match) {
+                query[0].$match._id.$lt = last_tweet_id;
+            } else {
+                query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
+            }
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -342,7 +367,12 @@ const getFollowedTweets = async (req, res) => {
         try {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             var query = fetch_feed_query;
-            query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
+            if (query[0].$match) {
+                query[0].$match._id.$lt = last_tweet_id;
+                query[0].$match.author_id.$in = followed_users;
+            } else {
+                query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
+            }
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -353,7 +383,11 @@ const getFollowedTweets = async (req, res) => {
         try {
             // Find tweets from the users that the current user follows
             var query = fetch_feed_query;
-            query.unshift({ $match: { author_id: { $in: followed_users } } });
+            if (query[0].$match) {
+                query[0].$match.author_id.$in = followed_users;
+            } else {
+                query.unshift({ $match: { author_id: { $in: followed_users } } });
+            }
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {

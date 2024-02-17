@@ -42,21 +42,18 @@ function Tweet( props ) {
     console.log('tweet_id', tweet._id, 'tweet.num_retweets', tweet.num_retweets);
 
     useEffect(() => {
-        setNumViews(prevNumViews => prevNumViews + 1);
-
-        return () => {
-            axios.put(requests.incrementViews + tweet._id, {
-              amount: num_views
-            }, {
-                headers: {
-                    Authorization: `Bearer ${user.token}`,
-                },
-            }).then(res => console.log(res))
-            .catch(err => console.log(err));
-        }
+      setNumViews(prevNumViews => prevNumViews + 1);
+      axios.put(requests.incrementViews + tweet._id, {
+          amount: 1
+      }, {
+          headers: {
+              Authorization: `Bearer ${user.token}`,
+          },
+      }).then(res => console.log(res))
+      .catch(err => console.log(err));
     }, []);
 
-     useEffect(() => {
+    useEffect(() => {
         if (bookmarkStatus === 'idle') {
             dispatch(fetchBookmarks());
         }
@@ -70,12 +67,13 @@ function Tweet( props ) {
           updated_tweet.liked_by = liked_by;
           updated_tweet.num_bookmarks = num_bookmarks;
           updated_tweet.num_retweets = numRetweets;
+          updated_tweet.num_views = num_views;
 
           console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
           onTweetUpdate(updated_tweet);
         }
 
-      }, [num_comments, liked_by, num_bookmarks, numRetweets]);
+      }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
 
       useEffect(() => {
       socket.on("update-likes", data => {
@@ -140,6 +138,7 @@ function Tweet( props ) {
         const isBookmarked = bookmarks.includes(tweet._id);
         if (isBookmarked) {
             dispatch(removeBookmark(tweet._id));
+            setNumBookmarks(num_bookmarks - 1);
             axios.post(requests.deleteBookmark + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
@@ -153,6 +152,7 @@ function Tweet( props ) {
             .catch(err => console.log(err));
         } else {
             dispatch(addBookmark(tweet));
+            setNumBookmarks(num_bookmarks + 1);
             axios.post(requests.bookmarkTweet + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
