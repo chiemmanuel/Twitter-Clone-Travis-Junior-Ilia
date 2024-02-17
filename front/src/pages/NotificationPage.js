@@ -4,7 +4,8 @@ import Notification from '../components/Notification'
 import {
     fetchNotifications,
     removeNotification,
-    updateNotifications,
+    markAllAsRead,
+    markOneAsRead,
     selectNotifications,
     selectNotificationsStatus,
     selectNotificationsError,
@@ -25,34 +26,32 @@ function NotificationPage() {
     }, [notificationsStatus, dispatch]);
 
     const handleReadOnClick = (notification) => {
-        let new_unread = notifications.unread;
-        let new_read = notifications.read;
-        if (notification.isRead) {
-           new_unread = new_unread.filter(n => n._id !== notification._id);
-           new_read = [notification, ...new_read];
+        console.log('handleReadOnClick', notification);
+        dispatch(markOneAsRead(notification._id));
+    }
 
-        } else {
-           new_read = new_read.filter(n => n._id !== notification._id);
-           new_unread = [notification, ...new_unread];
-        }
-        dispatch(updateNotifications({unread: new_unread, read: new_read}));
+    const handleMarkAllAsRead = () => {
+        dispatch(markAllAsRead());
     }
 
 
 
   return (
     <div>
+    <div className="header">
       <Navbar />
-      <div className="container">
+    </div>
+      <div className="main">
         <h1>Notifications</h1>
         <div className='notifications'>
             <div className='unread__notifications'>
                 <h2>{notifications.unread.length} Unread Notification(s)</h2>
-                {notifications.unread.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} />)}
+                <button onClick={handleMarkAllAsRead}>Mark All As Read</button>
+                {notifications.unread.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} isRead={false} />)}
             </div>
             <div className='read__notifications'>
                 <h2>Read</h2>
-                {notifications.read.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} />)}
+                {notifications.read.map(n => <Notification key={n._id} notification_object={n} handleReadOnClick={() => handleReadOnClick(n)} isRead={true} />)}
             </div>
         </div>
       </div>

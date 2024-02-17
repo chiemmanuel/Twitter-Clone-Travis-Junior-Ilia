@@ -34,8 +34,7 @@ function App() {
     function onNotification(data) {
       if (localStorage.getItem('user') !== null) {
       console.log('notification received:', data);
-      const { notification } = data;
-      dispatch(addNotification(notification));
+      dispatch(addNotification(data));
       } else {
         console.log('no user');
       }

@@ -25,7 +25,9 @@ export const notificationSlice = createSlice({
     reducers: {
         addNotification: (state, action) => {
             console.log('addNotification', action.payload);
-            state.notifications.unread.push(action.payload);
+            if (!state.notifications.unread.includes(action.payload._id)) {
+                state.notifications.unread.push(action.payload);
+            }
         },
         removeNotification: (state, action) => {
             if (state.notifications.unread.includes(action.payload)) {
@@ -37,6 +39,17 @@ export const notificationSlice = createSlice({
         updateNotifications: (state, action) => {
             state.notifications = action.payload;
         },
+        markAllAsRead: (state, action) => {
+            state.notifications.read = [...state.notifications.unread, ...state.notifications.read];
+            state.notifications.unread = [];
+        },
+        markOneAsRead: (state, action) => {
+            let index_to_update = state.notifications.unread.findIndex(n => n._id === action.payload);
+            state.notifications.read.unshift(state.notifications.unread[index_to_update]);
+            state.notifications.unread = state.notifications.unread.filter((n, index) => index !== index_to_update);
+        }
+
+
     },
     extraReducers: (builder) => {
         builder
@@ -55,7 +68,7 @@ export const notificationSlice = createSlice({
 });
 
 export default notificationSlice.reducer;
-export const { addNotification, removeNotification, updateNotifications } = notificationSlice.actions;
+export const { addNotification, removeNotification, markAllAsRead, markOneAsRead } = notificationSlice.actions;
 export const selectNotifications = state => state.notifications.notifications;
 export const selectNotificationsStatus = state => state.notifications.status;
 export const selectNotificationsError = state => state.notifications.error;
