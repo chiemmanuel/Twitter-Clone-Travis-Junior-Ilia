@@ -79,7 +79,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         axios.post(requests.postTweet, {
             content: tweetText,
             retweet_id: isRetweet ? retweet._id : null,
-            media: imgData.public_id,
+            media: imgData.url,
             hashtags: tweetHashTags,
             poll: displayPoll ? {
                 title: pollTitle,
