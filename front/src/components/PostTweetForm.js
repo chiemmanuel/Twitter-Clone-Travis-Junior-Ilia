@@ -14,7 +14,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
     const [tweetMedia, setTweetMedia] = useState(null)
     const [displayPoll, setDisplayPoll] = useState(false)
     const [pollTitle, setPollTitle] = useState('')
-    const [pollOptions, setPollOptions] = useState(['', ''])
+    const [pollOptions, setPollOptions] = useState([])
     const [pollHours, setPollHours] = useState(0)
     const [pollMinutes, setPollMinutes] = useState(0)
     const [message, setMessage] = useState('')
@@ -162,6 +162,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                             value={pollTitle}
                             onChange={(e) => setPollTitle(e.target.value)}
                         />
+                        {pollOptions.length < 2 ? setPollOptions(['', '']) : null}
                         {pollOptions.map((option, index) => (
                             <div key={index} className='poll-option-container'>
                                 <input
@@ -200,6 +201,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                             className="poll-duration-hours"
                             placeholder="Hours"
                             value={pollHours}
+                            min={0}
                             onChange={(e) => setPollHours(e.target.value)}
                         />
                         <label>Minutes</label>
@@ -208,6 +210,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                             className="poll-duration-minutes"
                             placeholder="Minutes"
                             value={pollMinutes}
+                            min={0}
                             onChange={(e) => setPollMinutes(e.target.value)}
                         />
                         </div>
