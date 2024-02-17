@@ -7,6 +7,7 @@ import socket from '../socket';
 import '../styles/Tweet.css';
 
 import Poll from './Poll';
+import Image from './Image';
 import PostTweetForm from './PostTweetForm';
 import comment_icon from '../icons/comment_icon.svg';
 import like_icon from '../icons/like_icon.svg';
@@ -146,7 +147,7 @@ function Tweet( props ) {
       </div>
       <div className="tweet__body">
         <p>{content}</p>
-        { media ? (<img src={media} alt="media" />) : null}
+        { media ? (<Image id={media} />) : null}
         {/* if poll exists, render poll component with poll object */}
         {poll && <Poll poll_object={poll} />}
         {retweet && (
