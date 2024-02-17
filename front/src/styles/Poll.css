@@ -23,6 +23,7 @@
   padding: 10px;
   border-bottom: 1px solid #ccc;
   cursor: pointer;
+  justify-content: space-between;
 }
 
 .poll__option:hover {
@@ -36,6 +37,21 @@
 .poll__option p {
   margin: 0;
 }
+
+.poll__option__value {
+  font-size: 14px;
+  color: #888;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.poll__option__votes {
+  font-size: 14px;
+  color: #888;
+  display: flex;
+  justify-content: flex-end;
+}
+
 
 .poll__footer {
   margin-top: 10px;
