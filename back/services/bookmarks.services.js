@@ -3,19 +3,25 @@ const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const userModel = require("../models/userModel.js");
 const { sendMessage } = require('../boot/socketio/socketio_connection');
+const { fetch_tweet_query } = require('../constants/fetchFeedConstants.js');
 
 const getBookmarks = async (req, res) => {
     const userId = req.user._id;
 
     try {
         const user = await userModel.findById(userId);
-        return res.status(statusCodes.success).json({ bookmarks: user.bookmarked_tweets });
+
+        var query = fetch_tweet_query;
+        query.unshift({ $match: { _id: { $in: user.bookmarked_tweets } } });
+        const bookmarked_tweets = await tweetModel.aggregate(query);
+        return res.status(statusCodes.success).json({ bookmarks: user.bookmarked_tweets , bookmarked_tweets: bookmarked_tweets});
 
     } catch (error) {
         logger.error(`Error while fetching bookmarks: ${error}`);
         res.status(statusCodes.queryError).send('Error while fetching bookmarks');
     }
 };
+    
 
 const addBookmark = async (req, res) => {
     const { tweet_id } = req.params;

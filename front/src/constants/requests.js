@@ -4,6 +4,7 @@ export const requests = {
     signup: '/auth/signup',
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
+    incrementViews: '/tweets/increment-views/',
     deleteTweet: '/tweets/delete/',
     getTweet: '/tweets/fetch/',
     liveFeed: '/tweets/livefeed',

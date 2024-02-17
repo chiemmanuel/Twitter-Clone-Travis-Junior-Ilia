@@ -368,6 +368,26 @@ if (tweets.length > 0) {
     }
 }
 
+/**
+ * This function increments the views field of a tweet by the given amount
+ * @param {*} req: The request object with tweetId in params and amount in body
+ * @param {*} res: The response object
+ * @returns: The res object with a status code and a message indicating the success or failure of the update
+ */
+const incrementViews = async (req, res) => {
+    const tweetId = req.params.tweetId;
+    const amount = req.body.amount;
+    try {
+        const tweet = await tweetModel.findByIdAndUpdate(tweetId, { $inc: { num_views: amount } });
+        logger.info(`Successfully incremented views for tweet with id: ${tweetId}`);
+        sendMessage(null, 'update-views', { tweet_id: tweetId, views: tweet.num_views });
+        return res.status(statusCodes.success).json({ message: 'Successfully incremented views' });
+    } catch (error) {
+        logger.error(`Error incrementing views: ${error}`);
+        return res.status(statusCodes.queryError).json({ message: 'Error incrementing views' });
+    }
+}
+
 module.exports = {
     postTweet,
     getTweetById,
@@ -377,4 +397,5 @@ module.exports = {
     getFollowedTweets,
     registerVote,
     likeTweet,
+    incrementViews,
 }

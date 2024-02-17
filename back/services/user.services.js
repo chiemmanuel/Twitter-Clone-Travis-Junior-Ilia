@@ -5,7 +5,7 @@ const logger = require("../middleware/winston");
 const tweetModel = require('../models/tweetModel');
 const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
-const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
+const { fetch_feed_query, fetch_tweet_query } = require ('../constants/fetchFeedConstants.js');
 const User = require('../models/userModel');
 
 /**
@@ -223,7 +223,9 @@ const getUserLikedTweets = async (req, res) => {
 
     try {
         // Find tweets where the given user _id is present in the liked_by array
-        const likedTweets = await tweetModel.find({ liked_by: _id });
+        var query = fetch_tweet_query;
+        query.unshift({ $match: { liked_by: _id } });
+        const likedTweets = await tweetModel.aggregate(query);
 
         if (likedTweets.length > 0) {
             return res.status(statusCodes.success).json({ status: 'success', likedTweets: likedTweets });
@@ -236,6 +238,7 @@ const getUserLikedTweets = async (req, res) => {
         return res.status(statusCodes.serverError).json({ status: 'error', error: error });
     }
 };
+
 
 /**
  * This function fetches the comments of a given user
