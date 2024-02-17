@@ -49,7 +49,7 @@ const postTweet = async (req, res) => {
         const tweet = await tweetModel.aggregate(fetch_tweet_query).match({ _id: tweet_id });
         sendMessage(null, 'tweet-created', { tweet: tweet[0] });
         logger.info(`${tweet[0]}`)
-        return res.status(statusCodes.success).json({ message: 'Successfully created tweet' });
+        return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error creating tweet' });

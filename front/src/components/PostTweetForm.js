@@ -86,9 +86,24 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             setPollHours(0)
             setPollMinutes(0)
             setMessage('')
-            console.log(response)
             closeModal()
-            // navigate('/home')
+            if (retweet) {
+                console.log(response)
+                axios.post(requests.postNotification, {
+                    recipient_email: retweet.author_email,
+                    content: `${user.username} <a href="/view_tweet/${response.data._id}">retweeted</a> your tweet "${retweet.content}"`,
+                }, {
+                    headers: {
+                        'Authorization' : `Bearer ${
+                            user.token
+                        }`,
+                    },
+                }).then((response) => {
+                    console.log(response)
+                }).catch((error) => {
+                    console.error('Error posting notification', error)
+                })
+            }
         })
         .catch((error) => {
             console.error('Error posting tweet', error)
