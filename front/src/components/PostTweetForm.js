@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 import ReactModal from 'react-modal';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 import socket from '../socket';
