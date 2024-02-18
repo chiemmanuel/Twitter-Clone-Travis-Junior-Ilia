@@ -30,5 +30,7 @@ export const requests = {
     likeComment: '/comments/like/',
     userSearch: '/search/username/',
     hashtagSearch: '/search/hashtag/',
+    liveFeed: '/tweets/livefeed',
+
 };
  

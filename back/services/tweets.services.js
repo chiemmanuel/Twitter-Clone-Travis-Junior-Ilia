@@ -19,7 +19,6 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const postTweet = async (req, res) => {
     if (req.body.poll) {
         pollResult = await createPoll(req.body.poll.title, req.body.poll.duration_seconds, req.body.poll.options);
-        console.log(pollResult);
         if (pollResult.error) {
             logger.error(`Error creating poll: ${pollResult.error}`);
             return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
@@ -27,8 +26,6 @@ const postTweet = async (req, res) => {
     } else {
         pollResult = { id: null };
     }
-
-    console.log(req.body);
 
     const newTweet = new tweetModel({
         author_id: req.user._id,
@@ -43,7 +40,6 @@ const postTweet = async (req, res) => {
     try {
         const result = await newTweet.save();
         const tweet_id = result._id;
-        console.log(result);
         if (req.body.retweet_id) {
             // If it's a retweet, increment the retweet count for the original tweet
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
@@ -55,9 +51,9 @@ const postTweet = async (req, res) => {
         } else {
             query.unshift({ $match: { _id: new ObjectId(tweet_id) } });
         }
-        console.log(query);
         const tweet = await tweetModel.aggregate(query);
         logger.info(`Successfully created tweet with id: ${tweet_id}`);
+        logger.info(`tweet: ${tweet[0]}`)
         sendMessage(null, 'tweet-created', { tweet: tweet[0] });
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
     } catch (error) {
@@ -311,9 +307,9 @@ const registerVote = async (req, res) => {
 const getLiveTweets = async (req, res) => {
     var tweets = [];
     logger.info(`Fetching tweets from the database`);
-    logger.info(req.body.last_tweet_id)
-    if(req.body.last_tweet_id) {
-        const last_tweet_id = new ObjectId(req.body.last_tweet_id);
+    logger.info(req.query.last_tweet_id)
+    if(req.query.last_tweet_id) {
+        const last_tweet_id = new ObjectId(req.query.last_tweet_id);
             try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
             var query = fetch_feed_query;
