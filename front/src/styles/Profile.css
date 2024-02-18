@@ -15,12 +15,10 @@ body {
 .header {
   width: 25%;
   position: fixed;
-  height: 100vh;
   display: flex;
   flex-direction: column;
   align-self: flex-start;
   justify-content: center;
-  border-right: solid 1px lightgray;
 }
 
 .main {

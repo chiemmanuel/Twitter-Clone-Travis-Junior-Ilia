@@ -41,6 +41,7 @@ const Userprofile = () => {
         setSuccessMessage(null);
       }, 2000);
     } catch (error) {
+
       console.error(error);
       // Handle error
     }
@@ -112,10 +113,11 @@ const Userprofile = () => {
           setUserComments(commentsResponse.data.comments);
         }
       } catch (error) {
-        console.error(error);
-        if (isMounted) {
-          setError("An error occurred while fetching user data");
-        }
+        console.log(error);
+        // console.error(error);
+        // if (isMounted) {
+        //   setError("An error occurred while fetching user data");
+        // }
       }
     };
 

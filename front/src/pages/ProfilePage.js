@@ -9,7 +9,6 @@ import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
 import Navbar from "../components/Navbar";
 import "../styles/Profile.css";
-import "../styles/Home.css";
 
 const ProfilePage = () => {
   const [activeContainer, setActiveContainer] = useState("userTweets");
@@ -60,14 +59,14 @@ const ProfilePage = () => {
         setUserTweets(tweetsResponse.data.tweets);
 
         // Fetch liked tweets
-        const likedTweetsResponse = await instance.get(requests.userLikedTweets + response.data._id, {
+        await instance.get(requests.userLikedTweets + response.data._id, {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
         }).then(
           (response) => {
             console.log(response.data);
-            setLikedTweets(likedTweetsResponse.data.likedTweets);
+            setLikedTweets(response.data.likedTweets);
           });
 
         // Fetch user comments

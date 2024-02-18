@@ -27,7 +27,6 @@ function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('user:', user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);
@@ -43,17 +42,17 @@ function Tweet( props ) {
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
 
-    useEffect(() => {
-      setNumViews(prevNumViews => prevNumViews + 1);
-      axios.put(requests.incrementViews + tweet._id, {
-          amount: 1
-      }, {
-          headers: {
-              Authorization: `Bearer ${user.token}`,
-          },
-      }).then(res => console.log(res))
-      .catch(err => console.log(err));
-    }, []);
+    // useEffect(() => {
+    //   setNumViews(prevNumViews => prevNumViews + 1);
+    //   axios.put(requests.incrementViews + tweet._id, {
+    //       amount: 1
+    //   }, {
+    //       headers: {
+    //           Authorization: `Bearer ${user.token}`,
+    //       },
+    //   }).then(res => console.log(res))
+    //   .catch(err => console.log(err));
+    // }, []);
 
     useEffect(() => {
         if (bookmarkStatus === 'idle') {
