@@ -32,6 +32,7 @@ const updateUser = async (req, res) => {
         const updateValues = {};
         
         if (username) {
+            sendMessage(null, 'update-username', { old_username: req.user.username, new_username: username });
             updateValues.username = username;
 
             // Update session's username if changed

@@ -8,8 +8,9 @@ import '../styles/Comment.css';
 
 function Comment( { comment }) {
     const user = JSON.parse(localStorage.getItem('user'));
-    const { author_name, content, media, created_at, updated_at } = comment;
+    const { content, media, created_at, updated_at } = comment;
     const [numLikes, setNumLikes] = useState(comment.likes.length);
+    const [author_name, setAuthorName] = useState(comment.author_name);
     const [profile_image, setProfileImage] = useState(comment.profile_image);
 
     useEffect(() => {
@@ -28,9 +29,16 @@ function Comment( { comment }) {
             }
         });
 
+        socket.on("update-username", data => {
+            if (data.old_username === author_name) {
+                setAuthorName(data.new_username);
+            }
+        });
+
         return () => {
             socket.off("update-comment-likes");
             socket.off("update-profile-image");
+            socket.off("update-username");
         }
         }, [comment._id, user._id]);
 
