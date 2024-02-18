@@ -14,7 +14,7 @@ const User = ({  displayname, username, action }) => {
         <span className='username'>@{ username }</span>
       </div>
       <div className='action'>
-        <a href='/logout'>
+        <a href='/'>
           <img src={logout_icon} alt=''></img>
         </a>
       </div>

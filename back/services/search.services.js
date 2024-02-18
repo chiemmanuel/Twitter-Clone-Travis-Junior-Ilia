@@ -19,20 +19,21 @@ const searchByUsername = async (req, res) => {
 };
 const searchByHashtag = async (req, res) => {
     const { hashtag } = req.params;
-
+    
+    var query_regex = new RegExp("^" + hashtag, 'i');
     try {
-        const mostViewedTweets = await tweetModel.find({ hashtags: hashtag })
+        const mostViewedTweets = await tweetModel.find({ hashtags: {$regex: query_regex} })
         .sort({ num_views: -1 })
         .limit(10);
-
-        const mostRecentTweets = await tweetModel.find({ hashtags: hashtag })
+        
+        const mostRecentTweets = await tweetModel.find({ hashtags: { $regex: query_regex } })
         .sort({ created_at: -1 })
         .limit(10);
 
-        return res.status(statusCodes.success).json({ 
+        return res.status(statusCodes.success).json({ results: {
             mostViewedTweets: Array.from(mostViewedTweets),
             mostRecentTweets: Array.from(mostRecentTweets), 
-        });
+        }});
 
     } catch (error) {
         logger.error(`Error while searching by hashtag ${hashtag}: ${error}`);
