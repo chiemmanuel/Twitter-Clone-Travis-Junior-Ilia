@@ -5,6 +5,7 @@ import socket from '../socket';
 import '../styles/Poll.css';
 
 function Poll({ poll_object }) {
+    console.log('poll_object', poll_object);
     const user = JSON.parse(localStorage.getItem('user'));
 
     const has_voted = poll_object.options.some(option => option.voter_ids.includes(user._id));

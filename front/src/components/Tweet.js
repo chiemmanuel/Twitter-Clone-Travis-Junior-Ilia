@@ -27,7 +27,6 @@ function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('user:', user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);
@@ -174,7 +173,7 @@ function Tweet( props ) {
     };
 
     const handleRetweetOnClick = () => {
-        navigate(`/view_tweet/?id=${retweet._id}`);
+        navigate(`/view_tweet/${retweet._id}`);
     }
     
   return (
@@ -228,13 +227,13 @@ function Tweet( props ) {
         <span>{num_comments}</span>
       </span>
           <span onClick={openRetweetModal}>
+            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
+            <span>{numRetweets}</span>
+            </span>
             <PostTweetForm 
             retweet={tweet}
             isOpen={isRetweetModalOpen}
             setIsOpen={setIsRetweetModalOpen} />
-            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
-            <span>{numRetweets}</span>
-            </span>
             <span onClick={handleLike}>
             <img src={like_icon} alt="like" className='tweet__footerIcon'/>
             <span>{liked_by?.length}</span>
