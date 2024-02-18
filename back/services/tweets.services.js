@@ -84,7 +84,9 @@ const getTweetById = async (req, res) => {
         } else {
             query.unshift({ $match: { _id: new ObjectId(tweetId) } });
         }
+        console.log(query);
         const tweet = await tweetModel.aggregate(query);
+        
         if (tweet.length === 0) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }

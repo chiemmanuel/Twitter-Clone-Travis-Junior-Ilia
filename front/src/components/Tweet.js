@@ -173,7 +173,7 @@ function Tweet( props ) {
     };
 
     const handleRetweetOnClick = () => {
-        navigate(`/view_tweet/?id=${retweet._id}`);
+        navigate(`/view_tweet/${retweet._id}`);
     }
     
   return (
@@ -183,9 +183,11 @@ function Tweet( props ) {
           <img src={author.profile_img} alt="profile" />
         )}
         <div className="tweet__headerText">
+        <div className='tweet__author' onClick={()=>navigate(`/profile/${author.username}`)}>
           {author && author.username && (
             <h3>{author.username} </h3>
-          )}
+            )}
+            </div>
           <p>{new Date(created_at).toUTCString()}</p>
         </div>
       </div>
@@ -214,7 +216,7 @@ function Tweet( props ) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
-              {retweet.poll && <Poll poll={retweet.poll} />}
+              {retweet.poll && <Poll poll_object={retweet.poll} />}
             </div>
           </div>
         )}
@@ -227,13 +229,13 @@ function Tweet( props ) {
         <span>{num_comments}</span>
       </span>
           <span onClick={openRetweetModal}>
+            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
+            <span>{numRetweets}</span>
+            </span>
             <PostTweetForm 
             retweet={tweet}
             isOpen={isRetweetModalOpen}
             setIsOpen={setIsRetweetModalOpen} />
-            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
-            <span>{numRetweets}</span>
-            </span>
             <span onClick={handleLike}>
             <img src={like_icon} alt="like" className='tweet__footerIcon'/>
             <span>{liked_by?.length}</span>
