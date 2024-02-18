@@ -128,7 +128,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             setPollHours(0)
             setPollMinutes(0)
             setMessage('')
-            closeModal()
+            setIsOpen(false);
             if (retweet) {
                 console.log(response)
                 axios.post(requests.postNotification, {

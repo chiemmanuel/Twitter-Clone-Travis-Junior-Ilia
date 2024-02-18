@@ -19,12 +19,15 @@ import Poll from './Poll';
 import PostTweetForm from './PostTweetForm';
 import comment_icon from '../icons/comment_icon.svg';
 import like_icon from '../icons/like_icon.svg';
+import bookmark_icon from '../icons/bookmark_icon.svg';
+import retweet_icon from '../icons/retweet_icon.svg';
 
 
 function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
+    console.log('user:', user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);
@@ -229,18 +232,7 @@ function Tweet( props ) {
             retweet={tweet}
             isOpen={isRetweetModalOpen}
             setIsOpen={setIsRetweetModalOpen} />
-            <svg
-              title='Retweet'
-              className='tweet__footerIcon'
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              stroke="#000"
-              stroke-linecap="square"
-              fill="none" color="#000">
-              <path d="M13 18H6V7"/>
-              <path d="m3 9 3-3 3 3m2-3h7v11"/>
-              <path d="m21 15-3 3-3-3"/>
-            </svg>
+            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
             <span>{numRetweets}</span>
             </span>
             <span onClick={handleLike}>
@@ -248,15 +240,7 @@ function Tweet( props ) {
             <span>{liked_by?.length}</span>
             </span>
             <span onClick={handleBookmark}>
-            <svg 
-            title='Bookmark'
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 50 50"
-              className='tweet__footerIcon bookmark-icon'>
-                <g>
-                  <path d="M 12.8125 2 C 12.335938 2.089844 11.992188 2.511719 12 3 L 12 47 C 11.996094 47.359375 12.1875 47.691406 12.496094 47.871094 C 12.804688 48.054688 13.1875 48.054688 13.5 47.875 L 25 41.15625 L 36.5 47.875 C 36.8125 48.054688 37.195313 48.054688 37.503906 47.871094 C 37.8125 47.691406 38.003906 47.359375 38 47 L 38 3 C 38 2.449219 37.550781 2 37 2 L 13 2 C 12.96875 2 12.9375 2 12.90625 2 C 12.875 2 12.84375 2 12.8125 2 Z M 14 4 L 36 4 L 36 45.25 L 25.5 39.125 C 25.191406 38.945313 24.808594 38.945313 24.5 39.125 L 14 45.25 Z"></path>
-                </g>
-            </svg>
+              <img src={bookmark_icon} alt="bookmark" className='tweet__footerIcon bookmark-icon' title='Bookmark'/>
             <span>{num_bookmarks}</span>
             </span>
         </div>

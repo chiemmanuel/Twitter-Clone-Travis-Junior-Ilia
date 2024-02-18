@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom";
-import instance from '../constants/axios'; // Import the Axios instance
+import instance from '../constants/axios';
 import "../styles/LogoutPage.css";
+import socket from "../socket";
+import useAppStateContext from "../hooks/useAppStateContext";
 
 const LogoutPage = ({ requests }) => {
   const [logoutStatus, setLogoutStatus] = useState(false);
   const history = useHistory();
+  const { dispatch } = useAppStateContext();
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const handleLogout = async () => {
     try {
@@ -18,6 +22,9 @@ const LogoutPage = ({ requests }) => {
 
       if (response.status === 200) {
         console.log('User logged out successfully');
+        socket.emit('userLogout', user.email);
+        socket.disconnect();
+        dispatch({ type: 'Logout' });
         setLogoutStatus(true);
         history.push('/Base');
       } else {
