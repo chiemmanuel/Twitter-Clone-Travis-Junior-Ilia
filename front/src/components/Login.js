@@ -56,6 +56,8 @@ const LoginForm = ({ onClose, showSignUpForm }) => {
               payload: {
                 token: token,
                 email: email,
+                _id: response.data._id,
+                username: response.data.username,
               },
             });
             navigate("/home");

@@ -24,5 +24,7 @@ export const requests = {
     getNotifications: '/notifications/',
     postTweet: '/tweets/tweet',
     likeComment: '/comments/like/',
+    userSearch: '/search/username/',
+    hashtagSearch: '/search/hashtag/',
 };
  

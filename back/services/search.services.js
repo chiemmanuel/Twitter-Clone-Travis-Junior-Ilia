@@ -1,18 +1,22 @@
 const logger = require('../middleware/winston');
 const tweetModel = require('../models/tweetModel.js');
+const userModel = require('../models/userModel.js');
 const statusCodes = require('../constants/statusCodes.js');
 
 const searchByUsername = async (req, res) => {
-    const { username } = req.params;
+    const { query } = req.params
 
     try {
-        return res.redirect(`/user/get/${username}`);
+        var query_regex = new RegExp("^" + query, 'i');
+        logger.info(`Searching by username: ${query}`);
+        logger.info(`Query regex: ${query_regex}`);
+        const results = await userModel.find({ username: { $regex: query_regex } })
+        return res.status(statusCodes.success).json({ results: results });
     } catch (error) {
-        logger.error(`Error while searching by username ${username}: ${error}`);
-        res.status(statusCodes.queryError).json({ error: `Error while searching by username ${username}` });
+        logger.error(`Error while searching by username ${query}: ${error}`);
+        res.status(statusCodes.queryError).json({ error: `Error while searching by username ${query}` });
     }
 };
-
 const searchByHashtag = async (req, res) => {
     const { hashtag } = req.params;
 
