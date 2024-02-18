@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTimes } from "@fortawesome/free-solid-svg-icons";
 import "../styles/Editprofile.css";
 
+const cldUploadApi = "https://api.cloudinary.com/v1_1/dqqel2q07/image/upload";
+
 const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
   const navigate = useNavigate();
   const { dispatch } = useAppStateContext();
@@ -14,10 +16,28 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
   const [formData, setFormData] = useState({});
   const [errorMessage, setErrorMessage] = useState("");
   const [isNextButtonDisabled, setIsNextButtonDisabled] = useState(true);
+  const [previewURL, setPreviewURL] = useState(null);
 
   const handleChange = (e, fieldName) => {
     setFormData((prevData) => ({ ...prevData, [fieldName]: e.target.value }));
     setIsNextButtonDisabled(e.target.value === "");
+  };
+
+  const handleImageUpdate = async (img) => {
+    const profile_img = new FormData();
+    profile_img.append('file', img);
+    profile_img.append('upload_preset', 'dkp3udd5');
+
+    const res = await fetch(
+      cldUploadApi,
+        {
+          method: 'POST',
+          body: profile_img
+        }
+    );
+    const imgData = await res.json();
+
+    setFormData((prevData) => ({ ...prevData, ['profile_img']: imgData.url }));
   };
 
   const handleNext = () => {
@@ -90,11 +110,14 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
         return (
           <>
             <label className="update-profile-label">Profile Image URL</label>
+            {previewURL && <img src={previewURL} alt="media" className='img-preview'/>}
             <input
-              className="update-profile-input"
-              type="text"
-              value={formData.profile_img || ""}
-              onChange={(e) => handleChange(e, "profile_img")}
+              type="file"
+              title='AAAAAAa'
+              onChange={(e) => {
+                handleImageUpdate(e.target.files[0]);
+                setPreviewURL(URL.createObjectURL(e.target.files[0]))
+              }}
             />
             <button
               className="update-profile-button"

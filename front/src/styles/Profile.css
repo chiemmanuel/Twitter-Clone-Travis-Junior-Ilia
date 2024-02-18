@@ -6,18 +6,15 @@ body {
 }
 
 .profile-page {
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start; /* Updated */
-  align-items: center;
-  padding: 20px;
+  margin: 0;
+
 }
 
 .user-info-container {
+  width: 100%;
+  align-self: flex-start;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   margin-bottom: 20px;
 }
