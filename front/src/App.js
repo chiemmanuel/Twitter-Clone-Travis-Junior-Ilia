@@ -10,10 +10,12 @@ import BasePage from './pages/BasePage';
 import TestPage from './pages/TestPage';
 import ProfilePage from './pages/ProfilePage';
 import Userprofile from './pages/Userprofile';
-import ViewTweetPage from './pages/TweetPage.js';
-import NotificationPage from './pages/NotificationPage.js';
-import BookmarkPage from './pages/BookmarksPage.js';
 import SearchPage from './pages/SearchPage.js';
+import ViewTweetPage from './pages/TweetPage.js';
+import BookmarkPage from './pages/BookmarksPage.js';
+import FollowersPage from './pages/FollowersPage.js';
+import FollowingPage from './pages/FollowingPage.js';
+import NotificationPage from './pages/NotificationPage.js';
 
 import { useDispatch } from 'react-redux';
 import { addNotification } from './features/Notifications/notificationSlice.js';
@@ -88,12 +90,26 @@ function App() {
       }
     }
 
+    function onFollowing(data) {
+      if (localStorage.getItem('user') !== null) {
+        const user = JSON.parse(localStorage.getItem('user'));
+        console.log('following update received:', data);
+        const { following, _id } = data;
+        if (user._id === _id) {
+          dispatch({ type: 'updateFollowing', payload: following });
+        }
+      } else {
+        console.log('no user');
+      }
+    }
+
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
     socket.on('notification', onNotification);
     socket.on('bookmark', onBookmark);
     socket.on('update-profile-image', onProfileImageUpdate);
     socket.on('update-username', onUsernameUpdate);
+    socket.on('update-following', onFollowing);
 
     return () => {
       socket.off('connect', onConnect);
@@ -102,6 +118,7 @@ function App() {
       socket.off('bookmark', onBookmark);
       socket.off('update-profile-image', onProfileImageUpdate);
       socket.off('update-username', onUsernameUpdate);
+      socket.off('update-following', onFollowing);
     };
   }, []);
 
@@ -121,6 +138,8 @@ function App() {
           <Route path='/notifications' element={<NotificationPage />} />
           <Route path='/bookmarks' element={<BookmarkPage />} />
           <Route path='/search' element={<SearchPage />} />
+          <Route path='/followers' element={<FollowersPage />} />
+          <Route path='/following' element={<FollowingPage />} />
         </Route>
           
       </Routes>

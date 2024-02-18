@@ -104,6 +104,7 @@ const login = async (req, res) => {
                 "username": user.username, 
                 "email": user.email,
                 "profile_img": user.profile_img,
+                "following": user.following,
             }
         );
     } catch (error) {

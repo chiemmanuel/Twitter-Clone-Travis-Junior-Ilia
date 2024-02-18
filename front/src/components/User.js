@@ -1,12 +1,43 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { requests } from '../constants/requests';
 import '../styles/User.css';
-import socket from '../socket';
-
+import axios from 'axios';
 
 import logout_icon from '../icons/logout_icon.svg';
 
 const User = ({ user }) => {
-  const { username, profile_img } = user;
+  const { _id, username, profile_img } = user;
+  const { following } = JSON.parse(localStorage.getItem("user"));
+
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    if (following && following.includes(_id)) {
+      setIsFollowing(true);
+    }
+  }, [following, _id]);
+
+  const handleFollowToggle = async () => {
+    if (isFollowing) {
+      await axios.delete('http://localhost:8080/followers/unfollow/' + _id,
+        {
+          headers: {
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
+          },
+        }
+      );
+      setIsFollowing(false);
+    } else {
+      await axios.post('http://localhost:8080/followers/follow/' + _id, {},
+        {
+          headers: {
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
+          },
+        }
+      );
+      setIsFollowing(true);
+    }
+  };
 
   return (
     <div className='user'>
@@ -16,9 +47,13 @@ const User = ({ user }) => {
         <span className='username'>@{ username }</span>
       </div>
       <div className='action'>
-        <a href='/'>
-          <img src={logout_icon} alt=''></img>
-        </a>
+      {JSON.parse(localStorage.getItem("user"))._id !== _id ? (
+        <button onClick={handleFollowToggle}>
+          {isFollowing ? 'Unfollow' : 'Follow'}
+        </button>
+      ) : (
+        <a href='/'><img src={logout_icon} alt=''></img></a>
+      )}
       </div>
     </div>
   );
