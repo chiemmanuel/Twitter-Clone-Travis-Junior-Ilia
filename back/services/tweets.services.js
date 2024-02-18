@@ -309,9 +309,9 @@ const registerVote = async (req, res) => {
 const getLiveTweets = async (req, res) => {
     var tweets = [];
     logger.info(`Fetching tweets from the database`);
-    logger.info(req.body.last_tweet_id)
-    if(req.body.last_tweet_id) {
-        const last_tweet_id = new ObjectId(req.body.last_tweet_id);
+    logger.info(req.query.last_tweet_id)
+    if(req.query.last_tweet_id) {
+        const last_tweet_id = new ObjectId(req.query.last_tweet_id);
             try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
             var query = fetch_feed_query;
