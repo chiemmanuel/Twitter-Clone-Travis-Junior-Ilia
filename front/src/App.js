@@ -7,10 +7,8 @@ import PublicRoute from './routes/PublicRoute';
 
 import HomePage from './pages/HomePage';
 import BasePage from './pages/BasePage';
-import TestPage from './pages/TestPage';
 import ProfilePage from './pages/ProfilePage';
 import Userprofile from './pages/Userprofile';
-import SearchPage from './pages/SearchPage.js';
 import ViewTweetPage from './pages/TweetPage.js';
 import BookmarkPage from './pages/BookmarksPage.js';
 import FollowersPage from './pages/FollowersPage.js';
