@@ -1,0 +1,93 @@
+.search-page {
+    margin-top: 10px;
+
+}
+
+.header {
+    width: 25%;
+}
+
+.main {
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+} 
+
+.no-results {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.search-bar {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 400px;
+}
+
+.search-bar input {
+    width: 300px;
+    height: 30px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    margin-right: 5px;
+}
+
+.search-results {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.tweet-results {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.most-viewed-tweets {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-right: 30px;
+    height: 100%;
+}
+
+.most-recent-tweets {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-left: 30px;
+    height: 100%;
+}
+
+.tweet-result {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 300px;
+    height: 200px;
+    border: none;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.tweet-result:hover {
+    background-color: #f2f2f2;
+    cursor: pointer;
+}
