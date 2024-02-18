@@ -19,6 +19,19 @@ export const fetchNotifications = createAsyncThunk('notifications/fetchNotificat
     return response.data;
 });
 
+const deleteReadNotifications = async (readNotifications) => {
+    const token = JSON.parse(localStorage.getItem('user')).token;
+    const response = await axios.put(requests.deleteReadNotifications,
+    {
+        readNotifications: readNotifications
+    },{
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
+    console.log('deleteReadNotifications', response.data);
+};
+
 export const notificationSlice = createSlice({
     name: 'notifications',
     initialState,
@@ -33,6 +46,7 @@ export const notificationSlice = createSlice({
             console.log('removeNotification', action.payload);
             if (action.payload.isRead) {
                 state.notifications.read = state.notifications.read.filter(n => n._id !== action.payload.notification_id);
+                deleteReadNotifications([action.payload.notification_id]);
             } else {
                 state.notifications.unread = state.notifications.unread.filter(n => n._id !== action.payload.notification_id);
             }
@@ -50,6 +64,7 @@ export const notificationSlice = createSlice({
             state.notifications.unread = state.notifications.unread.filter((n, index) => index !== index_to_update);
         },
         removeAllRead: (state, action) => {
+            deleteReadNotifications(state.notifications.read.map(n => n._id));
             state.notifications.read = [];
         },
 

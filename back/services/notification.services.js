@@ -59,7 +59,29 @@ const getNotifications = async (req, res) => {
         res.status(statusCodes.queryError).send('Error retrieving notifications');
     }
 }
+
+/**
+ * This function deletes all notifications in the given array of _ids that have isRead: true
+ * @param {*} req - The request object containing the array of _ids to delete
+ * @param {*} res
+ * @returns: The res object with a status code and a message indicating the success or failure of the deletion
+ */
+const deleteReadNotifications = async (req, res) => {
+    const recipient_email = req.user.email;
+    const { readNotifications } = req.body;
+    try {
+        await notificationModel.deleteMany({ _id: { $in: readNotifications } }, { isRead: true }, { recipient_email });
+        logger.info(`Read notifications deleted for ${recipient_email}`);
+        res.status(statusCodes.success).send('Read notifications deleted successfully');
+    } catch (error) {
+        logger.error(`Error deleting read notifications: ${error}`);
+        res.status(statusCodes.queryError).send('Error deleting read notifications');
+    }
+}
+
+
 module.exports = {
     createNotification,
     getNotifications,
+    deleteReadNotifications,
 };

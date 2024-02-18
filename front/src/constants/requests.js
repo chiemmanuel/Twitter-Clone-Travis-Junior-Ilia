@@ -25,6 +25,7 @@ export const requests = {
     postComment: '/comments/',
     postNotification: '/notifications/create',
     getNotifications: '/notifications/',
+    deleteReadNotifications: '/notifications/delete',
     postTweet: '/tweets/tweet',
     likeComment: '/comments/like/',
     userSearch: '/search/username/',

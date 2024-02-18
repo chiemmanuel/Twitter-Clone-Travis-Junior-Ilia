@@ -183,9 +183,11 @@ function Tweet( props ) {
           <img src={author.profile_img} alt="profile" />
         )}
         <div className="tweet__headerText">
+        <div className='tweet__author' onClick={()=>navigate(`/profile/${author.username}`)}>
           {author && author.username && (
             <h3>{author.username} </h3>
-          )}
+            )}
+            </div>
           <p>{new Date(created_at).toUTCString()}</p>
         </div>
       </div>
@@ -214,7 +216,7 @@ function Tweet( props ) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
-              {retweet.poll && <Poll poll={retweet.poll} />}
+              {retweet.poll && <Poll poll_object={retweet.poll} />}
             </div>
           </div>
         )}
