@@ -2,11 +2,10 @@
 
 .update-profile-container {
   position: fixed;
-  top: 25%; /* Updated to top of the page */
-  left: 25%; /* Updated to 25% from the left */
-  width: 50%; /* Updated to 50% of the width */
-  height: 40%; /* Updated to cover the entire height */
-  overflow-y: auto; /* Enable vertical scrolling if needed */
+  top: 25%; 
+  left: 25%; 
+  width: 50%; 
+  height: 40%; 
   background-color: white;
   padding: 20px;
   border-radius: 8px;
