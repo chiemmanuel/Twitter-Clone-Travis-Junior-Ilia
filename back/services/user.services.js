@@ -5,6 +5,7 @@ const logger = require("../middleware/winston");
 const tweetModel = require('../models/tweetModel');
 const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
+const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const { fetch_feed_query, fetch_tweet_query } = require ('../constants/fetchFeedConstants.js');
 const User = require('../models/userModel');
 
@@ -38,6 +39,7 @@ const updateUser = async (req, res) => {
         }
         if (profile_img) {
             updateValues.profile_img = profile_img;
+            sendMessage(null, 'update-profile-image', { author_name: username, profile_img: profile_img });
         }
 
         if (bio) {

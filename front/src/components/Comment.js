@@ -2,15 +2,15 @@ import { useState, useEffect } from 'react'
 import socket from '../socket';
 import { requests } from '../constants/requests';
 import axios from '../constants/axios';
-
 import like_icon from '../icons/like_icon.svg';
 import '../styles/Comment.css';
 
 
 function Comment( { comment }) {
     const user = JSON.parse(localStorage.getItem('user'));
-    const { author_name, profile_image, content, media, created_at, updated_at } = comment;
+    const { author_name, content, media, created_at, updated_at } = comment;
     const [numLikes, setNumLikes] = useState(comment.likes.length);
+    const [profile_image, setProfileImage] = useState(comment.profile_image);
 
     useEffect(() => {
         socket.on("update-comment-likes", data => {
@@ -22,8 +22,15 @@ function Comment( { comment }) {
             }
         });
 
+        socket.on("update-profile-image", data => {
+            if (data.author_name === author_name) {
+                setProfileImage(data.profile_img);
+            }
+        });
+
         return () => {
             socket.off("update-comment-likes");
+            socket.off("update-profile-image");
         }
         }, [comment._id, user._id]);
 
