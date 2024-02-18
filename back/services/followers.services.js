@@ -1,6 +1,7 @@
 const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const userModel = require('../models/userModel');
+const sendMessage = require('../boot/socketio/socketio_connection.js').sendMessage;
 
 const followUser = async (req, res) => {
     console.log('followUser');
@@ -58,11 +59,8 @@ const getFollowers = async (req, res) => {
                 }
             },
             {
-                $unwind: '$followers'
-            },
-            {
                 $project: {
-                    followers: 1,
+                    "followers._id": 1,
                     "followers.email": 1,
                     "followers.username": 1,
                     "followers.bio": 1,
@@ -70,8 +68,8 @@ const getFollowers = async (req, res) => {
                 }
             }
         ]);
-        logger.info(`Retrieved followers of user with id ${user_id}`);
-        res.status(statusCodes.success).json(followers);
+        logger.info(`Retrieved followers of user with email ${user_email}`);
+        res.status(statusCodes.success).json({ followers: followers.followers });
     } catch (error) {
         logger.error(`Error retrieving followers: ${error}`);
         res.status(statusCodes.queryError).send('Error retrieving followers');

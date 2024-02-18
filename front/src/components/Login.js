@@ -58,6 +58,8 @@ const LoginForm = ({ onClose, showSignUpForm }) => {
                 email: email,
                 _id: response.data._id,
                 username: response.data.username,
+                profile_img: response.data.profile_img,
+                following: response.data.following,
               },
             });
             navigate("/home");
