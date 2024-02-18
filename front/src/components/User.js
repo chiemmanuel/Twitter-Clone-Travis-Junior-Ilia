@@ -64,7 +64,7 @@ const User = ({ user }) => {
           {isFollowing ? 'Unfollow' : 'Follow'}
         </button>
       ) : (
-        <a href='/'><img src={logout_icon} alt=''></img></a>
+        <a href='/logout'><img src={logout_icon} alt=''></img></a>
       )}
       </div>
     </div>

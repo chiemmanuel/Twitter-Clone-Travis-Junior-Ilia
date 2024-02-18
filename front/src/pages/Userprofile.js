@@ -4,7 +4,8 @@ import instance from "../constants/axios";
 import { requests } from "../constants/requests";
 import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
-import "../styles/Profile.css";
+import Navbar from "../components/Navbar";
+import "../styles/Userprofile.css";
 
 const Userprofile = () => {
   const { username } = useParams();
@@ -17,11 +18,14 @@ const Userprofile = () => {
   const [followSuccess, setFollowSuccess] = useState(false);
   const [unfollowSuccess, setUnfollowSuccess] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(null);
 
+  // Function to handle container toggle
   const handleContainerToggle = (container) => {
     setActiveContainer(container);
   };
 
+  // Function to handle follow
   const handleFollow = async () => {
     try {
       // Make a request to follow the user
@@ -32,12 +36,18 @@ const Userprofile = () => {
       });
       setIsFollowing(true);
       setFollowSuccess(true);
+      setSuccessMessage(`Successfully followed ${username}!`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 2000);
     } catch (error) {
+
       console.error(error);
       // Handle error
     }
   };
 
+  // Function to handle unfollow
   const handleUnfollow = async () => {
     try {
       // Make a request to unfollow the user
@@ -48,6 +58,10 @@ const Userprofile = () => {
       });
       setIsFollowing(false);
       setUnfollowSuccess(true);
+      setSuccessMessage(`Successfully unfollowed ${username}!`);
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 2000);
     } catch (error) {
       console.error(error);
       // Handle error
@@ -99,10 +113,11 @@ const Userprofile = () => {
           setUserComments(commentsResponse.data.comments);
         }
       } catch (error) {
-        console.error(error);
-        if (isMounted) {
-          setError("An error occurred while fetching user data");
-        }
+        console.log(error);
+        // console.error(error);
+        // if (isMounted) {
+        //   setError("An error occurred while fetching user data");
+        // }
       }
     };
 
@@ -115,91 +130,97 @@ const Userprofile = () => {
 
   return (
     <div className="profile-page">
-      {error ? (
-        <p>{error}</p>
-      ) : user !== null ? (
-        <>
-          <div className="user-info-container">
-            <div className="user-info">
-              <img src={user.profile_img} alt="Profile" />
-              <div className="user-details">
-                <h2>{user.username}</h2>
-                <p>
-                  Joined since{" "}
-                  {new Date(user.created_at).toLocaleString("default", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-                <div className="follower-info">
-                  <p>{user.followers.length} followers</p>
-                  <p>{user.following.length} following</p>
+      <div className='header'>
+        <Navbar />
+      </div>
+      <div className='main'>
+        {error ? (
+          <p>{error}</p>
+        ) : user !== null ? (
+          <>
+            <div className="user-info-container">
+              <div className="user-info">
+                <img src={user.profile_img} alt="Profile" />
+                <div className="user-details">
+                  <h2>{user.username}</h2>
+                  <p>
+                    Joined since{" "}
+                    {new Date(user.created_at).toLocaleString("default", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <div className="follower-info">
+                    <p>{user.followers.length} followers</p>
+                    <p>{user.following.length} following</p>
+                  </div>
                 </div>
               </div>
+              <div className="follow-buttons">
+                {!user.isCurrentUser && !isFollowing && (
+                  <button onClick={handleFollow}>Follow</button>
+                )}
+                {!user.isCurrentUser && isFollowing && (
+                  <button onClick={handleUnfollow}>Unfollow</button>
+                )}
+              </div>
             </div>
-            <div className="follow-buttons">
-              {!user.isCurrentUser && !isFollowing && (
-                <button onClick={handleFollow}>Follow</button>
-              )}
-              {!user.isCurrentUser && isFollowing && (
-                <button onClick={handleUnfollow}>Unfollow</button>
-              )}
-            </div>
-          </div>
 
-          <div className="toggle-buttons">
-            <button onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
-            <button onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
-            <button onClick={() => handleContainerToggle("userComments")}>Replies</button>
-          </div>
-
-          {activeContainer === "userTweets" && (
-            <div className="user-tweets-container">
-              {userTweets.length > 0 ? (
-                userTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
-              ) : (
-                <p>No posts.</p>
-              )}
+            <div className="toggle-buttons">
+              <button className={`toggle-button ${activeContainer === "userTweets" && "active"}`} onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
+              <button className={`toggle-button ${activeContainer === "likedTweets" && "active"}`} onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
+              <button className={`toggle-button ${activeContainer === "userComments" && "active"}`} onClick={() => handleContainerToggle("userComments")}>Replies</button>
             </div>
-          )}
 
-          {activeContainer === "likedTweets" && (
-            <div className="user-tweets-container">
-              <h3>Liked Tweets</h3>
-              {likedTweets?.length > 0 ? (
-                likedTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
-              ) : (
-                <p>No liked tweets.</p>
-              )}
-            </div>
-          )}
+            {activeContainer === "userTweets" && (
+              <div className="user-tweets-container">
+                {userTweets.length > 0 ? (
+                  userTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
+                ) : (
+                  <div>
+                    <h2>This user hasn't posted anything yet</h2>
+                    <p>When they do, it’ll show up here.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {activeContainer === "userComments" && (
-            <div className="user-comments-container">
-              <h3>Comments</h3>
-              {userComments.length > 0 ? (
-                userComments.map((comment) => <Comment key={comment._id} comment={comment} />)
-              ) : (
-                <p>No comments.</p>
-              )}
-            </div>
-          )}
+            {activeContainer === "likedTweets" && (
+              <div className="user-tweets-container">
+                {likedTweets?.length > 0 ? (
+                  likedTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
+                ) : (
+                  <div>
+                    <h2>This user hasn't liked any post yet</h2>
+                    <p>When they do, it’ll show up here.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {followSuccess && (
-            <div className="success-message">
-              <p>Successfully followed {username}!</p>
-            </div>
-          )}
+            {activeContainer === "userComments" && (
+              <div className="user-comments-container">
+                {userComments.length > 0 ? (
+                  userComments.map((comment) => <Comment key={comment._id} comment={comment} />)
+                ) : (
+                  <div>
+                    <h2>This user hasn't replied to any post yet</h2>
+                    <p>When they do, it’ll show up here.</p>
+                  </div>
+                )}
+              </div>
+            )}
 
-          {unfollowSuccess && (
-            <div className="success-message">
-              <p>Successfully unfollowed {username}!</p>
-            </div>
-          )}
-        </>
-      ) : (
-        <p>Loading user data...</p>
-      )}
+            {successMessage && (
+              <div className="success-message">
+                <p>{successMessage}</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <p>Loading user data...</p>
+        )}
+      </div>
     </div>
   );
 };

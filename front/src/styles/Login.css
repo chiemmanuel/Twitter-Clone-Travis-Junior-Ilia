@@ -1,12 +1,12 @@
-
-
 .login-container {
-  width: 300px;
+  width: 500px;
+  display: block;
   margin: auto;
   padding: 20px;
   background-color: #f4f4f4;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  position: relative; /* Add position relative for absolute positioning within */
 }
 
 label {
@@ -25,6 +25,21 @@ input {
   box-sizing: border-box;
 }
 
+/* New container for password input and eye icon */
+.password-input-container {
+  position: relative;
+  padding: 10px;
+}
+
+.password-input {
+  width: calc(100% - 30px); /* Adjusted width for the input to make space for the eye icon */
+  padding: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
 .toggle-password {
   position: absolute;
   right: 10px;
@@ -36,7 +51,7 @@ input {
 .submit {
   width: 100%;
   padding: 10px;
-  background-color: #4caf50;
+  background-color: #101210;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -47,21 +62,19 @@ input {
   display: block;
   text-align: center;
   margin-top: 16px;
-  color: #333;
+  cursor: pointer;
+  color: rgb(11, 11, 11);
   text-decoration: none;
-}
-.login-container {
-  position: relative;
 }
 
 .close-button {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  bottom: 5%;
+  left: 95%;
   cursor: pointer;
-  font-size: 20px;
-  color: #333;
+  color: #0f1010;
 }
+
 .error-message {
   color: #f44336;
   font-size: 14px;

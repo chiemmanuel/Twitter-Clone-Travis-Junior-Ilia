@@ -9,7 +9,6 @@ import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
 import Navbar from "../components/Navbar";
 import "../styles/Profile.css";
-import "../styles/Home.css";
 
 const ProfilePage = () => {
   const [activeContainer, setActiveContainer] = useState("userTweets");
@@ -60,7 +59,7 @@ const ProfilePage = () => {
         setUserTweets(tweetsResponse.data.tweets);
 
         // Fetch liked tweets
-        const likedTweetsResponse = await instance.get(requests.userLikedTweets + response.data._id, {
+        await instance.get(requests.userLikedTweets + response.data._id, {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
@@ -90,7 +89,6 @@ const ProfilePage = () => {
       <div className='header'>
         <Navbar />
       </div>
-
       <div className='main'>
         {error ? (
           <p>{error}</p>
@@ -123,12 +121,10 @@ const ProfilePage = () => {
                 </button>
               </div>
             </div>
-    
-            {/* Toggle buttons and content */}
             <div className="toggle-buttons">
-              <button onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
-              <button onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
-              <button onClick={() => handleContainerToggle("userComments")}>Replies</button>
+              <button className={`toggle-button ${activeContainer === "userTweets" && "active"}`} onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
+              <button className={`toggle-button ${activeContainer === "likedTweets" && "active"}`} onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
+              <button className={`toggle-button ${activeContainer === "userComments" && "active"}`} onClick={() => handleContainerToggle("userComments")}>Replies</button>
             </div>
     
             {activeContainer === "userTweets" && (
@@ -136,33 +132,39 @@ const ProfilePage = () => {
                 {userTweets.length > 0 ? (
                   userTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
                 ) : (
-                  <p>No posts.</p>
+                  <div className="default-message-container">
+                    <h2>You don’t have any posts yet</h2>
+                    <p>Click on the post button and share your thoughts. When you do, it’ll show up here.</p>
+                  </div>
                 )}
               </div>
             )}
     
             {activeContainer === "likedTweets" && (
               <div className="user-tweets-container">
-                <h3>Liked Tweets</h3>
                 {likedTweets.length > 0 ? (
                   likedTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
                 ) : (
-                  <p>No liked tweets.</p>
+                  <div className="default-message-container">
+                    <h2>You don’t have any likes yet</h2>
+                    <p>Tap the heart on any post to show it some love. When you do, it’ll show up here.</p>
+                  </div>
                 )}
               </div>
             )}
     
-                      {activeContainer === "userComments" && (
+            {activeContainer === "userComments" && (
               <div className="user-comments-container">
-                <h3>Comments</h3>
                 {userComments.length > 0 ? (
                   userComments.map((comment) => <Comment key={comment._id} comment={comment} />)
                 ) : (
-                  <p>No comments.</p>
+                  <div>
+                    <p>You haven't replied to any tweet yet</p>
+                    <p>Comment tweets to express your opinion. When you do, it’ll show up here.</p>
+                  </div>
                 )}
               </div>
             )}
-
     
             {/* Overlay for EditProfile */}
             {showEditProfile && (

@@ -27,7 +27,6 @@ function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('user:', user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);
@@ -43,17 +42,17 @@ function Tweet( props ) {
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
 
-    useEffect(() => {
-      setNumViews(prevNumViews => prevNumViews + 1);
-      axios.put(requests.incrementViews + tweet._id, {
-          amount: 1
-      }, {
-          headers: {
-              Authorization: `Bearer ${user.token}`,
-          },
-      }).then(res => console.log(res))
-      .catch(err => console.log(err));
-    }, []);
+    // useEffect(() => {
+    //   setNumViews(prevNumViews => prevNumViews + 1);
+    //   axios.put(requests.incrementViews + tweet._id, {
+    //       amount: 1
+    //   }, {
+    //       headers: {
+    //           Authorization: `Bearer ${user.token}`,
+    //       },
+    //   }).then(res => console.log(res))
+    //   .catch(err => console.log(err));
+    // }, []);
 
     useEffect(() => {
         if (bookmarkStatus === 'idle') {
@@ -61,21 +60,21 @@ function Tweet( props ) {
         }
     }, [bookmarkStatus, dispatch]);
 
-      useEffect(() => {
-        console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
-        if ( onTweetUpdate !== undefined ) {
-          var updated_tweet = tweet;
-          updated_tweet.num_comments = num_comments;
-          updated_tweet.liked_by = liked_by;
-          updated_tweet.num_bookmarks = num_bookmarks;
-          updated_tweet.num_retweets = numRetweets;
-          updated_tweet.num_views = num_views;
+      // useEffect(() => {
+      //   console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
+      //   if ( onTweetUpdate !== undefined ) {
+      //     var updated_tweet = tweet;
+      //     updated_tweet.num_comments = num_comments;
+      //     updated_tweet.liked_by = liked_by;
+      //     updated_tweet.num_bookmarks = num_bookmarks;
+      //     updated_tweet.num_retweets = numRetweets;
+      //     updated_tweet.num_views = num_views;
 
-          console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
-          onTweetUpdate(updated_tweet);
-        }
+      //     console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
+      //     onTweetUpdate(updated_tweet);
+      //   }
 
-      }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
+      // }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
 
       useEffect(() => {
       socket.on("update-likes", data => {
@@ -174,7 +173,7 @@ function Tweet( props ) {
     };
 
     const handleRetweetOnClick = () => {
-        navigate(`/view_tweet/?id=${retweet._id}`);
+        navigate(`/view_tweet/${retweet._id}`);
     }
     
   return (
@@ -184,9 +183,11 @@ function Tweet( props ) {
           <img src={author.profile_img} alt="profile" />
         )}
         <div className="tweet__headerText">
+        <div className='tweet__author' onClick={()=>navigate(`/profile/${author.username}`)}>
           {author && author.username && (
             <h3>{author.username} </h3>
-          )}
+            )}
+            </div>
           <p>{new Date(created_at).toUTCString()}</p>
         </div>
       </div>
@@ -215,7 +216,7 @@ function Tweet( props ) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
-              {retweet.poll && <Poll poll={retweet.poll} />}
+              {retweet.poll && <Poll poll_object={retweet.poll} />}
             </div>
           </div>
         )}
@@ -228,13 +229,13 @@ function Tweet( props ) {
         <span>{num_comments}</span>
       </span>
           <span onClick={openRetweetModal}>
+            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
+            <span>{numRetweets}</span>
+            </span>
             <PostTweetForm 
             retweet={tweet}
             isOpen={isRetweetModalOpen}
             setIsOpen={setIsRetweetModalOpen} />
-            <img src={retweet_icon} alt="retweet" className='tweet__footerIcon' title='Retweet'/>
-            <span>{numRetweets}</span>
-            </span>
             <span onClick={handleLike}>
             <img src={like_icon} alt="like" className='tweet__footerIcon'/>
             <span>{liked_by?.length}</span>

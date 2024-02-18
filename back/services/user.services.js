@@ -295,13 +295,7 @@ const getUserComments = async (req, res) => {
  */
 const logout = (req, res) => {
     try {
-        // Check if the user is already logged out
-        if (!req.session.user || typeof req.session.user !== 'object') {
-            return res.status(400).json({ message: "User is already logged out" });
-        }
-        // Remove the user object from the session
         req.session.user = null;
-        // Destroy the session to log the user out
         req.session.destroy((err) => {
             if (err) {
                 console.error("Error while destroying session:", err);

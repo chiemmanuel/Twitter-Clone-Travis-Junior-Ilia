@@ -1,17 +1,39 @@
 /* Profile Page Styles */
 
+body {
+  margin: 0;
+  padding: 0;
+}
+
 .profile-page {
   margin: 0;
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
+.header {
+  width: 25%;
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-self: flex-start;
+  justify-content: center;
+}
+
+.main {
+  margin-left: 25%;
+  flex-basis: 75%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
 }
 
 .user-info-container {
-  width: 100%;
-  align-self: flex-start;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
 }
 
 .user-info {
@@ -23,6 +45,7 @@
   width: 100px;
   height: 100px;
   border-radius: 50%;
+  margin-left: 20px;
   margin-right: 20px;
 }
 
@@ -43,43 +66,53 @@
   margin-right: 20px;
 }
 
+.edit-options {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+  align-items: flex-end;
+}
+
 .edit-options button {
   cursor: pointer;
-  background-color: #3498db;
+  background-color: #202121;
   color: white;
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  margin-right: 10px;
+  margin-bottom: 15px;
 }
 
 .toggle-buttons {
+  display: flex;
+  justify-content: space-between;
   margin: 20px 0;
 }
 
 .toggle-buttons button {
   cursor: pointer;
-  background-color: #3498db;
+  background-color: #171718;
   color: white;
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
+  flex-grow: 1;
   margin-right: 10px;
 }
 
-.user-tweets-container {
-  margin-bottom: 20px;
+.toggle-buttons button.active {
+  background-color: #df6316;
 }
 
-.user-tweets-container p {
-  color: #555;
-}
-
+.user-tweets-container,
 .user-comments-container {
   margin-bottom: 20px;
 }
 
-/* Tweet Component Styles */
+.default-message-container {
+  text-align: center;
+  color: #555;
+}
 
 .tweet {
   border: 1px solid #ddd;
@@ -133,16 +166,11 @@
   align-items: center;
 }
 
-/* Pop-up styles for UpdateProfile and EditPassword components */
 .popup {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  width: 50%; /* Adjust as needed */
+  width: 50%;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   z-index: 1000;
 }
-/* UpdateProfile and EditPassword Styles */
-
-/* Add your styles for UpdateProfile and EditPassword components here */
-

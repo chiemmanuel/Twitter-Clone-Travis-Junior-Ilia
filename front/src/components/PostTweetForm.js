@@ -14,7 +14,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
     ReactModal.setAppElement('body');
     const closeModal = () => {
-        setIsOpen(false);
         if (tweetText !== '' || tweetMedia !== null || displayPoll) {
             const confirmClose = window.confirm('Are you sure you want to close the form? Your unsaved data will be lost.');
             if (!confirmClose) {
@@ -183,8 +182,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                         <div className="tweet__body">
                           <p>{retweet.content}</p>
                           { retweet.media !== "" && retweet.media !== null && <img src={retweet.media} alt="media" />}
-                          {/* if poll exists, render poll component with poll object */}
-                          {retweet.poll && <Poll poll_object={retweet.poll} />}
+                          {retweet.poll ? ( <Poll poll_object={retweet.poll} />) : null }
                           {retweet.retweet ? (
                             <div className="tweet__retweet" >
                               <div className="tweet__header">
@@ -194,18 +192,18 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                                   <h3>
                                     {retweet.retweet_author?.username}{" "}
                                   </h3>
-                                  {new Date(retweet.created_at).toUTCString() !== new Date(retweet.updated_at).toUTCString() ? (
-                                      <p>Edited: {new Date(retweet.updated_at).toUTCString()}</p>
+                                  {new Date(retweet.retweet.created_at).toUTCString() !== new Date(retweet.retweet.updated_at).toUTCString() ? (
+                                      <p>Edited: {new Date(retweet.retweet.updated_at).toUTCString()}</p>
                                   ) : (
-                                      <p>{new Date(retweet.created_at).toUTCString()}</p>
+                                      <p>{new Date(retweet.retweet.created_at).toUTCString()}</p>
                                   )
                                   }
                                 </div>
                               </div>
                               <div className="tweet__body">
-                                <p>{retweet.content}</p>
-                                <img src={retweet.media} alt="media" />
-                                {retweet.poll && <Poll poll={retweet.poll} />}
+                                <p>{retweet.retweet.content}</p>
+                                <img src={retweet.retweet.media} alt="media" />
+                                {retweet.retweet.poll && <Poll poll_object={retweet.poll} />}
                               </div>
                             </div> 
                           ) : null}

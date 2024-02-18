@@ -17,6 +17,16 @@ const signup = async (req, res) => {
             return res.status(statusCodes.badRequest).json({ error: "Missing information" });
         }
 
+        if (password.length < 8) {
+            return res.status(statusCodes.badRequest).json({ error: "Password should be at least 8 characters long" });
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(statusCodes.badRequest).json({ error: "Invalid email" });
+        }
+        // Check if user already exists and username is unique
         const existingUser = await User.findOne({ email });
         const existingUsername = await User.findOne({ username });
 
