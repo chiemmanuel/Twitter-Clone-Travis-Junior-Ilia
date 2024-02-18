@@ -25,7 +25,7 @@ const Userprofile = () => {
   const handleFollow = async () => {
     try {
       // Make a request to follow the user
-      await instance.post(requests.followUser + user._id, null, {
+      await instance.post(requests.followUser + user._id, {}, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
@@ -41,7 +41,7 @@ const Userprofile = () => {
   const handleUnfollow = async () => {
     try {
       // Make a request to unfollow the user
-      await instance.delete(requests.unFollowUser + user._id, null, {
+      await instance.delete(requests.unFollowUser + user._id, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
