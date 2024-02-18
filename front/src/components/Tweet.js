@@ -27,7 +27,6 @@ function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('user:', user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);

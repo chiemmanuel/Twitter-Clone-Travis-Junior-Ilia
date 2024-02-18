@@ -1,32 +1,32 @@
-import React, { useState } from "react";
-import { useHistory } from "react-router-dom";
-import instance from '../constants/axios';
-import "../styles/LogoutPage.css";
-import socket from "../socket";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import useAppStateContext from "../hooks/useAppStateContext";
+import instance from '../constants/axios';
+import socket from "../socket";
+import { requests } from "../constants/requests";
 
-const LogoutPage = ({ requests }) => {
-  const [logoutStatus, setLogoutStatus] = useState(false);
-  const history = useHistory();
+const LogoutPage = () => {
+  const navigate = useNavigate();
   const { dispatch } = useAppStateContext();
   const user = JSON.parse(localStorage.getItem('user'));
 
   const handleLogout = async () => {
     try {
       // Use Axios instance for making the logout request
-      const response = await instance.post(requests.logout, {
+      const response = await instance.post(requests.logout,{}, {
         headers: {
           'Authorization': `Bearer ${user.token}`, // Include necessary headers
         },
       });
 
       if (response.status === 200) {
-        console.log('User logged out successfully');
         socket.emit('userLogout', user.email);
+        dispatch({
+          type: "Logout",
+        });
         socket.disconnect();
-        dispatch({ type: 'Logout' });
-        setLogoutStatus(true);
-        history.push('/Base');
+        console.log('User logged out successfully');
+        navigate('/', { replace: true });
       } else {
         console.error('Failed to log out user');
       }
@@ -35,18 +35,13 @@ const LogoutPage = ({ requests }) => {
     }
   };
 
+  useEffect(() => {
+    handleLogout();
+  }, []);
+
   return (
-    <div className="logout-container">
-      <div className="logout-wrapper">
-        <div className="logout-buttons">
-          <button
-            id="logoutButton"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+    <div className="logout-page">
+      <h1>Logging out...</h1>
     </div>
   );
 };
