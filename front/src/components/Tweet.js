@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   fetchBookmarks,
+  addBookmark,
+  removeBookmark,
   selectBookmarks,
   selectBookmarksStatus,
   selectBookmarksError,
@@ -30,17 +32,28 @@ function Tweet( props ) {
     const bookmarkStatus = useSelector(selectBookmarksStatus);
     const bookmarks = useSelector(selectBookmarks);
 
-    const { author, content, media, hashtags, num_views, created_at, updated_at, poll, retweet, retweet_author } = tweet;
-    
+    const { author, content, media, hashtags, created_at, updated_at, poll, retweet, retweet_author } = tweet;
+    const [num_views, setNumViews] = useState(tweet.num_views);
     const [num_comments, setNumComments] = useState(tweet.num_comments);
     const [liked_by, setLikedBy] = useState(tweet.liked_by);
     const [isLiked, setIsLiked] = useState((liked_by && liked_by.includes(user._id)) || false);
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
-    const [isBookmarked, setIsBookmarked] = useState(bookmarks ? bookmarks.includes(tweet._id) : false);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
     console.log('tweet_id', tweet._id, 'tweet.num_retweets', tweet.num_retweets);
 
-     useEffect(() => {
+    useEffect(() => {
+      setNumViews(prevNumViews => prevNumViews + 1);
+      axios.put(requests.incrementViews + tweet._id, {
+          amount: 1
+      }, {
+          headers: {
+              Authorization: `Bearer ${user.token}`,
+          },
+      }).then(res => console.log(res))
+      .catch(err => console.log(err));
+    }, []);
+
+    useEffect(() => {
         if (bookmarkStatus === 'idle') {
             dispatch(fetchBookmarks());
         }
@@ -54,12 +67,13 @@ function Tweet( props ) {
           updated_tweet.liked_by = liked_by;
           updated_tweet.num_bookmarks = num_bookmarks;
           updated_tweet.num_retweets = numRetweets;
+          updated_tweet.num_views = num_views;
 
           console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
           onTweetUpdate(updated_tweet);
         }
 
-      }, [num_comments, liked_by, num_bookmarks, numRetweets]);
+      }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
 
       useEffect(() => {
       socket.on("update-likes", data => {
@@ -90,11 +104,18 @@ function Tweet( props ) {
               setNumComments(prevNumComments => prevNumComments + 1);
           }
       });
+
+      socket.on("update-views", data => {
+        if (data.tweet_id === tweet._id && data.views > num_views) {
+          setNumViews(data.views);
+        }
+      });
       return () => {
         socket.off("update-likes");
         socket.off("retweeted");
         socket.off("bookmark");
         socket.off("increment-comment-count");
+        socket.off("update-views");
       };
     }, [tweet._id, user]);
       
@@ -114,10 +135,10 @@ function Tweet( props ) {
     };
 
     const handleBookmark = () => {
+        const isBookmarked = bookmarks.includes(tweet._id);
         if (isBookmarked) {
+            dispatch(removeBookmark(tweet._id));
             setNumBookmarks(num_bookmarks - 1);
-            setIsBookmarked(false);
-
             axios.post(requests.deleteBookmark + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
@@ -130,8 +151,8 @@ function Tweet( props ) {
               })
             .catch(err => console.log(err));
         } else {
+            dispatch(addBookmark(tweet));
             setNumBookmarks(num_bookmarks + 1);
-            setIsBookmarked(true);
             axios.post(requests.bookmarkTweet + tweet._id, {}, {
                 headers: {
                     Authorization: `Bearer ${
@@ -169,7 +190,7 @@ function Tweet( props ) {
       </div>
       <div className="tweet__body">
         <p>{content}</p>
-        { media ? (<img src={media} alt="media" />) : null}
+        { media ? (<img src={media} alt=''/>) : null}
         {/* if poll exists, render poll component with poll object */}
         {poll && <Poll poll_object={poll} />}
         {retweet && (
@@ -200,16 +221,17 @@ function Tweet( props ) {
       <div className="tweet__footer">
         <p className="tweet__footerViews">{num_views} views</p>
         <div className="tweet__footerIcons">
-          <span onClick={handleComment}>
-            <img src={comment_icon} alt="comment" className='tweet__footerIcon'/>
-            <span>{num_comments}</span>
-          </span>
+      <span onClick={handleComment}>
+        <img src={comment_icon} alt="comment" className='tweet__footerIcon' title='Reply'/>
+        <span>{num_comments}</span>
+      </span>
           <span onClick={openRetweetModal}>
             <PostTweetForm 
             retweet={tweet}
             isOpen={isRetweetModalOpen}
             setIsOpen={setIsRetweetModalOpen} />
             <svg
+              title='Retweet'
               className='tweet__footerIcon'
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -220,7 +242,6 @@ function Tweet( props ) {
               <path d="m3 9 3-3 3 3m2-3h7v11"/>
               <path d="m21 15-3 3-3-3"/>
             </svg>
-            {console.log('tweet_id', tweet._id, 'num_retweets', numRetweets)}
             <span>{numRetweets}</span>
             </span>
             <span onClick={handleLike}>
@@ -229,9 +250,10 @@ function Tweet( props ) {
             </span>
             <span onClick={handleBookmark}>
             <svg 
+            title='Bookmark'
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 50 50"
-              className='tweet__footerIcon'>
+              className='tweet__footerIcon bookmark-icon'>
                 <g>
                   <path d="M 12.8125 2 C 12.335938 2.089844 11.992188 2.511719 12 3 L 12 47 C 11.996094 47.359375 12.1875 47.691406 12.496094 47.871094 C 12.804688 48.054688 13.1875 48.054688 13.5 47.875 L 25 41.15625 L 36.5 47.875 C 36.8125 48.054688 37.195313 48.054688 37.503906 47.871094 C 37.8125 47.691406 38.003906 47.359375 38 47 L 38 3 C 38 2.449219 37.550781 2 37 2 L 13 2 C 12.96875 2 12.9375 2 12.90625 2 C 12.875 2 12.84375 2 12.8125 2 Z M 14 4 L 36 4 L 36 45.25 L 25.5 39.125 C 25.191406 38.945313 24.808594 38.945313 24.5 39.125 L 14 45.25 Z"></path>
                 </g>

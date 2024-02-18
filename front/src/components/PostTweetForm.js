@@ -4,6 +4,9 @@ import { requests } from '../constants/requests';
 import ReactModal from 'react-modal';
 import Poll from './Poll';
 import '../styles/PostTweetForm.css';
+
+const cldUploadApi = "https://api.cloudinary.com/v1_1/dqqel2q07/image/upload";
+
 function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
     ReactModal.setAppElement('body');
@@ -24,7 +27,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         setTweetText(e.target.value)
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
         var words = tweetText.split(/[\s#]+/);
         // use reduce to split words into two arrays, one for hashtags and one for the rest of the tweet
@@ -36,8 +39,8 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             }
             return acc
         }, {hashtags: [],text: []})
-        setTweetText(splitWords.text.join(' '))
-        setTweetHashTags(splitWords.hashtags)
+        setTweetText(splitWords.text.join(' '));
+        setTweetHashTags(splitWords.hashtags);
 
         if (tweetText === '' && tweetMedia === null && !displayPoll) {
             setMessage('Please enter a tweet, attach media or create a poll')
@@ -59,10 +62,24 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             setMessage('Please enter a duration for your poll')
             return
         }
+
+        const formData = new FormData();
+        formData.append('file', tweetMedia);
+        formData.append('upload_preset', 'dkp3udd5');
+
+        const res = await fetch(
+            cldUploadApi,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        const imgData = await res.json();
+
         axios.post(requests.postTweet, {
             content: tweetText,
             retweet_id: isRetweet ? retweet._id : null,
-            media: tweetMedia,
+            media: imgData.url,
             hashtags: tweetHashTags,
             poll: displayPoll ? {
                 title: pollTitle,
@@ -235,9 +252,9 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                 <div className="tweet-options">
                     <div className="tweet-options-left">
                         <input
-                            type="file"
+                            type="Text"
                             className="tweet-media"
-                            onChange={(e) => setTweetMedia(e.target.files[0])}
+                            onChange={(e) => setTweetMedia(e.target.value)}
                             disabled={displayPoll}
                         />
                         {!isRetweet && (
@@ -267,11 +284,10 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                     </div>
                 </div>
                 <p className="message">{message}</p>
-
             </form>
         </div>
         </ReactModal>
   );
 }
 
-export default PostTweetForm
+export default PostTweetForm;

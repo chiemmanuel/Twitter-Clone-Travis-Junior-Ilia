@@ -10,6 +10,7 @@ export const requests = {
     editProfile: '/user/update',
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
+    incrementViews: '/tweets/increment-views/',
     deleteTweet: '/tweets/delete/',
     getTweet: '/tweets/fetch/',
     liveFeed: '/tweets/livefeed',

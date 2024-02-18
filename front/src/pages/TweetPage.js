@@ -29,6 +29,7 @@ const ViewTweetPage = () => {
               },
         })
             .then((response) => {
+                console.log('response', response)
                 setTweet(response.data.tweet)
                 setTweetAuthorUsername(response.data.tweet.author.username)
                 setTweetAuthorEmail(response.data.tweet.author_email)

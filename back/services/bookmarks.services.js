@@ -3,19 +3,29 @@ const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const userModel = require("../models/userModel.js");
 const { sendMessage } = require('../boot/socketio/socketio_connection');
+const { fetch_tweet_query } = require('../constants/fetchFeedConstants.js');
 
 const getBookmarks = async (req, res) => {
     const userId = req.user._id;
 
     try {
         const user = await userModel.findById(userId);
-        return res.status(statusCodes.success).json({ bookmarks: user.bookmarked_tweets });
+
+        var query = fetch_tweet_query;
+        if (query[0].$match) {
+            query[0].$match._id.$in = user.bookmarked_tweets;
+        } else {
+        query.unshift({ $match: { _id: { $in: user.bookmarked_tweets } } });
+        }
+        const bookmarked_tweets = await tweetModel.aggregate(query);
+        return res.status(statusCodes.success).json({ bookmarks: user.bookmarked_tweets , bookmarked_tweets: bookmarked_tweets});
 
     } catch (error) {
         logger.error(`Error while fetching bookmarks: ${error}`);
         res.status(statusCodes.queryError).send('Error while fetching bookmarks');
     }
 };
+    
 
 const addBookmark = async (req, res) => {
     const { tweet_id } = req.params;
@@ -55,7 +65,7 @@ const deleteBookmark = async (req, res) => {
         await user.save();
         await tweet.save();
         
-        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: false})
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: true})
         return res.status(statusCodes.success).json({ message: 'Bookmark deleted' });
     
     } catch (error) {

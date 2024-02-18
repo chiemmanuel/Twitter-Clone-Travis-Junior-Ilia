@@ -5,7 +5,7 @@ const logger = require("../middleware/winston");
 const tweetModel = require('../models/tweetModel');
 const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
-const fetch_feed_query = require ('../constants/fetchFeedConstants.js').fetch_feed_query;
+const { fetch_feed_query, fetch_tweet_query } = require ('../constants/fetchFeedConstants.js');
 const User = require('../models/userModel');
 
 /**
@@ -202,7 +202,12 @@ const getUserTweets = async (req, res) => {
     if(req.body.last_tweet_id) {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
-            query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
+            if (query[0].$match) {
+                query[0].$match.author_email = user_email;
+                query[0].$match._id.$lt = last_tweet_id;
+            } else {
+                query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
+            }
             // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
@@ -236,7 +241,13 @@ const getUserLikedTweets = async (req, res) => {
     console.log(_id);
     try {
         // Find tweets where the given user _id is present in the liked_by array
-        const likedTweets = await tweetModel.find({ liked_by: _id });
+        var query = fetch_tweet_query;
+        if (query[0].$match) {
+            query[0].$match.liked_by = _id;
+        } else {
+            query.unshift({ $match: { liked_by: _id } });
+        }
+        const likedTweets = await tweetModel.aggregate(query);
 
         if (likedTweets.length > 0) {
             return res.status(statusCodes.success).json({ status: 'success', likedTweets: likedTweets });
@@ -250,6 +261,7 @@ const getUserLikedTweets = async (req, res) => {
         return res.status(statusCodes.serverError).json({ status: 'error', error: error });
     }
 };
+
 
 /**
  * This function fetches the comments of a given user
