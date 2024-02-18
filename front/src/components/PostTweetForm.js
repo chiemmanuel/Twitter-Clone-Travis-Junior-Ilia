@@ -2,7 +2,10 @@ import { useState } from 'react';
 import axios from '../constants/axios';
 import { requests } from '../constants/requests';
 import ReactModal from 'react-modal';
+
+
 import Poll from './Poll';
+import upload_icon from '../icons/upload_icon.svg';
 import '../styles/PostTweetForm.css';
 
 const cldUploadApi = "https://api.cloudinary.com/v1_1/dqqel2q07/image/upload";
@@ -10,11 +13,32 @@ const cldUploadApi = "https://api.cloudinary.com/v1_1/dqqel2q07/image/upload";
 function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
     ReactModal.setAppElement('body');
-    const closeModal = () => setIsOpen(false);
+    const closeModal = () => {
+        setIsOpen(false);
+        if (tweetText !== '' || tweetMedia !== null || displayPoll) {
+            const confirmClose = window.confirm('Are you sure you want to close the form? Your unsaved data will be lost.');
+            if (!confirmClose) {
+                return;
+            }
+        }
+        setTweetText('')
+        setTweetMedia(null)
+        setPreviewURL(null)
+        setTweetHashTags([])
+        setDisplayPoll(false)
+        setPollTitle('')
+        setPollOptions([])
+        setPollHours(0)
+        setPollMinutes(0)
+        setMessage('')
+        setIsOpen(false);
+    }
+        
     const isRetweet = retweet ? true : false
     const [tweetText, setTweetText] = useState('')
     const [tweetHashTags, setTweetHashTags] = useState([])
     const [tweetMedia, setTweetMedia] = useState(null)
+    const [previewURL, setPreviewURL] = useState(null);
     const [displayPoll, setDisplayPoll] = useState(false)
     const [pollTitle, setPollTitle] = useState('')
     const [pollOptions, setPollOptions] = useState([])
@@ -96,6 +120,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         .then((response) => {
             setTweetText('')
             setTweetMedia(null)
+            setPreviewURL(null)
             setTweetHashTags([])
             setDisplayPoll(false)
             setPollTitle('')
@@ -143,6 +168,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                     value={tweetText}
                     onChange={(e) => handleTweetTextChange(e)}
                 />
+                {previewURL && <img src={previewURL} alt="media" className='img-preview'/>}
                 {isRetweet ? (
                         <div className="tweet">
                         <div className="tweet__header">
@@ -251,10 +277,17 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                 )}
                 <div className="tweet-options">
                     <div className="tweet-options-left">
+                        <label for="tweet-media">
+                            <img id='upload-icon' src={upload_icon} alt='media-icon' title='Attach an image or gif' />
+                        </label>
                         <input
-                            type="Text"
-                            className="tweet-media"
-                            onChange={(e) => setTweetMedia(e.target.value)}
+                            type="file"
+                            id="tweet-media"
+                            title='Attach an image or video'
+                            onChange={(e) => {
+                                setTweetMedia(e.target.files[0])
+                                setPreviewURL(URL.createObjectURL(e.target.files[0]))
+                            }}
                             disabled={displayPoll}
                         />
                         {!isRetweet && (

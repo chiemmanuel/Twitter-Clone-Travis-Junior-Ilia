@@ -39,7 +39,6 @@ function Tweet( props ) {
     const [isLiked, setIsLiked] = useState((liked_by && liked_by.includes(user._id)) || false);
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
-    console.log('tweet_id', tweet._id, 'tweet.num_retweets', tweet.num_retweets);
 
     useEffect(() => {
       setNumViews(prevNumViews => prevNumViews + 1);

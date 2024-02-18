@@ -47,6 +47,12 @@
   resize: none;
 }
 
+.img-preview {
+  height: 300px;
+  width: 300px;
+  margin-top: 10px;
+}
+
 .poll-form {
   margin-top: 10px;
 }
@@ -132,6 +138,23 @@
   width: 100px;
 }
 
+#tweet-media {
+  display: none;
+}
+
+#upload-icon {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background-color: #1da1f2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  height: 24px;
+  width: 24px;
+}
+
+
 .tweet-media {
   width: 75px;
   margin-top: 10px;
@@ -139,6 +162,7 @@
 }
 
 .tweet-poll {
+ margin-top: 20px;
  margin-left: 10px;
  height : 40px;
 }
