@@ -44,7 +44,6 @@ const EditPassword = ({onClose}) => {
   };
 
   return (
-    <div className="edit-password-container">
       <form onSubmit={handleSubmit} className="password-form">
       <span className="close-button" onClick={onClose}>
         <FontAwesomeIcon icon={faTimes} />
@@ -76,7 +75,6 @@ const EditPassword = ({onClose}) => {
         </button>
         {error && <p className="password-error">{error}</p>}
       </form>
-    </div>
   );
 };
 

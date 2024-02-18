@@ -1,58 +1,85 @@
 /* UpdateProfile.css */
 
 .update-profile-container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 400px;
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    cursor: pointer;
-    color: #1da1f2;
-  }
-  
-  .update-profile-form {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .update-profile-label {
-    margin-top: 10px;
-    font-weight: bold;
-  }
-  
-  .update-profile-input,
-  .update-profile-textarea {
-    margin-bottom: 10px;
-    padding: 8px;
-    border: 1px solid #1da1f2; /* Twitter blue border color */
-    border-radius: 4px;
-  }
-  
-  .update-profile-button {
-    background-color: #1da1f2;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  
-  .update-profile-button:hover {
-    background-color: #0f75bc; /* Slightly darker shade on hover */
-  }
-  
-  .error-message {
-    color: #ff0000;
-    margin-top: 10px;
-  }
-  
+  position: fixed;
+  top: 25%; /* Updated to top of the page */
+  left: 25%; /* Updated to 25% from the left */
+  width: 50%; /* Updated to 50% of the width */
+  height: 40%; /* Updated to cover the entire height */
+  overflow-y: auto; /* Enable vertical scrolling if needed */
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.close-button {
+  position: relative;
+  top: 5%;
+  left: 95%;
+  cursor: pointer;
+  color: #0f1010;
+}
+
+.update-profile-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.update-profile-label {
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.update-profile-input,
+.update-profile-textarea {
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #1a1b1b; /* Twitter blue border color */
+  border-radius: 4px;
+}
+
+.update-profile-button,
+.update-profile-button-next,
+.update-profile-button-skip {
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 10px; /* Added margin between buttons */
+}
+.update-profile-button {
+  position: relative;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #4ca5cf; /* Twitter blue color */
+}
+.update-profile-button-next {
+  background-color: #1d252b; /* Slightly darker shade */
+}
+.update-profile-button-skip {
+  background-color: #413939; /* Light gray color */
+}
+
+.update-profile-button:hover {
+  background-color: #365574; /* Slightly darker shade on hover */
+}
+.update-profile-button-next:hover {
+  background-color: #4f8197; /* Slightly darker shade on hover */
+}
+.update-profile-button-skip:hover {
+  background-color: #47546b; /* Slightly darker shade on hover */
+}
+
+.error-message {
+  color: #ff0000;
+  margin-top: 10px;
+}
+
+/* Additional styling for image preview */
+.img-preview {
+  max-width: 100%;
+  margin-top: 10px;
+}

@@ -41,6 +41,12 @@ const SignUp = ({ onClose, showLoginForm }) => {
         return;
       }
 
+      // Check password length
+      if (fields.password.length < 8) {
+        setMessage("Password must be at least 8 characters long");
+        return;
+      }
+
       // Send request to server for each step
       const response = await instance.post(requests.signup, {
         ...fields,
@@ -139,21 +145,22 @@ const SignUp = ({ onClose, showLoginForm }) => {
       )}
 
       {step === 3 && (
-        <>
-        <div className="password-container">
-          <label>Password</label>
-          <input
-            type={showPass ? "text" : "password"}
-            className="signup-input"
-            value={fields.password}
-            onChange={(e) => handleChange(e, "password")}
-          />
-          <span onClick={togglePassword} className="toggle-password">
-            <FontAwesomeIcon icon={showPass ? faEye : faEyeSlash} className="customIcon" />
-          </span>
-        </div>
-        </>
-      )}
+          <>
+          <div className="password-container">
+            <label>Password</label>
+            <input
+              type={showPass ? "text" : "password"}
+              className="signup-input"
+              value={fields.password}
+              onChange={(e) => handleChange(e, "password")}
+              minLength={8} // Add minLength attribute to enforce minimum length of 8 characters
+            />
+            <span onClick={togglePassword} className="toggle-password">
+              <FontAwesomeIcon icon={showPass ? faEye : faEyeSlash} className="customIcon" />
+            </span>
+          </div>
+          </>
+        )}
 
       {step === 4 && (
         <>
