@@ -20,7 +20,10 @@
   height: 40px;
   border-radius: 50%;
 
-  background-color: grey;
+  background-size: cover;
+  background-position: center;
+  background-color: aquamarine;
+  background-size: 55px;
 }
 
 .displayname, .username {
