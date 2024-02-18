@@ -58,6 +58,28 @@ const AppStateReducer = (state, action) => {
       };
     }
 
+    case "Follow": {
+      const updatedUser = { ...state.user,
+        following: [...state.user.following, action.payload],
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return {
+        ...state,
+        user: updatedUser,
+      };
+    }
+
+    case "Unfollow": {
+      const updatedUser = { ...state.user,
+        following: state.user.following.filter((id) => id !== action.payload),
+      };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return {
+        ...state,
+        user: updatedUser,
+      };
+    }
+
     default:
       return state;
 }

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { requests } from '../constants/requests';
 import '../styles/User.css';
-import axios from 'axios';
+import instance from '../constants/axios';
+import useAppStateContext from '../hooks/useAppStateContext';
 
 import logout_icon from '../icons/logout_icon.svg';
 
 const User = ({ user }) => {
+  const { dispatch } = useAppStateContext();
   const { _id, username, profile_img } = user;
   const { following } = JSON.parse(localStorage.getItem("user"));
 
@@ -19,22 +21,32 @@ const User = ({ user }) => {
 
   const handleFollowToggle = async () => {
     if (isFollowing) {
-      await axios.delete('http://localhost:8080/followers/unfollow/' + _id,
+      await instance.delete('http://localhost:8080/followers/unfollow/' + _id,
         {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
         }
-      );
+      ).then((res) => {
+        console.log(res.data);
+        dispatch({ type: 'Unfollow', payload: _id });
+      }).catch((err) => {
+        console.log(err);
+      });
       setIsFollowing(false);
     } else {
-      await axios.post('http://localhost:8080/followers/follow/' + _id, {},
+      await instance.post('http://localhost:8080/followers/follow/' + _id, {},
         {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
         }
-      );
+      ).then((res) => {
+        console.log(res.data);
+        dispatch({ type: 'Follow', payload: _id });
+      }).catch((err) => {
+        console.log(err);
+      });
       setIsFollowing(true);
     }
   };

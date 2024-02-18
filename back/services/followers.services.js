@@ -1,6 +1,7 @@
 const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const userModel = require('../models/userModel');
+const sendMessage = require('../boot/socketio/socketio_connection.js').sendMessage;
 
 const followUser = async (req, res) => {
     console.log('followUser');
