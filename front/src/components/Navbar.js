@@ -24,7 +24,7 @@ const Navbar = () => {
       <NavbarLink name='Search' icon={search_icon} href='/' />
       <NavbarLink name='Notifications' icon={notifications_icon} href='/notifications' />
       <NavbarLink name='Bookmarks' icon={bookmark_icon} href='/bookmarks' />
-      <NavbarLink name='Profile' icon={profile_icon} href='/' />
+      <NavbarLink name='Profile' icon={profile_icon} href='/profile' />
       <button onClick={openPostModal}>Post</button>
       <PostTweetForm 
         isOpen={isPostModalOpen}
