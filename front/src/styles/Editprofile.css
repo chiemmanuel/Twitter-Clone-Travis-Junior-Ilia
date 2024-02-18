@@ -80,6 +80,6 @@
 
 /* Additional styling for image preview */
 .img-preview {
-  max-width: 100%;
+  max-width: 50%;
   margin-top: 10px;
 }

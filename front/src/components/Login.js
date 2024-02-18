@@ -82,6 +82,9 @@ const LoginForm = ({ onClose, showSignUpForm }) => {
 
   return (
     <div className="login-container">
+      <span className="close-button" onClick={onClose}>
+        &#10006;
+      </span>
       {currentStep === 1 && (
         <>
           <label className="email">Email</label>
@@ -94,37 +97,35 @@ const LoginForm = ({ onClose, showSignUpForm }) => {
         </>
       )}
 
-      {currentStep === 2 && (
-        <>
-          <label className="password">Password</label>
-          <input
-            type={showPass ? "text" : "password"}
-            className="password-input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <span onClick={(e) => togglePassword(e)} className="toggle-password">
-            <span>
-              {showPass ? (
-                <FontAwesomeIcon icon={faEye} className="customIcon" />
-              ) : (
-                <FontAwesomeIcon icon={faEyeSlash} className="customIcon" />
-              )}
+{currentStep === 2 && (
+  <>
+    <label className="password">Password</label>
+    <div className="password-input-container">
+      <input
+        type={showPass ? "text" : "password"}
+        className="password-input"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+            <span onClick={(e) => togglePassword(e)} className="toggle-password">
+              <span>
+                {showPass ? (
+                  <FontAwesomeIcon icon={faEye} className="customIcon" />
+                ) : (
+                  <FontAwesomeIcon icon={faEyeSlash} className="customIcon" />
+                )}
+              </span>
             </span>
-          </span>
+          </div>
         </>
       )}
-
-      <button className="submit" onClick={handleNextClick}>
+            <button className="submit" onClick={handleNextClick}>
         {currentStep === 1 ? "Next" : "Sign In"}
       </button>
       <span className="signup-link" onClick={handleSignUpClick}>
-        Sign Up
+      New here? Sign Up
       </span>
       <span className="error-message">{message}</span>
-      <span className="close-button" onClick={onClose}>
-        &#10006;
-      </span>
     </div>
   );
 };
