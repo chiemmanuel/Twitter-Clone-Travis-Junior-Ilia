@@ -367,8 +367,8 @@ const getFollowedTweets = async (req, res) => {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             var query = fetch_feed_query;
             if (query[0].$match) {
-                query[0].$match._id.$lt = last_tweet_id;
-                query[0].$match.author_id.$in = followed_users;
+                query[0].$match._id = { $lt: last_tweet_id };
+                query[0].$match.author_id = { $in: followed_users };
             } else {
                 query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             }
