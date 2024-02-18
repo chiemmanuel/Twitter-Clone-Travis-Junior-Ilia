@@ -16,8 +16,12 @@ const HomePage = () => {
   const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
-    socket.on('new-tweet', data => {
-      setLiveFeedTweets(prevTweets => [data, ...prevTweets]);
+    socket.on('tweet-created', data => {
+      const tweet = data.tweet;
+      if (liveFeedTweets.includes(tweet)) {
+        return;
+      }
+      setLiveFeedTweets(prevTweets => [tweet, ...prevTweets]);
     });
     
     instance.get(requests.liveFeed, {
@@ -29,17 +33,19 @@ const HomePage = () => {
       setLiveFeedTweets(res.data.tweets);
       setLiveFeedLastId(res.data.last_tweet_id);
       if (res.data.tweets.length < 10) {
+        console.log('no more tweets');
         setLiveFeedHasMore(false);
       }
     }).catch((err) => {
       console.log(err);
     });
     return () => {
-      socket.off('new-tweet');
+      socket.off('tweet-created');
     }
   }, []);
 
   const fetchMoreLiveFeedTweets = () => {
+    console.log('fetching more live feed tweets');
     instance.get(requests.liveFeed + `?last_tweet_id=${liveFeedLastId}`,
       {
       headers: {
@@ -49,6 +55,7 @@ const HomePage = () => {
       setLiveFeedTweets(prevTweets => [...prevTweets, ...res.data.tweets]);
       setLiveFeedLastId(res.data.last_tweet_id);
       if (res.data.tweets.length < 10 || res.data.last_tweet_id === null) {
+        console.log('no more tweets');
         setLiveFeedHasMore(false);
       }
     }).catch((err) => {
@@ -64,17 +71,19 @@ const HomePage = () => {
 
       <div className='main'>
         <div className='livefeed'>
+          <h1>Live Feed</h1>
           <InfiniteScroll
             dataLength={liveFeedTweets.length}
             next={fetchMoreLiveFeedTweets}
             hasMore={liveFeedHasMore}
             loader={<h4>Loading...</h4>}
+            scrollableTarget="livefeed"
+            scrollThreshold={0.5}
           >
             {liveFeedTweets.map((tweet) => {
               return <Tweet key={tweet._id} tweet={tweet} />
             })}
           </InfiniteScroll>
-
         </div>
 
         <div className=''>

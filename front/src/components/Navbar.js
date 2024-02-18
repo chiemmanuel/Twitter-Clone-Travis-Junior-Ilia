@@ -20,7 +20,7 @@ const Navbar = () => {
       <a href='/'>
         <img src={twitter_icon} alt='twitter-logo' className='twitter-logo'></img>
       </a>
-      <NavbarLink name='Home' icon={home_icon} href='/' />
+      <NavbarLink name='Home' icon={home_icon} href='/home' />
       <NavbarLink name='Search' icon={search_icon} href='/search' />
       <NavbarLink name='Notifications' icon={notifications_icon} href='/notifications' />
       <NavbarLink name='Bookmarks' icon={bookmark_icon} href='/bookmarks' />

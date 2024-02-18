@@ -27,7 +27,6 @@ function Tweet( props ) {
     const { tweet } = props
     const { onTweetUpdate } = props;
     const user = JSON.parse(localStorage.getItem('user'));
-    console.log('user:', user);
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [isRetweetModalOpen, setIsRetweetModalOpen] = useState(false);
@@ -61,21 +60,21 @@ function Tweet( props ) {
         }
     }, [bookmarkStatus, dispatch]);
 
-      useEffect(() => {
-        console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
-        if ( onTweetUpdate !== undefined ) {
-          var updated_tweet = tweet;
-          updated_tweet.num_comments = num_comments;
-          updated_tweet.liked_by = liked_by;
-          updated_tweet.num_bookmarks = num_bookmarks;
-          updated_tweet.num_retweets = numRetweets;
-          updated_tweet.num_views = num_views;
+      // useEffect(() => {
+      //   console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
+      //   if ( onTweetUpdate !== undefined ) {
+      //     var updated_tweet = tweet;
+      //     updated_tweet.num_comments = num_comments;
+      //     updated_tweet.liked_by = liked_by;
+      //     updated_tweet.num_bookmarks = num_bookmarks;
+      //     updated_tweet.num_retweets = numRetweets;
+      //     updated_tweet.num_views = num_views;
 
-          console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
-          onTweetUpdate(updated_tweet);
-        }
+      //     console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
+      //     onTweetUpdate(updated_tweet);
+      //   }
 
-      }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
+      // }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
 
       useEffect(() => {
       socket.on("update-likes", data => {
