@@ -145,7 +145,7 @@ const ProfilePage = () => {
             </div>
           )}
   
-          {activeContainer === "userComments" && (
+                    {activeContainer === "userComments" && (
             <div className="user-comments-container">
               <h3>Comments</h3>
               {userComments.length > 0 ? (
@@ -155,6 +155,7 @@ const ProfilePage = () => {
               )}
             </div>
           )}
+
   
           {/* Overlay for EditProfile */}
           {showEditProfile && (

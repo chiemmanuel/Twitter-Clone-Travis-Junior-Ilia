@@ -204,7 +204,7 @@ const SignUp = ({ onClose, showLoginForm }) => {
       )}
 
       <div className="signup-buttons">
-      <button className="signup-back" onClick={() => setStep((prevStep) => prevStep - 1)} disabled={step == 1}>
+      <button className="signup-back" onClick={() => setStep((prevStep) => prevStep - 1)} disabled={step === 1}>
         Previous
       </button>
       <button className="signup-next" onClick={step < 7 ? handleNext : handleSignUp} >

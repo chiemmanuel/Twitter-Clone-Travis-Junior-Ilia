@@ -175,12 +175,13 @@ const getUserByUsername = async (req, res) => {
         logger.info(`Fetching user with username: ${username}`);
 
         // Fetch user information from the database based on the username
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username : username });
 
         if (!user) {
+            console.log("User not found");
             return res.status(statusCodes.badRequest).json({ message: "User not found" });
         }
-
+        console.log(user);
         return res.status(statusCodes.success).json(user);
     } catch (error) {
         console.error("Error while getting user from MongoDB", error.message);

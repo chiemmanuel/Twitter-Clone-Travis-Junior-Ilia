@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import BasePage from './pages/BasePage';
 import TestPage from './pages/TestPage';
 import ProfilePage from './pages/ProfilePage';
+import Userprofile from './pages/Userprofile';
 import ViewTweetPage from './pages/TweetPage.js';
 import NotificationPage from './pages/NotificationPage.js';
 import BookmarkPage from './pages/BookmarksPage.js';
@@ -78,6 +79,7 @@ function App() {
         <Route path='/' element={<BasePage />} />
         <Route path='/Home' element={<HomePage />} />
         <Route path='/profile/' element={<ProfilePage />} />
+        <Route path='/profile/:username' element={<Userprofile />} />
         <Route element={<PublicRoute />}>
           <Route path='/test' element={<TestPage />} />
         </Route>
