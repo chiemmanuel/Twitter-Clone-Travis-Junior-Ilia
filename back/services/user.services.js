@@ -175,12 +175,13 @@ const getUserByUsername = async (req, res) => {
         logger.info(`Fetching user with username: ${username}`);
 
         // Fetch user information from the database based on the username
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username : username });
 
         if (!user) {
+            console.log("User not found");
             return res.status(statusCodes.badRequest).json({ message: "User not found" });
         }
-
+        console.log(user);
         return res.status(statusCodes.success).json(user);
     } catch (error) {
         console.error("Error while getting user from MongoDB", error.message);
@@ -238,14 +239,15 @@ const getUserTweets = async (req, res) => {
  */
 const getUserLikedTweets = async (req, res) => {
     const { _id } = req.params;
+    console.log('Fetching liked tweets for user with _id:', _id);
     console.log(_id);
     try {
         // Find tweets where the given user _id is present in the liked_by array
         var query = fetch_tweet_query;
         if (query[0].$match) {
-            query[0].$match.liked_by = _id;
+            query[0].$match.liked_by = new ObjectId(_id);
         } else {
-            query.unshift({ $match: { liked_by: _id } });
+            query.unshift({ $match: { liked_by: new ObjectId(_id) }});
         }
         const likedTweets = await tweetModel.aggregate(query);
 

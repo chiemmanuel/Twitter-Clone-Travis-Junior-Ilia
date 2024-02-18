@@ -6,7 +6,10 @@ import { requests } from "../constants/requests";
 import UpdateProfile from "../components/Editprofile";
 import Editpassword from "../components/Editpassword";
 import Tweet from "../components/Tweet";
+import Comment from "../components/Comment";
+import Navbar from "../components/Navbar";
 import "../styles/Profile.css";
+import "../styles/Home.css";
 
 const ProfilePage = () => {
   const [activeContainer, setActiveContainer] = useState("userTweets");
@@ -61,8 +64,11 @@ const ProfilePage = () => {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
-        });
-        setLikedTweets(likedTweetsResponse.data.likedTweets);
+        }).then(
+          (response) => {
+            console.log(response.data);
+            setLikedTweets(response.data.likedTweets);
+          });
 
         // Fetch user comments
         const commentsResponse = await instance.get(requests.userComments + response.data.username, {
@@ -81,98 +87,105 @@ const ProfilePage = () => {
   }, []);
   return (
     <div className="profile-page">
-      {error ? (
-        <p>{error}</p>
-      ) : user !== null ? (
-        <>
-          <div className="user-info-container">
-            <div className="user-info">
-              <img src={user.profile_img} alt="Profile" />
-              <div className="user-details">
-                <h2>{user.username}</h2>
-                <p>
-                  Joined since{" "}
-                  {new Date(user.created_at).toLocaleString("default", {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </p>
-                <div className="follower-info">
-                  <p>{user.followers.length} followers</p>
-                  <p>{user.following.length} following</p>
+      <div className='header'>
+        <Navbar />
+      </div>
+
+      <div className='main'>
+        {error ? (
+          <p>{error}</p>
+        ) : user !== null ? (
+          <>
+            <div className="user-info-container">
+              <div className="user-info">
+                <img src={user.profile_img} alt="Profile" />
+                <div className="user-details">
+                  <h2>{user.username}</h2>
+                  <p>
+                    Joined since{" "}
+                    {new Date(user.created_at).toLocaleString("default", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </p>
+                  <div className="follower-info">
+                    <p>{user.followers.length} followers</p>
+                    <p>{user.following.length} following</p>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="edit-options">
-              <button className="edit-profile-button" onClick={handleEditProfileClick}>
-                Edit Profile
-              </button>
-              <button className="edit-password-button" onClick={handleEditPasswordClick}>
-                Edit Password
-              </button>
-            </div>
-          </div>
-  
-          {/* Toggle buttons and content */}
-          <div className="toggle-buttons">
-            <button onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
-            <button onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
-            <button onClick={() => handleContainerToggle("userComments")}>Replies</button>
-          </div>
-  
-          {activeContainer === "userTweets" && (
-            <div className="user-tweets-container">
-              {userTweets.length > 0 ? (
-                userTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
-              ) : (
-                <p>No posts.</p>
-              )}
-            </div>
-          )}
-  
-          {activeContainer === "likedTweets" && (
-            <div className="user-tweets-container">
-              <h3>Liked Tweets</h3>
-              {likedTweets.length > 0 ? (
-                likedTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
-              ) : (
-                <p>No liked tweets.</p>
-              )}
-            </div>
-          )}
-  
-          {activeContainer === "userComments" && (
-            <div className="user-comments-container">
-              <h3>Comments</h3>
-              {userComments.length > 0 ? (
-                userComments.map((comment) => <Tweet key={comment._id} tweet={comment} />)
-              ) : (
-                <p>No comments.</p>
-              )}
-            </div>
-          )}
-  
-          {/* Overlay for EditProfile */}
-          {showEditProfile && (
-            <div className="overlay">
-              <div className="popup">
-                <UpdateProfile onClose={handleCloseEditProfile} />
+              <div className="edit-options">
+                <button className="edit-profile-button" onClick={handleEditProfileClick}>
+                  Edit Profile
+                </button>
+                <button className="edit-password-button" onClick={handleEditPasswordClick}>
+                  Edit Password
+                </button>
               </div>
             </div>
-          )}
-  
-          {/* Overlay for EditPassword */}
-          {showEditPassword && (
-            <div className="overlay">
-              <div className="popup">
-                <Editpassword onClose={handleCloseEditPassword} />
-              </div>
+    
+            {/* Toggle buttons and content */}
+            <div className="toggle-buttons">
+              <button onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
+              <button onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
+              <button onClick={() => handleContainerToggle("userComments")}>Replies</button>
             </div>
-          )}
-        </>
-      ) : (
-        <p>Loading user data...</p>
-      )}
+    
+            {activeContainer === "userTweets" && (
+              <div className="user-tweets-container">
+                {userTweets.length > 0 ? (
+                  userTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
+                ) : (
+                  <p>No posts.</p>
+                )}
+              </div>
+            )}
+    
+            {activeContainer === "likedTweets" && (
+              <div className="user-tweets-container">
+                <h3>Liked Tweets</h3>
+                {likedTweets.length > 0 ? (
+                  likedTweets.map((tweet) => <Tweet key={tweet._id} tweet={tweet} />)
+                ) : (
+                  <p>No liked tweets.</p>
+                )}
+              </div>
+            )}
+    
+                      {activeContainer === "userComments" && (
+              <div className="user-comments-container">
+                <h3>Comments</h3>
+                {userComments.length > 0 ? (
+                  userComments.map((comment) => <Comment key={comment._id} comment={comment} />)
+                ) : (
+                  <p>No comments.</p>
+                )}
+              </div>
+            )}
+
+    
+            {/* Overlay for EditProfile */}
+            {showEditProfile && (
+              <div className="overlay">
+                <div className="popup">
+                  <UpdateProfile onClose={handleCloseEditProfile} />
+                </div>
+              </div>
+            )}
+    
+            {/* Overlay for EditPassword */}
+            {showEditPassword && (
+              <div className="overlay">
+                <div className="popup">
+                  <Editpassword onClose={handleCloseEditPassword} />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p>Loading user data...</p>
+        )}
+      </div>
     </div>
   );  
 };

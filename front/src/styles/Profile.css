@@ -1,14 +1,15 @@
 /* Profile Page Styles */
 
 .profile-page {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
+  margin: 0;
+
 }
 
 .user-info-container {
+  width: 100%;
+  align-self: flex-start;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   margin-bottom: 20px;
 }

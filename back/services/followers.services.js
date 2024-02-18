@@ -3,6 +3,7 @@ const statusCodes = require('../constants/statusCodes.js');
 const userModel = require('../models/userModel');
 
 const followUser = async (req, res) => {
+    console.log('followUser');
     const { followed_user_id } = req.params;
     const user_id  = req.user._id;
     try {
@@ -10,6 +11,7 @@ const followUser = async (req, res) => {
         await userModel.findOneAndUpdate( { _id: followed_user_id }, { $addToSet: { followers: user_id } });
         logger.info(`User with id ${user_id} has followed user with id ${followed_user_id}`);
         res.status(statusCodes.success).send('User followed successfully');
+        console.log('User followed successfully');
     } catch (error) {
         logger.error(`Error following user: ${error}`);
         res.status(statusCodes.queryError).send('Error following user');
@@ -17,12 +19,16 @@ const followUser = async (req, res) => {
 };
 
 const unfollowUser = async (req, res) => {
+    console.log('unfollowUser');
     const { followed_user_id } = req.params;
     const  user_id  = req.user._id;
+    console.log(followed_user_id);
+    console.log(user_id);
     try {
         await userModel.findOneAndUpdate( { _id: user_id }, { $pull: { following: followed_user_id } });
         await userModel.findOneAndUpdate( { _id: followed_user_id }, { $pull: { followers: user_id } });
         logger.info(`User with id ${user_id} has unfollowed user with id ${followed_user_id}`);
+        console.log('User unfollowed successfully');
         res.status(statusCodes.success).send('User unfollowed successfully');
     } catch (error) {
         logger.error(`Error unfollowing user: ${error}`);
