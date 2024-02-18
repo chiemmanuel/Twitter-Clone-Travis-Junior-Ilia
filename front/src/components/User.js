@@ -3,14 +3,14 @@ import '../styles/User.css';
 
 import logout_icon from '../icons/logout_icon.svg';
 
-const User = ({  displayname, username, action }) => {
+const User = ({ user }) => {
+  const { username, profile_img } = user;
+
   return (
     <div className='user'>
-      <div className='user-photo'>
-
-      </div>
+      <div className='user-photo' style={{ backgroundImage: `url(${profile_img})` }}></div>
       <div className='info'>
-        <span className='displayname'>{ displayname }</span>
+        <span className='displayname'>{ username }</span>
         <span className='username'>@{ username }</span>
       </div>
       <div className='action'>

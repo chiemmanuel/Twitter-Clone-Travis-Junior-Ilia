@@ -15,12 +15,14 @@ const Navbar = () => {
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const openPostModal = () => setIsPostModalOpen(true);
 
+  const user = JSON.parse(localStorage.getItem('user'));
+
   return (
     <div className='navbar'>
-      <a href='/'>
+      <a href='/home'>
         <img src={twitter_icon} alt='twitter-logo' className='twitter-logo'></img>
       </a>
-      <NavbarLink name='Home' icon={home_icon} href='/' />
+      <NavbarLink name='Home' icon={home_icon} href='/home' />
       <NavbarLink name='Search' icon={search_icon} href='/search' />
       <NavbarLink name='Notifications' icon={notifications_icon} href='/notifications' />
       <NavbarLink name='Bookmarks' icon={bookmark_icon} href='/bookmarks' />
@@ -29,7 +31,7 @@ const Navbar = () => {
       <PostTweetForm 
         isOpen={isPostModalOpen}
         setIsOpen={setIsPostModalOpen} />
-      <User displayname='Display name' username='username'/>
+      <User user={user}/>
     </div>
   );
 }
