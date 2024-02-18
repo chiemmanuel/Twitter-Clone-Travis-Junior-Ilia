@@ -219,7 +219,7 @@ const SignUp = ({ onClose, showLoginForm }) => {
       </button>
       </div>
       <span className="login-link" onClick={handleLoginClick}>
-        Login
+        Already have an account? Login
       </span>
 
       <span className="error-message">{message}</span>

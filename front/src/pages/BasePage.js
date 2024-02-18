@@ -27,7 +27,8 @@ const BasePage = () => {
 
   return (
     <div className="base-page">
-      <h1>Base page</h1>
+      <h1>Twitter/X Project</h1>
+      <h3>Bare with us, we had just one month.</h3>
       <div className="form-switch">
         <button className={`login-button ${showLoginForm ? "active" : ""}`} onClick={handleSignInClick}>
           Sign In
@@ -36,8 +37,18 @@ const BasePage = () => {
           Sign Up
         </button>
       </div>
-      {showLoginForm && <LoginForm onClose={handleCloseLoginForm} showSignUpForm={() => setShowSignUp(true)} />}
-      {showSignUp && <SignUp onClose={handleCloseSignUpForm} showLoginForm={() => setShowLoginForm(true)}/>}
+      {showLoginForm && (
+      <div className="overlay">
+      <div className="popup">
+        <LoginForm onClose={handleCloseLoginForm} showSignUpForm={() => setShowSignUp(true)} />
+        </div>
+        </div>)}
+      {showSignUp && (
+        <div className="overlay">
+        <div className="popup">
+      <SignUp onClose={handleCloseSignUpForm} showLoginForm={() => setShowLoginForm(true)}/>
+      </div>
+      </div>)}
     </div>
   );
 };

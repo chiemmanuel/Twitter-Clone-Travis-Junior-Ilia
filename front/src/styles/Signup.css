@@ -62,7 +62,6 @@
   margin-right: 10px;
 }
 
-
 .signup-container .signup-next:disabled,
 .signup-container .signup-back:disabled {
   background-color: #ccc;
@@ -86,10 +85,13 @@
   font-size: 14px;
   margin-top: 8px;
 }
-
-/* Add media queries for responsiveness if needed */
-@media (max-width: 600px) {
-  .signup-container {
-    width: 100%;
-  }
+.login-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  cursor: pointer;
+  color: rgb(11, 11, 11);
+  text-decoration: none;
 }
+
+

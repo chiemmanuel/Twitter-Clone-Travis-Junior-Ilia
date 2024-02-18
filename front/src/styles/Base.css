@@ -8,8 +8,6 @@
   height: 100vh;
   padding: 20px;
   background-color: #f4f4f4;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   transition: background-color 0.3s ease;
 }
 
@@ -19,8 +17,16 @@
 
 .base-page h1 {
   color: #333;
-  font-size: 24px;
-  margin-bottom: 20px;
+  font-size: 100px;
+  margin-bottom: 50px;
+}
+.base-page h1:hover {
+  color: #000; /* Change the text color on hover */
+}
+.base-page h3 {
+  color: #333;
+  font-size: 20px;
+  margin-bottom: 200px;
 }
 
 .form-switch {
@@ -34,8 +40,8 @@
   flex: 1;
   background-color: #101112;
   color: #fff;
-  padding: 15px;
-  font-size: 16px;
+  padding: 25px;
+  font-size: 40px;
   cursor: pointer;
   border: none;
   border-radius: 8px; /* Rounded corners for buttons */
@@ -49,6 +55,25 @@
 }
 
 .form-container {
+  max-width: 600px;/* Adjust the max-width for larger forms */
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 600px; /* Adjust the max-width for larger forms */
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popup {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 50%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
 }
