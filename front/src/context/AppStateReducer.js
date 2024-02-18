@@ -26,6 +26,38 @@ const AppStateReducer = (state, action) => {
       };
     }
 
+    case "UpdateProfileImage": {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...state.user,
+          profile_img: action.payload,
+        })
+        );
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          profile_img: action.payload,
+        },
+      };
+    }
+
+    case "UpdateUsername": {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...state.user,
+          username: action.payload,
+        })
+        );
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          username: action.payload,
+        },
+      };
+    }
+
     default:
       return state;
 }

@@ -32,7 +32,7 @@ const updateUser = async (req, res) => {
         const updateValues = {};
         
         if (username) {
-            sendMessage(null, 'update-username', { old_username: req.user.username, new_username: username });
+            sendMessage(null, 'update-username', { old_username: req.user.username, new_username: username , _id: req.user._id});
             updateValues.username = username;
 
             // Update session's username if changed
@@ -40,7 +40,7 @@ const updateUser = async (req, res) => {
         }
         if (profile_img) {
             updateValues.profile_img = profile_img;
-            sendMessage(null, 'update-profile-image', { author_name: username, profile_img: profile_img });
+            sendMessage(null, 'update-profile-image', { author_name: username, profile_img: profile_img, _id: req.user._id});
         }
 
         if (bio) {

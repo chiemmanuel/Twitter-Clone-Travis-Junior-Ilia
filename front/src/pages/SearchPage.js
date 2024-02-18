@@ -13,7 +13,6 @@ function SearchPage() {
     const [searchResults, setSearchResults] = useState([])
     const [tweetResult, setTweetResult] = useState(false)
     const user = JSON.parse(localStorage.getItem('user'))
-    console.log(user.token)
 
     useEffect(() => {
         setTweetResult(false)
@@ -87,7 +86,7 @@ function SearchPage() {
                     if (result.username) {
                         return (
                             <div className='user-result' onClick={() => navigate(`/profile/${result.username}`)}>
-                            <User key={result._id} username={result.username} displayname={result.username} />
+                            <User key={result._id} user={{username: result.username, profile_img: result.profile_img}} />
                             </div>
                         )
                     }

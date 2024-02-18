@@ -1,5 +1,7 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
 import '../styles/User.css';
+import socket from '../socket';
+
 
 import logout_icon from '../icons/logout_icon.svg';
 
