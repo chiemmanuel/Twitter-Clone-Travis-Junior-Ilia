@@ -59,7 +59,6 @@ const postTweet = async (req, res) => {
         const tweet = await tweetModel.aggregate(query);
         logger.info(`Successfully created tweet with id: ${tweet_id}`);
         sendMessage(null, 'tweet-created', { tweet: tweet[0] });
-        logger.info(`${tweet[0]}`)
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
@@ -79,7 +78,6 @@ const getTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
     logger.info(`Fetching tweet with id: ${tweetId}`)
     try {
-        console.log(fetch_tweet_query)
         var query = [...fetch_tweet_query]
         if (query[0].$match) {
             query[0].$match._id = new ObjectId(tweetId);
@@ -87,7 +85,6 @@ const getTweetById = async (req, res) => {
             query.unshift({ $match: { _id: new ObjectId(tweetId) } });
         }
         const tweet = await tweetModel.aggregate(query);
-        console.log(fetch_tweet_query)
         if (tweet.length === 0) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }

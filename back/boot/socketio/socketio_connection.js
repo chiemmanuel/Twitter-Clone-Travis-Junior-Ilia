@@ -19,10 +19,12 @@ module.exports.socketconnection = (server) => {
         users[email] = socket.id;
         logger.info('socket.io users:', users);
     });
-    socket.on('disconnect', email => {
-        logger.info('user disconnected');
+    socket.on('userLogout', email => {
         delete users[email];
         logger.info('socket.io users:', users);
+    });
+    socket.on('disconnect', () =>{
+        logger.info('user disconnected');
     });
     });
 };
