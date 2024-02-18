@@ -79,7 +79,6 @@ const ProfilePage = () => {
 
     fetchUserData();
   }, []);
-
   return (
     <div className="profile-page">
       {error ? (
@@ -113,16 +112,14 @@ const ProfilePage = () => {
               </button>
             </div>
           </div>
-
-          {showEditProfile && <UpdateProfile onClose={handleCloseEditProfile} />}
-          {showEditPassword && <Editpassword onClose={handleCloseEditPassword} />}
-
+  
+          {/* Toggle buttons and content */}
           <div className="toggle-buttons">
             <button onClick={() => handleContainerToggle("userTweets")}>Tweets</button>
             <button onClick={() => handleContainerToggle("likedTweets")}>Liked Tweets</button>
             <button onClick={() => handleContainerToggle("userComments")}>Replies</button>
           </div>
-
+  
           {activeContainer === "userTweets" && (
             <div className="user-tweets-container">
               {userTweets.length > 0 ? (
@@ -132,7 +129,7 @@ const ProfilePage = () => {
               )}
             </div>
           )}
-
+  
           {activeContainer === "likedTweets" && (
             <div className="user-tweets-container">
               <h3>Liked Tweets</h3>
@@ -143,7 +140,7 @@ const ProfilePage = () => {
               )}
             </div>
           )}
-
+  
           {activeContainer === "userComments" && (
             <div className="user-comments-container">
               <h3>Comments</h3>
@@ -154,12 +151,30 @@ const ProfilePage = () => {
               )}
             </div>
           )}
+  
+          {/* Overlay for EditProfile */}
+          {showEditProfile && (
+            <div className="overlay">
+              <div className="popup">
+                <UpdateProfile onClose={handleCloseEditProfile} />
+              </div>
+            </div>
+          )}
+  
+          {/* Overlay for EditPassword */}
+          {showEditPassword && (
+            <div className="overlay">
+              <div className="popup">
+                <Editpassword onClose={handleCloseEditPassword} />
+              </div>
+            </div>
+          )}
         </>
       ) : (
         <p>Loading user data...</p>
       )}
     </div>
-  );
+  );  
 };
 
 export default ProfilePage;

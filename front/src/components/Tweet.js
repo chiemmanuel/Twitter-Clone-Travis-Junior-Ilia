@@ -179,9 +179,9 @@ function Tweet( props ) {
                 <img src={retweet_author.profile_img} alt="profile" />
               )}
               <div className="tweet__headerText">
-                <h3>
-                  {retweet_author.username}{" "}
-                </h3>
+                {retweet_author && retweet_author.username && (
+                  <h3>{retweet_author.username}</h3>
+                )}
                 {new Date(created_at).toUTCString() !== new Date(updated_at).toUTCString() ? (
                   <p>Edited: {new Date(updated_at).toUTCString()}</p>
                 ) : (
@@ -225,7 +225,7 @@ function Tweet( props ) {
             </span>
             <span onClick={handleLike}>
             <img src={like_icon} alt="like" className='tweet__footerIcon'/>
-            <span>{liked_by.length}</span>
+            <span>{liked_by?.length}</span>
             </span>
             <span onClick={handleBookmark}>
             <svg 
@@ -241,7 +241,7 @@ function Tweet( props ) {
         </div>
         </div>
         <div className="tweet__footer">
-        {hashtags.map((hashtag, index) => (
+        {hashtags?.map((hashtag, index) => (
           <span key={index} className="tweet__footerHashtag">{'#' + hashtag}</span>
         ))}
         </div>

@@ -7,6 +7,7 @@ import PublicRoute from './routes/PublicRoute';
 import HomePage from './pages/HomePage';
 import BasePage from './pages/BasePage';
 import TestPage from './pages/TestPage';
+import ProfilePage from './pages/ProfilePage';
 import ViewTweetPage from './pages/TweetPage.js';
 import NotificationPage from './pages/NotificationPage.js';
 
@@ -75,6 +76,7 @@ function App() {
       <Routes>
         <Route path='/' element={<BasePage />} />
         <Route path='/Home' element={<HomePage />} />
+        <Route path='/profile/' element={<ProfilePage />} />
         <Route element={<PublicRoute />}>
           <Route path='/test' element={<TestPage />} />
         </Route>
