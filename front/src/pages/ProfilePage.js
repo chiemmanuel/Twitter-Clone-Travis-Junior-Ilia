@@ -6,6 +6,7 @@ import { requests } from "../constants/requests";
 import UpdateProfile from "../components/Editprofile";
 import Editpassword from "../components/Editpassword";
 import Tweet from "../components/Tweet";
+import Comment from "../components/Comment";
 import "../styles/Profile.css";
 
 const ProfilePage = () => {
@@ -61,8 +62,11 @@ const ProfilePage = () => {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
-        });
-        setLikedTweets(likedTweetsResponse.data.likedTweets);
+        }).then(
+          (response) => {
+            console.log(response.data);
+            setLikedTweets(response.data.likedTweets);
+          });
 
         // Fetch user comments
         const commentsResponse = await instance.get(requests.userComments + response.data.username, {
@@ -145,7 +149,7 @@ const ProfilePage = () => {
             <div className="user-comments-container">
               <h3>Comments</h3>
               {userComments.length > 0 ? (
-                userComments.map((comment) => <Tweet key={comment._id} tweet={comment} />)
+                userComments.map((comment) => <Comment key={comment._id} comment={comment} />)
               ) : (
                 <p>No comments.</p>
               )}

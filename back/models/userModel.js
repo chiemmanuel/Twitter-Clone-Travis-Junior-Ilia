@@ -41,12 +41,6 @@ const userSchema = new mongoose.Schema({
     bookmarked_tweets: [{
         type: mongoose.Schema.Types.ObjectId,
     }],
-    liked_tweets: [{
-        type: mongoose.Schema.Types.ObjectId,
-    }],
-    blocked_users: [{
-        type: mongoose.Schema.Types.ObjectId,
-    }],
 
 }, { timestamps: {
     createdAt: 'created_at',

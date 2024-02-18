@@ -238,14 +238,15 @@ const getUserTweets = async (req, res) => {
  */
 const getUserLikedTweets = async (req, res) => {
     const { _id } = req.params;
+    console.log('Fetching liked tweets for user with _id:', _id);
     console.log(_id);
     try {
         // Find tweets where the given user _id is present in the liked_by array
         var query = fetch_tweet_query;
         if (query[0].$match) {
-            query[0].$match.liked_by = _id;
+            query[0].$match.liked_by = new ObjectId(_id);
         } else {
-            query.unshift({ $match: { liked_by: _id } });
+            query.unshift({ $match: { liked_by: new ObjectId(_id) }});
         }
         const likedTweets = await tweetModel.aggregate(query);
 

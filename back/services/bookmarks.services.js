@@ -13,7 +13,7 @@ const getBookmarks = async (req, res) => {
 
         var query = fetch_tweet_query;
         if (query[0].$match) {
-            query[0].$match._id.$in = user.bookmarked_tweets;
+            query[0].$match._id = { $in: user.bookmarked_tweets };
         } else {
         query.unshift({ $match: { _id: { $in: user.bookmarked_tweets } } });
         }

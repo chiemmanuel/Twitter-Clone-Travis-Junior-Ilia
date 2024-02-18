@@ -55,6 +55,7 @@ const postTweet = async (req, res) => {
         } else {
             query.unshift({ $match: { _id: new ObjectId(tweet_id) } });
         }
+        console.log(query);
         const tweet = await tweetModel.aggregate(query);
         logger.info(`Successfully created tweet with id: ${tweet_id}`);
         sendMessage(null, 'tweet-created', { tweet: tweet[0] });
