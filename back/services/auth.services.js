@@ -65,8 +65,11 @@ const signup = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        console.log(email, password)
+        console.log("login user in")
 
         if (!email || !password) {
+            console.log("Missing information")
             return res.status(statusCodes.badRequest).json({ error: "Missing information" });
         }
 
@@ -79,6 +82,7 @@ const login = async (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
+            console.log("Email or password don't match")
             return res.status(statusCodes.badRequest).json({ message: "Email or password don't match" });
         }
 

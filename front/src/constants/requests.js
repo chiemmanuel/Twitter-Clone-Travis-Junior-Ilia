@@ -2,6 +2,12 @@ export const requests = {
     login: '/auth/login',
     logout: '/user/logout',
     signup: '/auth/signup',
+    currentUser: '/user/getme',
+    userTweet: '/user/getTweets/',
+    userLikedTweets: '/user/getlikedTweets/',
+    userComments: '/user/getComments/',
+    editPassword: '/user/updatepassword',
+    editProfile: '/user/update',
     likeTweet: '/tweets/like/',
     editTweet: '/tweets/edit/',
     incrementViews: '/tweets/increment-views/',
@@ -19,3 +25,4 @@ export const requests = {
     postTweet: '/tweets/tweet',
     likeComment: '/comments/like/',
 };
+ 

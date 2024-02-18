@@ -36,7 +36,7 @@ function Tweet( props ) {
     const [num_views, setNumViews] = useState(tweet.num_views);
     const [num_comments, setNumComments] = useState(tweet.num_comments);
     const [liked_by, setLikedBy] = useState(tweet.liked_by);
-    const [isLiked, setIsLiked] = useState(liked_by.includes(user._id));
+    const [isLiked, setIsLiked] = useState((liked_by && liked_by.includes(user._id)) || false);
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
     console.log('tweet_id', tweet._id, 'tweet.num_retweets', tweet.num_retweets);
@@ -178,11 +178,13 @@ function Tweet( props ) {
   return (
     <div className="tweet">
       <div className="tweet__header">
-        <img src={author.profile_img} alt="profile" />
+        {author && author.profile_img && (
+          <img src={author.profile_img} alt="profile" />
+        )}
         <div className="tweet__headerText">
-          <h3>
-            {author.username}{" "}
-          </h3>
+          {author && author.username && (
+            <h3>{author.username} </h3>
+          )}
           <p>{new Date(created_at).toUTCString()}</p>
         </div>
       </div>
@@ -194,17 +196,18 @@ function Tweet( props ) {
         {retweet && (
           <div className="tweet__retweet" onClick={handleRetweetOnClick}>
             <div className="tweet__header">
-              <img src={retweet_author.profile_img} alt="profile" />
+              {retweet_author && retweet_author.profile_img && (
+                <img src={retweet_author.profile_img} alt="profile" />
+              )}
               <div className="tweet__headerText">
-                <h3>
-                  {retweet_author.username}{" "}
-                </h3>
+                {retweet_author && retweet_author.username && (
+                  <h3>{retweet_author.username}</h3>
+                )}
                 {new Date(created_at).toUTCString() !== new Date(updated_at).toUTCString() ? (
-                    <p>Edited: {new Date(updated_at).toUTCString()}</p>
+                  <p>Edited: {new Date(updated_at).toUTCString()}</p>
                 ) : (
-                    <p>{new Date(created_at).toUTCString()}</p>
-                )
-                }
+                  <p>{new Date(created_at).toUTCString()}</p>
+                )}
               </div>
             </div>
             <div className="tweet__body">
@@ -212,7 +215,7 @@ function Tweet( props ) {
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
               {retweet.poll && <Poll poll={retweet.poll} />}
             </div>
-          </div> 
+          </div>
         )}
       </div>
       <div className="tweet__footer">
@@ -242,8 +245,8 @@ function Tweet( props ) {
             <span>{numRetweets}</span>
             </span>
             <span onClick={handleLike}>
-            <img src={like_icon} alt="like" className='tweet__footerIcon' title='Like'/>
-            <span>{liked_by.length}</span>
+            <img src={like_icon} alt="like" className='tweet__footerIcon'/>
+            <span>{liked_by?.length}</span>
             </span>
             <span onClick={handleBookmark}>
             <svg 
@@ -260,7 +263,7 @@ function Tweet( props ) {
         </div>
         </div>
         <div className="tweet__footer">
-        {hashtags.map((hashtag, index) => (
+        {hashtags?.map((hashtag, index) => (
           <span key={index} className="tweet__footerHashtag">{'#' + hashtag}</span>
         ))}
         </div>

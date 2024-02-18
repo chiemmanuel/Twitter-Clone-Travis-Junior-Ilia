@@ -139,17 +139,17 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             <form className="post-tweet-form" onSubmit={handleSubmit}>
                 <textarea
                     className="tweet-text"
-                    placeholder={isRetweet ? `Retweeting ${retweet.author.username}` : displayPoll ? "Ask a question" :"What's happening?"}
+                    placeholder={isRetweet ? `Retweeting ${retweet.author?.username}` : displayPoll ? "Ask a question" :"What's happening?"}
                     value={tweetText}
                     onChange={(e) => handleTweetTextChange(e)}
                 />
                 {isRetweet ? (
                         <div className="tweet">
                         <div className="tweet__header">
-                          <img src={retweet.author.profile_img} alt="profile" />
+                          <img src={retweet.author?.profile_img} alt="profile" />
                           <div className="tweet__headerText">
                             <h3>
-                              {retweet.author.username}{" "}
+                              {retweet.author?.username}{" "}
                             </h3>
                             <p>{new Date(retweet.created_at).toUTCString()}</p>
                           </div>
@@ -162,10 +162,11 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                           {retweet.retweet ? (
                             <div className="tweet__retweet" >
                               <div className="tweet__header">
-                                <img src={retweet.retweet_author.profile_img} alt="profile" />
+                                {retweet && retweet.retweet_author?.profile_img && (
+                                <img src={retweet.retweet_author.profile_img} alt="profile" />)}
                                 <div className="tweet__headerText">
                                   <h3>
-                                    {retweet.retweet_author.username}{" "}
+                                    {retweet.retweet_author?.username}{" "}
                                   </h3>
                                   {new Date(retweet.created_at).toUTCString() !== new Date(retweet.updated_at).toUTCString() ? (
                                       <p>Edited: {new Date(retweet.updated_at).toUTCString()}</p>
