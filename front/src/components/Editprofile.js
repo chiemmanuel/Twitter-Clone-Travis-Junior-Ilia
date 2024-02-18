@@ -90,7 +90,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               onChange={(e) => handleChange(e, "username")}
             />
             <button
-              className="update-profile-button"
+              className="update-profile-button-next"
               type="button"
               onClick={handleNext}
               disabled={isNextButtonDisabled}
@@ -98,7 +98,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               Next
             </button>
             <button
-              className="update-profile-button"
+              className="update-profile-button-skip"
               type="button"
               onClick={handleSkip}
             >
@@ -120,7 +120,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               }}
             />
             <button
-              className="update-profile-button"
+              className="update-profile-button-next"
               type="button"
               onClick={handleNext}
               disabled={isNextButtonDisabled}
@@ -128,7 +128,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               Next
             </button>
             <button
-              className="update-profile-button"
+              className="update-profile-button-skip"
               type="button"
               onClick={handleSkip}
             >
@@ -146,7 +146,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               onChange={(e) => handleChange(e, "bio")}
             />
             <button
-              className="update-profile-button"
+              className="update-profile-button-next"
               type="button"
               onClick={handleNext}
               disabled={isNextButtonDisabled}
@@ -154,7 +154,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               Next
             </button>
             <button
-              className="update-profile-button"
+              className="update-profile-button-skip"
               type="button"
               onClick={handleSkip}
             >
@@ -173,7 +173,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               onChange={(e) => handleChange(e, "gender")}
             />
             <button
-              className="update-profile-button"
+              className="update-profile-button-next"
               type="button"
               onClick={handleNext}
               disabled={isNextButtonDisabled}
@@ -181,7 +181,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               Next
             </button>
             <button
-              className="update-profile-button"
+              className="update-profile-button-skip"
               type="button"
               onClick={handleSkip}
             >
@@ -200,7 +200,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               onChange={(e) => handleChange(e, "dob")}
             />
             <button
-              className="update-profile-button"
+              className="update-profile-button-next"
               type="button"
               onClick={handleNext}
               disabled={isNextButtonDisabled}
@@ -208,7 +208,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               Next
             </button>
             <button
-              className="update-profile-button"
+              className="update-profile-button-skip"
               type="button"
               onClick={handleSkip}
             >
@@ -227,7 +227,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               onChange={(e) => handleChange(e, "contact")}
             />
             <button
-              className="update-profile-button"
+              className="update-profile-button-next"
               type="button"
               onClick={handleNext}
               disabled={isNextButtonDisabled}
@@ -235,7 +235,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               Next
             </button>
             <button
-              className="update-profile-button"
+              className="update-profile-button-skip"
               type="button"
               onClick={handleSkip}
             >
