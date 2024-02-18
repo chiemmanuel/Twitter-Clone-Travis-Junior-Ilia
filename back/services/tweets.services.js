@@ -314,7 +314,7 @@ const getLiveTweets = async (req, res) => {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
             var query = fetch_feed_query;
             if (query[0].$match) {
-                query[0].$match._id.$lt = last_tweet_id;
+                query[0].$match._id = { $lt: last_tweet_id };
             } else {
                 query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
             }
