@@ -85,13 +85,13 @@ function SearchPage() {
                 <div className='user-results'>
                 {searchResults.map((result) => {
                     if (result.username) {
-                    return (
-                    <div className='user-result' onClick={() => navigate(`/profile/${result.username}`)}>
-                    <User key={result._id} username={result.username} displayname={result.username} />
-                    </div>
-                    )}
-                    })
-                }
+                        return (
+                            <div className='user-result' onClick={() => navigate(`/profile/${result.username}`)}>
+                            <User key={result._id} username={result.username} displayname={result.username} />
+                            </div>
+                        )
+                    }
+                })}
                 </div>
             ) : !tweetResult ? (
                 <div className='no-results'>
@@ -132,4 +132,4 @@ function SearchPage() {
   )
 }
 
-export default SearchPage
+export default SearchPage;

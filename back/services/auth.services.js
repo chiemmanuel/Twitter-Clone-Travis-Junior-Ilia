@@ -29,7 +29,7 @@ const signup = async (req, res) => {
         }
 
         const hash = await bcrypt.hash(password, 10);
-        const profile_img = "default_silouhette_img.png";// Add a default image for the user from cloudinary
+        const profile_img = "https://res.cloudinary.com/dqqel2q07/image/upload/v1708218630/default_profile_img.jpg";// Add a default image for the user from cloudinary
 
         const newUser = new User({
             email,
@@ -97,7 +97,15 @@ const login = async (req, res) => {
             }
         );
 
-        return res.status(statusCodes.success).json({ "token": token, "_id": user._id, "username": user.username, "email": user.email});
+        return res.status(statusCodes.success).json(
+            { 
+                "token": token, 
+                "_id": user._id, 
+                "username": user.username, 
+                "email": user.email,
+                "profile_img": user.profile_img,
+            }
+        );
     } catch (error) {
         console.error("Error while getting user from MongoDB", error.message);
         return res.status(statusCodes.queryError).json({ message: "Failed to get user" });
