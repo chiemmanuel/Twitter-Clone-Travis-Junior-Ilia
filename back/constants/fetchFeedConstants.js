@@ -1,5 +1,5 @@
 const fetch_feed_query = [
-    { $sort: { _id: -1 } },
+    { $sort: { created_at: -1 } },
     { $limit: 10 },
     { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
     { $unwind: { path: '$author'}},
