@@ -6,6 +6,7 @@ import { requests } from "../constants/requests";
 import UpdateProfile from "../components/Editprofile";
 import Editpassword from "../components/Editpassword";
 import Tweet from "../components/Tweet";
+import Comment from "../components/Comment";
 import "../styles/Profile.css";
 
 const ProfilePage = () => {
@@ -141,16 +142,17 @@ const ProfilePage = () => {
             </div>
           )}
   
-          {activeContainer === "userComments" && (
+                    {activeContainer === "userComments" && (
             <div className="user-comments-container">
               <h3>Comments</h3>
               {userComments.length > 0 ? (
-                userComments.map((comment) => <Tweet key={comment._id} tweet={comment} />)
+                userComments.map((comment) => <Comment key={comment._id} comment={comment} />)
               ) : (
                 <p>No comments.</p>
               )}
             </div>
           )}
+
   
           {/* Overlay for EditProfile */}
           {showEditProfile && (

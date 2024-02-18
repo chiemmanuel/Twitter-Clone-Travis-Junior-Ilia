@@ -5,7 +5,7 @@ import SignUp from "../components/Signup";
 import "../styles/Base.css";
 
 const BasePage = () => {
-  const [showLoginForm, setShowLoginForm] = useState(true);
+  const [showLoginForm, setShowLoginForm] = useState(false);
   const [showSignUp, setShowSignUp] = useState(false);
 
   const handleCloseLoginForm = () => {
