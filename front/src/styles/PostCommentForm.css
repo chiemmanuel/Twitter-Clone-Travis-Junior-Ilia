@@ -14,6 +14,12 @@
     flex-direction: column;
 }
 
+.comment-media-preview {
+    height: 200px;
+    width: 200px;
+    margin-top: 10px;
+}
+
 .comment-text {
     padding: 10px;
     border: 1px solid #e6ecf0;
@@ -22,17 +28,38 @@
     margin-bottom: 10px;
 }
 
-.comment-media {
-    margin-bottom: 10px;
+#comment-media {
+    display: none;
+}
+
+.comment-form-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.comment-media-label {
+    display: flex;
+    padding: 8px 8px;
+    background-color: #1da1f2;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    height: 16px;
+    width: 16px;
+    margin-left: 5px;
 }
 
 .comment-submit {
+    margin-bottom: 8px;
     background-color: #1da1f2;
     color: #fff;
     padding: 8px 16px;
     border: none;
     border-radius: 9999px;
     cursor: pointer;
+    width: 100px;
 }
 
 .comment-message {
