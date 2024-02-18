@@ -13,6 +13,7 @@ import ViewTweetPage from './pages/TweetPage.js';
 import NotificationPage from './pages/NotificationPage.js';
 import BookmarkPage from './pages/BookmarksPage.js';
 import SearchPage from './pages/SearchPage.js';
+import LogoutPage from './components/Logout.js';
 
 import { useDispatch } from 'react-redux';
 import { addNotification } from './features/Notifications/notificationSlice.js';
@@ -89,6 +90,7 @@ function App() {
           <Route path='/notifications' element={<NotificationPage />} />
           <Route path='/bookmarks' element={<BookmarkPage />} />
           <Route path='/search' element={<SearchPage />} />
+          <Route path='/logout' element={<LogoutPage />} />
         </Route>
           
       </Routes>

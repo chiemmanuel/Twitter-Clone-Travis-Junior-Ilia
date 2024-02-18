@@ -18,6 +18,7 @@ const AppStateReducer = (state, action) => {
     }
 
     case "Logout": {
+      console.log("Logout");
       localStorage.removeItem("user");
       return {
         ...state,
