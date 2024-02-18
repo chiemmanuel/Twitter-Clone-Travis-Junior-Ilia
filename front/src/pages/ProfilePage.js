@@ -7,6 +7,7 @@ import UpdateProfile from "../components/Editprofile";
 import Editpassword from "../components/Editpassword";
 import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
+import Navbar from "../components/Navbar";
 import "../styles/Profile.css";
 
 const ProfilePage = () => {
@@ -85,6 +86,9 @@ const ProfilePage = () => {
   }, []);
   return (
     <div className="profile-page">
+      <div className='header'>
+        <Navbar />
+      </div>
       {error ? (
         <p>{error}</p>
       ) : user !== null ? (

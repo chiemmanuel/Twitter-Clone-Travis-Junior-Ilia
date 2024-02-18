@@ -4,6 +4,7 @@ import instance from "../constants/axios";
 import { requests } from "../constants/requests";
 import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
+import Navbar from "../components/Navbar";
 import "../styles/Profile.css";
 
 const Userprofile = () => {
@@ -41,7 +42,7 @@ const Userprofile = () => {
   const handleUnfollow = async () => {
     try {
       // Make a request to unfollow the user
-      await instance.delete(requests.unFollowUser + user._id, null, {
+      await instance.delete(requests.unFollowUser + user._id, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
@@ -115,6 +116,9 @@ const Userprofile = () => {
 
   return (
     <div className="profile-page">
+      <div className='header'>
+        <Navbar />
+      </div>
       {error ? (
         <p>{error}</p>
       ) : user !== null ? (

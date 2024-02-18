@@ -1,8 +1,17 @@
 /* Profile Page Styles */
 
+body {
+  margin: 0;
+  padding: 0;
+}
+
 .profile-page {
-  max-width: 800px;
-  margin: 0 auto;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Updated */
+  align-items: center;
   padding: 20px;
 }
 
@@ -42,6 +51,12 @@
   margin-right: 20px;
 }
 
+.edit-options {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* Updated */ 
+}
+
 .edit-options button {
   cursor: pointer;
   background-color: #3498db;
@@ -49,7 +64,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 4px;
-  margin-right: 10px;
+  margin-bottom: 10px; /* Updated */
 }
 
 .toggle-buttons {
@@ -141,7 +156,18 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   z-index: 1000;
 }
+
+.header {
+  position: fixed;
+  height: 100vh;
+  width: 25%;
+  padding-top: 30px;
+  display: flex;
+  align-self: flex-start;
+  justify-content: center;
+  border-right: solid 1px lightgray;
+}
+
 /* UpdateProfile and EditPassword Styles */
 
 /* Add your styles for UpdateProfile and EditPassword components here */
-
