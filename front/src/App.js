@@ -78,14 +78,13 @@ function App() {
   return (
     <>
       <Routes>
+        <Route element={<PublicRoute />}>
         <Route path='/' element={<BasePage />} />
+        </Route>
+        <Route element={<PrivateRoute />}>
         <Route path='/Home' element={<HomePage />} />
         <Route path='/profile/' element={<ProfilePage />} />
         <Route path='/profile/:username' element={<Userprofile />} />
-        <Route element={<PublicRoute />}>
-          <Route path='/test' element={<TestPage />} />
-        </Route>
-        <Route element={<PrivateRoute />}>
           <Route path='/view_tweet/:id' element={<ViewTweetPage />} />
           <Route path='/notifications' element={<NotificationPage />} />
           <Route path='/bookmarks' element={<BookmarkPage />} />
