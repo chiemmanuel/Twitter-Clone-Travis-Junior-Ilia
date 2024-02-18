@@ -22,6 +22,8 @@ const unfollowUser = async (req, res) => {
     console.log('unfollowUser');
     const { followed_user_id } = req.params;
     const  user_id  = req.user._id;
+    console.log(followed_user_id);
+    console.log(user_id);
     try {
         await userModel.findOneAndUpdate( { _id: user_id }, { $pull: { following: followed_user_id } });
         await userModel.findOneAndUpdate( { _id: followed_user_id }, { $pull: { followers: user_id } });
