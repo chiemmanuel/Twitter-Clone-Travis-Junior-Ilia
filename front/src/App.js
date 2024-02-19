@@ -137,8 +137,8 @@ function App() {
           <Route path='/notifications' element={<NotificationPage />} />
           <Route path='/bookmarks' element={<BookmarkPage />} />
           <Route path='/search' element={<SearchPage />} />
-          <Route path='/followers' element={<FollowersPage />} />
-          <Route path='/following' element={<FollowingPage />} />
+          <Route path='/followers/:username' element={<FollowersPage />} />
+          <Route path='/following/:username' element={<FollowingPage />} />
           <Route path='/logout' element={<LogoutPage />} />
         </Route>
           

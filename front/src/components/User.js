@@ -3,10 +3,12 @@ import { requests } from '../constants/requests';
 import '../styles/User.css';
 import instance from '../constants/axios';
 import useAppStateContext from '../hooks/useAppStateContext';
+import { useNavigate } from 'react-router-dom';
 
 import logout_icon from '../icons/logout_icon.svg';
 
 const User = ({ user }) => {
+  const navigate = useNavigate();
   const { dispatch } = useAppStateContext();
   const { _id, username, profile_img } = user;
   const { following } = JSON.parse(localStorage.getItem("user"));
@@ -19,7 +21,8 @@ const User = ({ user }) => {
     }
   }, [following, _id]);
 
-  const handleFollowToggle = async () => {
+  const handleFollowToggle = async (e) => {
+    e.stopPropagation();
     if (isFollowing) {
       await instance.delete('http://localhost:8080/followers/unfollow/' + _id,
         {
@@ -52,7 +55,7 @@ const User = ({ user }) => {
   };
 
   return (
-    <div className='user'>
+    <div className='user' onClick={() => navigate(`/profile/${username}`)}>
       <div className='user-photo' style={{ backgroundImage: `url(${profile_img})` }}></div>
       <div className='info'>
         <span className='displayname'>{ username }</span>

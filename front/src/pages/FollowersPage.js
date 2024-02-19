@@ -8,20 +8,31 @@ import '../styles/Followers.css';
 import { useParams } from 'react-router';
 
 const FollowersPage = () => {
+  const { username } = useParams();
   const { user_email } = useParams();
   const [followers, setFollowers] = useState([]);
 
   useEffect(() => {
-    const getFollowers = async () => {
-      const res = await axios.get(requests.getFollowers + 'it@it.com', {
+    const fetchInfo = async () => {
+      const response = await axios.get(requests.userByUsername + username, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
       });
-      setFollowers(res.data.followers);
-    };
 
-    getFollowers();
+      const getFollowers = async () => {
+        const res = await axios.get(requests.getFollowers + response.data.email, {
+          headers: {
+            Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
+          },
+        });
+        setFollowers(res.data.followers);
+      };
+
+      getFollowers();
+    }
+
+    fetchInfo();
 
   }, [user_email]);
 

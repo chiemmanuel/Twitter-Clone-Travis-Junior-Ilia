@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
 import axios from '../constants/axios';
 import { requests } from "../constants/requests";
 import Navbar from '../components/Navbar';
@@ -8,22 +8,34 @@ import '../styles/Followers.css';
 import { useParams } from 'react-router';
 
 const FollowingPage = () => {
-  const { user_email } = useParams();
-  const [followers, setFollowers] = useState([]);
+  const { username } = useParams();
+  const [following, setFollowers] = useState([]);
+
+  const current_user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
-    const getFollowers = async () => {
-      const res = await axios.get(requests.getFollowers + 'it@it.com', {
+    const fetchInfo = async () => {
+      const response = await axios.get(requests.userByUsername + username, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
       });
-      setFollowers(res.data.followers);
-    };
 
-    getFollowers();
+      const getFollowers = async () => {
+        const res = await axios.get(requests.getFollowing + response.data.email, {
+          headers: {
+            Authorization: `Bearer ${current_user.token}`,
+          },
+        });
+        setFollowers(res.data.following);
+      };
 
-  }, [user_email]);
+      getFollowers();
+    }
+
+    fetchInfo();
+
+  }, [username]);
 
   return (
     <div className='home'>
@@ -33,8 +45,8 @@ const FollowingPage = () => {
 
       <div className='main'>
         <div className='followers-list'>
-        {followers.length > 0 ? (
-            followers.map((follower) => <User user={follower}/>)
+        {following.length > 0 ? (
+            following.map((follower) => <User user={follower}/>)
           ) : (
             <p>No followers</p>
           )}

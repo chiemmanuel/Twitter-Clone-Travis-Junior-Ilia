@@ -36,15 +36,17 @@ function BookmarksPage() {
 
   return (
     <div className='page'>
-    <div className='navbar'>
-        <Navbar />
-    </div>
-    <div className="bookmarks">
-      <h1>Bookmarks</h1>
-      {bookmarkStatus === 'loading' && <div>Loading...</div>}
-      {bookmarkStatus === 'succeeded' && bookmarkedTweets.map((tweet) => (
-        <Tweet key={tweet._id} tweet={tweet} />
-      ))}
+      <div className='header'>
+          <Navbar />
+      </div>
+      <div className='main'>
+        <div className="bookmarks">
+          <h1>Bookmarks</h1>
+          {bookmarkStatus === 'loading' && <div>Loading...</div>}
+          {bookmarkStatus === 'succeeded' && bookmarkedTweets.map((tweet) => (
+            <Tweet key={tweet._id} tweet={tweet} />
+            ))}
+        </div>
     </div>
     </div>
   )

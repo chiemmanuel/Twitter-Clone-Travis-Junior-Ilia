@@ -5,18 +5,6 @@
   padding: 10px;
 }
 
-/* Header styles */
-.header {
-  position: fixed;
-  height: 100vh;
-  width: 25%;
-  padding-top: 30px;
-  display: flex;
-  align-self: flex-start;
-  justify-content: center;
-  border-right: solid 1px lightgray;
-}
-
 /* Styles for the user info container */
 .user-info-container {
   display: flex;
@@ -147,4 +135,9 @@
     width: 100%;
     margin-bottom: 10px;
   }
+}
+
+.ff:hover {
+  cursor: pointer;
+  font-weight: 500;
 }

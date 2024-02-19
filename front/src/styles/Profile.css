@@ -12,23 +12,6 @@ body {
   margin: 0 auto;
 }
 
-.header {
-  width: 25%;
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  align-self: flex-start;
-  justify-content: center;
-}
-
-.main {
-  margin-left: 25%;
-  flex-basis: 75%;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-}
-
 .user-info-container {
   display: flex;
   justify-content: space-between;
@@ -60,6 +43,16 @@ body {
 
 .follower-info {
   display: flex;
+  gap: 15px;
+}
+
+.follower-info a {
+  color: black;
+  text-decoration: none;
+}
+
+.follower-info a:hover {
+  text-decoration: underline;
 }
 
 .follower-info p {
@@ -173,4 +166,9 @@ body {
   width: 50%;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
   z-index: 1000;
+}
+
+.ff:hover {
+  cursor: pointer;
+  font-weight: 500;
 }

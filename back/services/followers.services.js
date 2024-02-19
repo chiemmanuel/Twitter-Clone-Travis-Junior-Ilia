@@ -85,7 +85,7 @@ const getFollowers = async (req, res) => {
 const getFollowing = async (req, res) => {
     const { user_email } = req.params;
     try {
-        const following = await userModel.aggregate([
+        const [following] = await userModel.aggregate([
             {
                 $match: { email: user_email }
             },
@@ -94,26 +94,21 @@ const getFollowing = async (req, res) => {
                     from: 'users',
                     localField: 'following',
                     foreignField: '_id',
-                    as: 'followed_user'
+                    as: 'following'
                 }
             },
             {
-                $unwind: '$followed_user'
-            },
-            {
                 $project: {
-                    _id: 0,
-                    "followed_user._id": 1,
-                    "followed_user.email": 1,
-                    "followed_user.username": 1,
-                    "followed_user.bio": 1,
-                    "followed_user.profile_img": 1,
-
+                    "following._id": 1,
+                    "following.email": 1,
+                    "following.username": 1,
+                    "following.bio": 1,
+                    "following.profile_img": 1,
                 }
             }
         ]);
         logger.info(`Retrieved users that user with email ${user_email} is following`);
-        res.status(statusCodes.success).json({followed_users: following});
+        res.status(statusCodes.success).json({ following: following.following });
     } catch (error) {
         logger.error(`Error retrieving following: ${error}`);
         res.status(statusCodes.queryError).send('Error retrieving following');
