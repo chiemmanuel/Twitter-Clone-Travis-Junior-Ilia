@@ -3,17 +3,6 @@
 
 }
 
-.header {
-    width: 25%;
-}
-
-.main {
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-} 
-
 .no-results {
     margin-top: 10px;
     display: flex;

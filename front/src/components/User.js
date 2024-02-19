@@ -21,7 +21,8 @@ const User = ({ user }) => {
     }
   }, [following, _id]);
 
-  const handleFollowToggle = async () => {
+  const handleFollowToggle = async (e) => {
+    e.stopPropagation();
     if (isFollowing) {
       await instance.delete('http://localhost:8080/followers/unfollow/' + _id,
         {
@@ -54,9 +55,9 @@ const User = ({ user }) => {
   };
 
   return (
-    <div className='user'>
+    <div className='user' onClick={() => navigate(`/profile/${username}`)}>
       <div className='user-photo' style={{ backgroundImage: `url(${profile_img})` }}></div>
-      <div className='info' onClick={() => navigate(`/profile/${username}`)}>
+      <div className='info'>
         <span className='displayname'>{ username }</span>
         <span className='username'>@{ username }</span>
       </div>

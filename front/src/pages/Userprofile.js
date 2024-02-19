@@ -131,7 +131,7 @@ const Userprofile = () => {
   }, [username, followSuccess, unfollowSuccess]);
 
   return (
-    <div className="profile-page">
+    <div className="page">
       <div className='header'>
         <Navbar />
       </div>

@@ -12,23 +12,6 @@ body {
   margin: 0 auto;
 }
 
-.header {
-  width: 25%;
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  align-self: flex-start;
-  justify-content: center;
-}
-
-.main {
-  margin-left: 25%;
-  flex-basis: 75%;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-}
-
 .user-info-container {
   display: flex;
   justify-content: space-between;

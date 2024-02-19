@@ -7,6 +7,8 @@
   display: flex;
   align-items: center;
   gap: 15px;
+  
+  cursor: pointer;
 }
 
 .user:hover {
@@ -24,8 +26,6 @@
   background-position: center;
   background-color: aquamarine;
   background-size: 55px;
-
-  cursor: pointer;
 }
 
 .displayname, .username {
@@ -42,8 +42,6 @@
 
   font-size: 16px;
   font-weight: 500;
-  
-  cursor: pointer;
 }
 
 .action {
