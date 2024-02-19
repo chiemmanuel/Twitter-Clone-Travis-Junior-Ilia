@@ -148,3 +148,8 @@
     margin-bottom: 10px;
   }
 }
+
+.ff:hover {
+  cursor: pointer;
+  font-weight: 500;
+}

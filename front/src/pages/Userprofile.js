@@ -6,6 +6,7 @@ import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
 import Navbar from "../components/Navbar";
 import "../styles/Userprofile.css";
+import { useNavigate } from 'react-router-dom';
 
 const Userprofile = () => {
   const { username } = useParams();
@@ -19,6 +20,7 @@ const Userprofile = () => {
   const [unfollowSuccess, setUnfollowSuccess] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [successMessage, setSuccessMessage] = useState(null);
+  const navigate = useNavigate();
 
   // Function to handle container toggle
   const handleContainerToggle = (container) => {
@@ -151,8 +153,8 @@ const Userprofile = () => {
                     })}
                   </p>
                   <div className="follower-info">
-                    <p>{user.followers.length} followers</p>
-                    <p>{user.following.length} following</p>
+                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers.length} followers</div>
+                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following.length} following</div>
                   </div>
                 </div>
               </div>

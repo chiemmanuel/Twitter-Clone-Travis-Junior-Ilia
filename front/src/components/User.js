@@ -3,10 +3,12 @@ import { requests } from '../constants/requests';
 import '../styles/User.css';
 import instance from '../constants/axios';
 import useAppStateContext from '../hooks/useAppStateContext';
+import { useNavigate } from 'react-router-dom';
 
 import logout_icon from '../icons/logout_icon.svg';
 
 const User = ({ user }) => {
+  const navigate = useNavigate();
   const { dispatch } = useAppStateContext();
   const { _id, username, profile_img } = user;
   const { following } = JSON.parse(localStorage.getItem("user"));
@@ -54,7 +56,7 @@ const User = ({ user }) => {
   return (
     <div className='user'>
       <div className='user-photo' style={{ backgroundImage: `url(${profile_img})` }}></div>
-      <div className='info'>
+      <div className='info' onClick={() => navigate(`/profile/${username}`)}>
         <span className='displayname'>{ username }</span>
         <span className='username'>@{ username }</span>
       </div>

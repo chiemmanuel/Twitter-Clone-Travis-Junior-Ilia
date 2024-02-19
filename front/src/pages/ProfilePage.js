@@ -9,6 +9,7 @@ import Tweet from "../components/Tweet";
 import Comment from "../components/Comment";
 import Navbar from "../components/Navbar";
 import "../styles/Profile.css";
+import { useNavigate } from 'react-router-dom';
 
 const ProfilePage = () => {
   const [activeContainer, setActiveContainer] = useState("userTweets");
@@ -19,6 +20,7 @@ const ProfilePage = () => {
   const [userComments, setUserComments] = useState([]);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
+  const navigate = useNavigate();
 
   const handleCloseEditProfile = () => {
     setShowEditProfile(false);
@@ -107,8 +109,8 @@ const ProfilePage = () => {
                     })}
                   </p>
                   <div className="follower-info">
-                    <p>{user.followers.length} followers</p>
-                    <p>{user.following.length} following</p>
+                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers.length} followers</div>
+                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following.length} following</div>
                   </div>
                 </div>
               </div>
