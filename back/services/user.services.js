@@ -6,7 +6,6 @@ const tweetModel = require('../models/tweetModel');
 const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
-const { fetch_feed_query, fetch_tweet_query } = require ('../constants/fetchFeedConstants.js');
 const User = require('../models/userModel');
 
 /**
@@ -78,8 +77,8 @@ const updateUser = async (req, res) => {
         }
 
         // Update user information in the database
-        await User.findOneAndUpdate({ email }, updateValues);
-
+        const result = await User.findOneAndUpdate({ email }, updateValues);
+        console.log(result);
         return res.status(statusCodes.success).json({ message: "User information updated successfully" });
     } catch (error) {
         console.error("Error while updating user information", error.message);
@@ -148,6 +147,7 @@ const updatePassword = async (req, res) => {
 const getcurrentUser = async (req, res) => {
     try {
         console.log("getting current user")
+        console.log(req.user);
         const { _id } = req.user;
 
         // Fetch user information from the database based on the email
@@ -202,7 +202,37 @@ const getUserTweets = async (req, res) => {
     user_email = req.params.user_email;
     console.log(user_email);
     var tweets = [];
-    var query = fetch_feed_query;
+    var query = [
+        { $sort: { created_at: -1 } },
+        { $limit: 10 },
+        { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+        { $unwind: { path: '$author'}},
+        { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+        { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+        { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+        { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+        { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+        { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+        { $project: {
+            "author_email": 1,
+            "content": 1,
+            "media": 1,
+            "poll": 1,
+            "retweet": 1,
+            "hashtags": 1,
+            "num_comments": 1,
+            "liked_by": 1,
+            "num_retweets": 1,
+            "num_views": 1,
+            "num_bookmarks": 1,
+            "created_at": 1,
+            "updated_at": 1,
+            "author.username": 1,
+            "author.profile_img": 1,
+            "retweet_author.username": 1,
+            "retweet_author.profile_img": 1,
+        } },
+    ];;
     if(req.body.last_tweet_id) {
         last_tweet_id = new ObjectId(req.body.last_tweet_id);
         try {
@@ -246,7 +276,35 @@ const getUserLikedTweets = async (req, res) => {
     console.log(_id);
     try {
         // Find tweets where the given user _id is present in the liked_by array
-        var query = fetch_tweet_query;
+        var query = [
+            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+            { $unwind: { path: '$author'}},
+            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+            { $project: {
+                "author_email": 1,
+                "content": 1,
+                "media": 1,
+                "poll": 1,
+                "retweet": 1,
+                "hashtags": 1,
+                "num_comments": 1,
+                "liked_by": 1,
+                "num_retweets": 1,
+                "num_views": 1,
+                "num_bookmarks": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "author.username": 1,
+                "author.profile_img": 1,
+                "retweet_author.username": 1,
+                "retweet_author.profile_img": 1,
+            } },
+        ];
         if (query[0].$match) {
             query[0].$match.liked_by = new ObjectId(_id);
         } else {

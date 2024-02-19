@@ -3,7 +3,6 @@ const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const userModel = require("../models/userModel.js");
 const { sendMessage } = require('../boot/socketio/socketio_connection');
-const { fetch_tweet_query } = require('../constants/fetchFeedConstants.js');
 
 const getBookmarks = async (req, res) => {
     const userId = req.user._id;
@@ -11,7 +10,35 @@ const getBookmarks = async (req, res) => {
     try {
         const user = await userModel.findById(userId);
 
-        var query = fetch_tweet_query;
+        var query = [
+            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+            { $unwind: { path: '$author'}},
+            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+            { $project: {
+                "author_email": 1,
+                "content": 1,
+                "media": 1,
+                "poll": 1,
+                "retweet": 1,
+                "hashtags": 1,
+                "num_comments": 1,
+                "liked_by": 1,
+                "num_retweets": 1,
+                "num_views": 1,
+                "num_bookmarks": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "author.username": 1,
+                "author.profile_img": 1,
+                "retweet_author.username": 1,
+                "retweet_author.profile_img": 1,
+            } },
+        ];;
         if (query[0].$match) {
             query[0].$match._id = { $in: user.bookmarked_tweets };
         } else {

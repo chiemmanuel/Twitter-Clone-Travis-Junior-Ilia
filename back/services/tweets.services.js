@@ -4,7 +4,6 @@ const tweetModel = require('../models/tweetModel.js');
 const pollModel = require('../models/pollModel.js');
 const userModel = require('../models/userModel.js');
 const ObjectId = require('mongoose').Types.ObjectId;
-const { fetch_feed_query, fetch_tweet_query }  = require ('../constants/fetchFeedConstants.js');
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 
 
@@ -45,7 +44,37 @@ const postTweet = async (req, res) => {
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
             sendMessage(null, 'retweeted', { tweet_id: req.body.retweet_id});
         }
-        var query = [...fetch_tweet_query]
+        var query = [
+            { $sort: { created_at: -1 } },
+            { $limit: 10 },
+            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+            { $unwind: { path: '$author'}},
+            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+            { $project: {
+                "author_email": 1,
+                "content": 1,
+                "media": 1,
+                "poll": 1,
+                "retweet": 1,
+                "hashtags": 1,
+                "num_comments": 1,
+                "liked_by": 1,
+                "num_retweets": 1,
+                "num_views": 1,
+                "num_bookmarks": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "author.username": 1,
+                "author.profile_img": 1,
+                "retweet_author.username": 1,
+                "retweet_author.profile_img": 1,
+            } },
+        ];
         if (query[0].$match) {
             query[0].$match._id = new ObjectId(tweet_id);
         } else {
@@ -74,7 +103,35 @@ const getTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
     logger.info(`Fetching tweet with id: ${tweetId}`)
     try {
-        var query = [...fetch_tweet_query]
+        var query = [
+            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+            { $unwind: { path: '$author'}},
+            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+            { $project: {
+                "author_email": 1,
+                "content": 1,
+                "media": 1,
+                "poll": 1,
+                "retweet": 1,
+                "hashtags": 1,
+                "num_comments": 1,
+                "liked_by": 1,
+                "num_retweets": 1,
+                "num_views": 1,
+                "num_bookmarks": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "author.username": 1,
+                "author.profile_img": 1,
+                "retweet_author.username": 1,
+                "retweet_author.profile_img": 1,
+            } },
+        ];
         if (query[0].$match) {
             query[0].$match._id = new ObjectId(tweetId);
         } else {
@@ -124,7 +181,35 @@ const editTweetById = async (req, res) => {
         }
 
         await tweet.save();
-        var query = [...fetch_tweet_query]
+        var query = [
+            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+            { $unwind: { path: '$author'}},
+            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+            { $project: {
+                "author_email": 1,
+                "content": 1,
+                "media": 1,
+                "poll": 1,
+                "retweet": 1,
+                "hashtags": 1,
+                "num_comments": 1,
+                "liked_by": 1,
+                "num_retweets": 1,
+                "num_views": 1,
+                "num_bookmarks": 1,
+                "created_at": 1,
+                "updated_at": 1,
+                "author.username": 1,
+                "author.profile_img": 1,
+                "retweet_author.username": 1,
+                "retweet_author.profile_img": 1,
+            } },
+        ];
         if (query[0].$match) {
             query[0].$match._id = new ObjectId(tweet_id);
         } else {
@@ -312,7 +397,37 @@ const getLiveTweets = async (req, res) => {
         const last_tweet_id = new ObjectId(req.query.last_tweet_id);
             try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
-            var query = fetch_feed_query;
+            var query = [
+                { $sort: { created_at: -1 } },
+                { $limit: 10 },
+                { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+                { $unwind: { path: '$author'}},
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+                { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+                { $project: {
+                    "author_email": 1,
+                    "content": 1,
+                    "media": 1,
+                    "poll": 1,
+                    "retweet": 1,
+                    "hashtags": 1,
+                    "num_comments": 1,
+                    "liked_by": 1,
+                    "num_retweets": 1,
+                    "num_views": 1,
+                    "num_bookmarks": 1,
+                    "created_at": 1,
+                    "updated_at": 1,
+                    "author.username": 1,
+                    "author.profile_img": 1,
+                    "retweet_author.username": 1,
+                    "retweet_author.profile_img": 1,
+                } },
+            ];
             if (query[0].$match) {
                 query[0].$match._id = { $lt: last_tweet_id };
             } else {
@@ -328,7 +443,38 @@ const getLiveTweets = async (req, res) => {
     } else {
         try {
             // If no last_tweet_id is provided, fetch the most recent tweets
-            tweets = await tweetModel.aggregate(fetch_feed_query);
+            var query = [
+                { $sort: { created_at: -1 } },
+                { $limit: 10 },
+                { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+                { $unwind: { path: '$author'}},
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+                { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+                { $project: {
+                    "author_email": 1,
+                    "content": 1,
+                    "media": 1,
+                    "poll": 1,
+                    "retweet": 1,
+                    "hashtags": 1,
+                    "num_comments": 1,
+                    "liked_by": 1,
+                    "num_retweets": 1,
+                    "num_views": 1,
+                    "num_bookmarks": 1,
+                    "created_at": 1,
+                    "updated_at": 1,
+                    "author.username": 1,
+                    "author.profile_img": 1,
+                    "retweet_author.username": 1,
+                    "retweet_author.profile_img": 1,
+                } },
+            ];
+            tweets = await tweetModel.aggregate(query);
             console.log(tweets);
         } catch (error) {
             console.log(error);
@@ -367,7 +513,37 @@ const getFollowedTweets = async (req, res) => {
         last_tweet_id = new ObjectId(req.query.last_tweet_id);
         try {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
-            var query = fetch_feed_query;
+            var query = [
+                { $sort: { created_at: -1 } },
+                { $limit: 10 },
+                { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+                { $unwind: { path: '$author'}},
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+                { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+                { $project: {
+                    "author_email": 1,
+                    "content": 1,
+                    "media": 1,
+                    "poll": 1,
+                    "retweet": 1,
+                    "hashtags": 1,
+                    "num_comments": 1,
+                    "liked_by": 1,
+                    "num_retweets": 1,
+                    "num_views": 1,
+                    "num_bookmarks": 1,
+                    "created_at": 1,
+                    "updated_at": 1,
+                    "author.username": 1,
+                    "author.profile_img": 1,
+                    "retweet_author.username": 1,
+                    "retweet_author.profile_img": 1,
+                } },
+            ];
             if (query[0].$match) {
                 query[0].$match._id = { $lt: last_tweet_id };
                 query[0].$match.author_id = { $in: followed_users };
@@ -384,7 +560,37 @@ const getFollowedTweets = async (req, res) => {
     } else {
         try {
             // Find tweets from the users that the current user follows
-            var query = fetch_feed_query;
+            var query = [
+                { $sort: { created_at: -1 } },
+                { $limit: 10 },
+                { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
+                { $unwind: { path: '$author'}},
+                { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
+                { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+                { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
+                { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
+                { $project: {
+                    "author_email": 1,
+                    "content": 1,
+                    "media": 1,
+                    "poll": 1,
+                    "retweet": 1,
+                    "hashtags": 1,
+                    "num_comments": 1,
+                    "liked_by": 1,
+                    "num_retweets": 1,
+                    "num_views": 1,
+                    "num_bookmarks": 1,
+                    "created_at": 1,
+                    "updated_at": 1,
+                    "author.username": 1,
+                    "author.profile_img": 1,
+                    "retweet_author.username": 1,
+                    "retweet_author.profile_img": 1,
+                } },
+            ];
             if (query[0].$match) {
                 query[0].$match.author_id = { $in: followed_users} ;
             } else {
