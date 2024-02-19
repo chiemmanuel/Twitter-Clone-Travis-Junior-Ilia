@@ -13,7 +13,12 @@ const HomePage = () => {
   const [liveFeedTweets, setLiveFeedTweets] = useState([]);
   const [liveFeedHasMore, setLiveFeedHasMore] = useState(true);
   const [liveFeedLastId, setLiveFeedLastId] = useState(null);
+  const [followedTweets, setFollowedTweets] = useState([]);
+  const [followedHasMore, setFollowedHasMore] = useState(true);
+  const [followedLastId, setFollowedLastId] = useState(null);
   const user = JSON.parse(localStorage.getItem('user'));
+
+  const [activeSection, setActiveSection] = useState('livefeed');
 
   useEffect(() => {
     socket.on('tweet-created', data => {
@@ -39,10 +44,49 @@ const HomePage = () => {
     }).catch((err) => {
       console.log(err);
     });
+
+    instance.get(requests.getFollowedTweets, {
+      headers: {
+        Authorization: `Bearer ${user.token}`
+      }
+    }).then((res) => {
+      console.log(res.data);
+      setFollowedTweets(res.data.tweets);
+      setFollowedLastId(res.data.last_tweet_id);
+      if (res.data.tweets.length < 10) {
+        console.log('no more tweets');
+        setFollowedHasMore(false);
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
     return () => {
       socket.off('tweet-created');
+      // clear the live feed and followed tweets
+      setLiveFeedTweets([]);
+      setFollowedTweets([]);
+
     }
   }, []);
+
+
+  const fetchMoreFollowedTweets = () => {
+    console.log('fetching more followed tweets');
+    instance.get(requests.getFollowedTweets + `?last_tweet_id=${followedLastId}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`
+      }
+    }).then((res) => {
+      setFollowedTweets(prevTweets => [...prevTweets, ...res.data.tweets]);
+      setFollowedLastId(res.data.last_tweet_id);
+      if (res.data.tweets.length < 10 || res.data.last_tweet_id === null) {
+        console.log('no more tweets');
+        setFollowedHasMore(false);
+      }
+    }).catch((err) => {
+      console.log(err);
+    });
+  }
 
   const fetchMoreLiveFeedTweets = () => {
     console.log('fetching more live feed tweets');
@@ -68,8 +112,12 @@ const HomePage = () => {
       <div className='header'>
         <Navbar />
       </div>
-
       <div className='main'>
+        <div className='tabs'>
+          <button onClick={()=>setActiveSection('livefeed')}>Live Feed</button>
+          <button onClick={()=>setActiveSection('forYou')}>For You</button>
+        </div>
+        {activeSection === 'livefeed' ? (
         <div className='livefeed'>
           <h1>Live Feed</h1>
           <InfiniteScroll
@@ -85,10 +133,23 @@ const HomePage = () => {
             })}
           </InfiniteScroll>
         </div>
-
-        <div className=''>
-
+      ) : (
+        <div className='forYou'>
+          <h1>For You</h1>
+          <InfiniteScroll
+            dataLength={followedTweets.length}
+            next={fetchMoreFollowedTweets}
+            hasMore={followedHasMore}
+            loader={<h4>Loading...</h4>}
+            scrollableTarget="forYou"
+            scrollThreshold={0.5}
+          >
+            {followedTweets.map((tweet) => {
+              return <Tweet key={tweet._id} tweet={tweet} />
+            })}
+          </InfiniteScroll>
         </div>
+      )}
       </div>
     </div>
   );
