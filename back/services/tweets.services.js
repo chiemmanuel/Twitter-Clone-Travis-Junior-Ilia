@@ -318,6 +318,7 @@ const getLiveTweets = async (req, res) => {
             } else {
                 query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
             }
+            console.log(query);
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -328,6 +329,7 @@ const getLiveTweets = async (req, res) => {
         try {
             // If no last_tweet_id is provided, fetch the most recent tweets
             tweets = await tweetModel.aggregate(fetch_feed_query);
+            console.log(tweets);
         } catch (error) {
             console.log(error);
             logger.error("Error fetching tweets from the database:" + error);
@@ -361,8 +363,8 @@ const getFollowedTweets = async (req, res) => {
         logger.error(`Error fetching users that ${user_id} follows: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error fetching users that the current user follows' });
     }
-    if(req.body.last_tweet_id) {
-        last_tweet_id = new ObjectId(req.body.last_tweet_id);
+    if(req.query.last_tweet_id) {
+        last_tweet_id = new ObjectId(req.query.last_tweet_id);
         try {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             var query = fetch_feed_query;
@@ -373,6 +375,7 @@ const getFollowedTweets = async (req, res) => {
                 query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             }
             tweets = await tweetModel.aggregate(query);
+            console.log(tweets);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
             logger.error(`Error fetching tweets from the database: ${error}`);
@@ -383,7 +386,7 @@ const getFollowedTweets = async (req, res) => {
             // Find tweets from the users that the current user follows
             var query = fetch_feed_query;
             if (query[0].$match) {
-                query[0].$match.author_id.$in = followed_users;
+                query[0].$match.author_id = { $in: followed_users} ;
             } else {
                 query.unshift({ $match: { author_id: { $in: followed_users } } });
             }

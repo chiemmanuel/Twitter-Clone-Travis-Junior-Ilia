@@ -42,39 +42,23 @@ function Tweet( props ) {
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
 
-    // useEffect(() => {
-    //   setNumViews(prevNumViews => prevNumViews + 1);
-    //   axios.put(requests.incrementViews + tweet._id, {
-    //       amount: 1
-    //   }, {
-    //       headers: {
-    //           Authorization: `Bearer ${user.token}`,
-    //       },
-    //   }).then(res => console.log(res))
-    //   .catch(err => console.log(err));
-    // }, []);
+    useEffect(() => {
+      setNumViews(prevNumViews => prevNumViews + 1);
+      axios.put(requests.incrementViews + tweet._id, {
+          amount: 1
+      }, {
+          headers: {
+              Authorization: `Bearer ${user.token}`,
+          },
+      }).then(res => console.log(res))
+      .catch(err => console.log(err));
+    }, []);
 
     useEffect(() => {
         if (bookmarkStatus === 'idle') {
             dispatch(fetchBookmarks());
         }
     }, [bookmarkStatus, dispatch]);
-
-      // useEffect(() => {
-      //   console.log('tweet_id:', tweet._id, 'onTweetUpdate:', onTweetUpdate)
-      //   if ( onTweetUpdate !== undefined ) {
-      //     var updated_tweet = tweet;
-      //     updated_tweet.num_comments = num_comments;
-      //     updated_tweet.liked_by = liked_by;
-      //     updated_tweet.num_bookmarks = num_bookmarks;
-      //     updated_tweet.num_retweets = numRetweets;
-      //     updated_tweet.num_views = num_views;
-
-      //     console.log('calling onTweetUpdate for tweet: ', tweet._id, 'with updated_tweet: ', updated_tweet);
-      //     onTweetUpdate(updated_tweet);
-      //   }
-
-      // }, [num_comments, liked_by, num_bookmarks, numRetweets, num_views]);
 
       useEffect(() => {
       socket.on("update-likes", data => {

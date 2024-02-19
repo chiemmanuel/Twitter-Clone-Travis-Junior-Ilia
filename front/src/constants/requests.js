@@ -33,5 +33,6 @@ export const requests = {
     getFollowers: '/followers/followers/',
     getFollowing: '/followers/following/',
     liveFeed: '/tweets/livefeed',
+    getFollowedTweets: '/tweets/foryoupage',
 };
  

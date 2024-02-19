@@ -32,3 +32,10 @@
   flex-direction: column;
   border-right: solid 1px lightgray;
 }
+
+.forYou {  margin-top: 10px;
+  flex-basis: 55%;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  border-right: solid 1px lightgray;}
