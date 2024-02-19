@@ -1,0 +1,10 @@
+.page {
+    margin-top: 10px;
+}
+.bookmarks {
+
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+}

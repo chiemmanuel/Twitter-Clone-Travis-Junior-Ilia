@@ -1,0 +1,16 @@
+const express = require('express');
+const router = express.Router();
+
+const tweetsService = require('../services/tweets.services');
+
+router.get('/livefeed', tweetsService.getLiveTweets);
+router.get('/fetch/:tweetId', tweetsService.getTweetById);
+router.put('/like/:tweetId', tweetsService.likeTweet);
+router.put('/edit/:tweetId', tweetsService.editTweetById);
+router.delete('/delete/:tweetId', tweetsService.deleteTweetById);
+router.get('/foryoupage', tweetsService.getFollowedTweets);
+router.post('/tweet', tweetsService.postTweet);
+router.put('/poll/vote', tweetsService.registerVote);
+router.put('/increment-views/:tweetId', tweetsService.incrementViews);
+
+module.exports = router;

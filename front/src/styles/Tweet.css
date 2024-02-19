@@ -1,0 +1,94 @@
+.tweet {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.tweet__header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.tweet__header img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.tweet__headerText h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.tweet__headerText p {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+}
+
+.tweet__body {
+  margin-bottom: 8px;
+}
+
+.tweet__body p {
+  margin: 0;
+}
+
+.tweet__body img {
+  max-width: 100%;
+  margin-bottom: 8px;
+}
+
+.tweet__retweet {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.tweet__footer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-top: 16px;
+  justify-content: space-evenly;
+}
+
+.tweet__footerViews {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+}
+
+.tweet__footerIcons {
+  display: flex;
+  align-items: center;
+}
+
+.tweet__footerIcons span {
+  display: flex;
+  align-items: center;
+  margin-right: 16px;
+  cursor: pointer;
+}
+
+.tweet__footerIcon {
+  width: 20px;
+  height: 20px;
+  margin-right: 4px;
+}
+
+.tweet__footer span {
+  font-size: 12px;
+  color: #888;
+}
+
+.tweet__footerHashtag {
+  font-size: 12px;
+  color: #888;
+  margin-right: 8px;
+}
