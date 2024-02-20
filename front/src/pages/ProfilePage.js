@@ -171,12 +171,9 @@ const ProfilePage = () => {
             {/* Overlay for EditProfile */}
             {showEditProfile && (
               <div className="overlay">
-                <div className="popup">
                   <UpdateProfile onClose={handleCloseEditProfile} />
-                </div>
               </div>
             )}
-    
             {/* Overlay for EditPassword */}
             {showEditPassword && (
               <div className="overlay">
