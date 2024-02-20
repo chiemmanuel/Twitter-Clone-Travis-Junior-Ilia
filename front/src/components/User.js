@@ -63,7 +63,7 @@ const User = ({ user }) => {
       </div>
       <div className='action'>
       {JSON.parse(localStorage.getItem("user"))._id !== _id ? (
-        <button onClick={handleFollowToggle}>
+        <button className='button' onClick={handleFollowToggle}>
           {isFollowing ? 'Unfollow' : 'Follow'}
         </button>
       ) : (

@@ -116,7 +116,7 @@ const UpdateProfile = ({ onClose, onUpdateSuccess }) => {
               title='AAAAAAa'
               onChange={(e) => {
                 handleImageUpdate(e.target.files[0]);
-                setPreviewURL(URL.createObjectURL(e.target.files[0]))
+                setPreviewURL(URL.createObjectURL(e.target.files[0]) || null)
               }}
             />
             <button
