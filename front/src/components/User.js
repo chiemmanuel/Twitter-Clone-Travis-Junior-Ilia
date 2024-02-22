@@ -63,6 +63,7 @@ const User = ({ user }) => {
         <span className='username'>@{ username }</span>
       </div>
       <div className='action'>
+
       {current_user._id !== _id ? (
         <button onClick={handleFollowToggle}>
           {isFollowing ? 'Unfollow' : 'Follow'}
