@@ -62,8 +62,12 @@ const addBookmark = async (req, res) => {
         const user = await userModel.findById(userId);
         const tweet = await tweetModel.findById(tweet_id);
 
+        if (!tweet) {
+            return res.status(statusCodes.notFound).json({ error: 'Tweet not found' });
+        }
+
         if (user.bookmarked_tweets.includes(tweet_id)) {
-            res.status(statusCodes.success).json({ message: 'This tweet is already bookmarked' });
+            return res.status(statusCodes.success).json({ message: 'This tweet is already bookmarked' });
         } else {
             user.bookmarked_tweets.push(tweet_id);
             tweet.num_bookmarks += 1;
@@ -87,6 +91,10 @@ const deleteBookmark = async (req, res) => {
         const user = await userModel.findById(userId);
         const tweet = await tweetModel.findById(tweet_id);
 
+        if (!tweet) {
+            return res.status(statusCodes.notFound).json({ error: 'Tweet not found' });
+        }
+
         user.bookmarked_tweets.pull(tweet_id);
         tweet.num_bookmarks -= 1;
         await user.save();
@@ -97,7 +105,7 @@ const deleteBookmark = async (req, res) => {
     
     } catch (error) {
         logger.error(`Error while deleting a bookmark: ${error}`);
-        res.status(statusCodes.queryError).json({ error: 'Error while deleting a bookmark' });
+        return res.status(statusCodes.queryError).json({ error: 'Error while deleting a bookmark' });
     }
 };
 
