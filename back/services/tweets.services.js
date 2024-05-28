@@ -16,26 +16,50 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
  * @returns: The res object with a status code and a message
  */
 const postTweet = async (req, res) => {
-    if (req.body.poll) {
-        pollResult = await createPoll(req.body.poll.title, req.body.poll.duration_seconds, req.body.poll.options);
-        if (pollResult.error) {
-            logger.error(`Error creating poll: ${pollResult.error}`);
-            return res.status(statusCodes.queryError).json({ message: 'Error creating poll' });
-        }
-    } else {
-        pollResult = { id: null };
-    }
-
-    const newTweet = new tweetModel({
+    let tweetInfo = {
         author_id: req.user._id,
+        author_username: req.user.username,
         author_email: req.user.email,
+        author_profile_img: req.body.author_profile_img,
         content: req.body.content,
-        media: req.body.media ? req.body.media : null,
-        poll_id: pollResult.id,
-        retweet_id: req.body.retweet_id ? req.body.retweet_id : null,
-        hashtags: req.body.hashtags ? req.body.hashtags : null,
-        liked_by: [],
-    });
+        media: req.body.media,  
+        retweet_id: req.body.retweet_id,
+        hashtags: req.body.hashtags,
+        num_comments: 0,
+        num_likes: 0,
+        num_retweets: 0,
+        num_views: 0,
+        num_bookmarks: 0,
+    } 
+    if (req.body.poll) {
+        let poll = {
+            title: req.body.poll.title,
+            duration_seconds: req.body.poll.duration_seconds,
+            options: req.body.poll.options.map(option => {
+                return { option_value: option, num_votes: 0, voter_ids: [] };
+            }),
+            isClosed: false,
+        };
+        if (poll.options.length < 2 || poll.options.length > 4) {
+            return res.status(statusCodes.badRequest).json({ message: 'Poll must have between 2 and 4 options' });
+        }
+        if (poll.duration_seconds < 60) {
+            return res.status(statusCodes.badRequest).json({ message: 'Poll duration must be at least 60 seconds' });
+        }
+        if (poll.title === '') {
+            return res.status(statusCodes.badRequest).json({ message: 'Poll title cannot be empty' });
+        }
+        if (poll.options.some(option => option.option_value === '')) {
+            return res.status(statusCodes.badRequest).json({ message: 'Poll options cannot be empty' });
+        }
+        if (poll.options.some(option => option.option_value.length > 25)) {
+            return res.status(statusCodes.badRequest).json({ message: 'Poll options cannot be longer than 25 characters' });
+        }
+        tweetInfo.poll = poll;
+    }
+    console.log(tweetInfo);
+    const newTweet = new tweetModel(tweetInfo);
+
     try {
         const result = await newTweet.save();
         const tweet_id = result._id;
@@ -44,46 +68,7 @@ const postTweet = async (req, res) => {
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
             sendMessage(null, 'retweeted', { tweet_id: req.body.retweet_id});
         }
-        var query = [
-            { $sort: { created_at: -1 } },
-            { $limit: 10 },
-            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-            { $unwind: { path: '$author'}},
-            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
-            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-            { $project: {
-                "author_email": 1,
-                "content": 1,
-                "media": 1,
-                "poll": 1,
-                "retweet": 1,
-                "hashtags": 1,
-                "num_comments": 1,
-                "liked_by": 1,
-                "num_retweets": 1,
-                "num_views": 1,
-                "num_bookmarks": 1,
-                "created_at": 1,
-                "updated_at": 1,
-                "author.username": 1,
-                "author.profile_img": 1,
-                "retweet_author.username": 1,
-                "retweet_author.profile_img": 1,
-            } },
-        ];
-        if (query[0].$match) {
-            query[0].$match._id = new ObjectId(tweet_id);
-        } else {
-            query.unshift({ $match: { _id: new ObjectId(tweet_id) } });
-        }
-        const tweet = await tweetModel.aggregate(query);
-        logger.info(`Successfully created tweet with id: ${tweet_id}`);
-        logger.info(`tweet: ${tweet[0]}`)
-        sendMessage(null, 'tweet-created', { tweet: tweet[0] });
+        sendMessage(null, 'tweet-created', { tweet: result }	)
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
     } catch (error) {
         logger.error(`Error creating tweet: ${error}`);
@@ -104,33 +89,8 @@ const getTweetById = async (req, res) => {
     logger.info(`Fetching tweet with id: ${tweetId}`)
     try {
         var query = [
-            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-            { $unwind: { path: '$author'}},
-            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
             { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
             { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-            { $project: {
-                "author_email": 1,
-                "content": 1,
-                "media": 1,
-                "poll": 1,
-                "retweet": 1,
-                "hashtags": 1,
-                "num_comments": 1,
-                "liked_by": 1,
-                "num_retweets": 1,
-                "num_views": 1,
-                "num_bookmarks": 1,
-                "created_at": 1,
-                "updated_at": 1,
-                "author.username": 1,
-                "author.profile_img": 1,
-                "retweet_author.username": 1,
-                "retweet_author.profile_img": 1,
-            } },
         ];
         if (query[0].$match) {
             query[0].$match._id = new ObjectId(tweetId);
@@ -182,38 +142,13 @@ const editTweetById = async (req, res) => {
 
         await tweet.save();
         var query = [
-            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-            { $unwind: { path: '$author'}},
-            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
             { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
             { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-            { $project: {
-                "author_email": 1,
-                "content": 1,
-                "media": 1,
-                "poll": 1,
-                "retweet": 1,
-                "hashtags": 1,
-                "num_comments": 1,
-                "liked_by": 1,
-                "num_retweets": 1,
-                "num_views": 1,
-                "num_bookmarks": 1,
-                "created_at": 1,
-                "updated_at": 1,
-                "author.username": 1,
-                "author.profile_img": 1,
-                "retweet_author.username": 1,
-                "retweet_author.profile_img": 1,
-            } },
         ];
         if (query[0].$match) {
-            query[0].$match._id = new ObjectId(tweet_id);
+            query[0].$match._id = new ObjectId(tweetId);
         } else {
-            query.unshift({ $match: { _id: new ObjectId(tweet_id) } });
+            query.unshift({ $match: { _id: new ObjectId(tweetId) } });
         }
         const updatedTweet = await tweetModel.aggregate(query);
         console.log(updatedTweet);
@@ -329,12 +264,12 @@ const createPoll = async (title, duration_seconds, option_values) => {
 /**
  *
  * This function closes a poll by updating the isClosed field to true and emitting a poll-closed event to the client
- * @param {String} poll_id: The id of the poll to be closed
+ * @param {String} poll_id: The tweet id of the poll to be closed
  * @returns: Nothing
  */
 const closePoll = async (poll_id) => {
     try {
-        const poll = await pollModel.findByIdAndUpdate(poll_id, { isClosed: true });
+        await tweetModel.findByIdAndUpdate(poll_id, { 'poll.isClosed': true });
         logger.info(`Successfully closed poll with id: ${poll_id}`);
         sendMessage(null, 'poll-close', { poll_id: poll_id });
         return;
@@ -358,7 +293,7 @@ const registerVote = async (req, res) => {
     user_id = req.user._id;
     user_email = req.user.email;
     try {
-        const poll = await pollModel.findById(poll_id);
+        const poll = await tweetModel.findById(poll_id).select('poll');
         console.log(poll);
         if (poll.isClosed) {
             logger.error(`Error registering vote: Poll with id ${poll_id} is closed`);
@@ -373,7 +308,7 @@ const registerVote = async (req, res) => {
         }
         poll.options[option_index].num_votes += 1;
         poll.options[option_index].voter_ids.push(user_id);
-        await poll.save();
+        await tweetModel.findByIdAndUpdate(poll_id, { poll: poll });
         logger.info(`Successfully registered vote for poll with id: ${poll_id}`);
         sendMessage(null, 'poll-vote', { poll_id: poll_id, option_index: option_index, voter_id: user_id});
         return res.status(statusCodes.success).json({ message: 'Successfully registered vote' });
@@ -394,35 +329,8 @@ const getLiveTweets = async (req, res) => {
     logger.info(`Fetching tweets from the database`);
     logger.info(req.query.last_tweet_id)
     var query = [
-        { $sort: { created_at: -1 } },
-        { $limit: 10 },
-        { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-        { $unwind: { path: '$author'}},
-        { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-        { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
         { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
         { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-        { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-        { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-        { $project: {
-            "author_email": 1,
-            "content": 1,
-            "media": 1,
-            "poll": 1,
-            "retweet": 1,
-            "hashtags": 1,
-            "num_comments": 1,
-            "liked_by": 1,
-            "num_retweets": 1,
-            "num_views": 1,
-            "num_bookmarks": 1,
-            "created_at": 1,
-            "updated_at": 1,
-            "author.username": 1,
-            "author.profile_img": 1,
-            "retweet_author.username": 1,
-            "retweet_author.profile_img": 1,
-        } },
     ];
     if(req.query.last_tweet_id) {
         const last_tweet_id = new ObjectId(req.query.last_tweet_id);
@@ -480,33 +388,8 @@ const getFollowedTweets = async (req, res) => {
     var query = [
         { $sort: { created_at: -1 } },
         { $limit: 10 },
-        { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-        { $unwind: { path: '$author'}},
-        { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-        { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
         { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
         { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-        { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-        { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-        { $project: {
-            "author_email": 1,
-            "content": 1,
-            "media": 1,
-            "poll": 1,
-            "retweet": 1,
-            "hashtags": 1,
-            "num_comments": 1,
-            "liked_by": 1,
-            "num_retweets": 1,
-            "num_views": 1,
-            "num_bookmarks": 1,
-            "created_at": 1,
-            "updated_at": 1,
-            "author.username": 1,
-            "author.profile_img": 1,
-            "retweet_author.username": 1,
-            "retweet_author.profile_img": 1,
-        } },
     ];
     if(req.query.last_tweet_id) {
         last_tweet_id = new ObjectId(req.query.last_tweet_id);
