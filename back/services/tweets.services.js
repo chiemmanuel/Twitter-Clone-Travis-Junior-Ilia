@@ -68,6 +68,9 @@ const postTweet = async (req, res) => {
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
             sendMessage(null, 'retweeted', { tweet_id: req.body.retweet_id});
         }
+        if (result.poll.duration_seconds) {
+            setTimeout(closePoll, result.poll.duration_seconds * 1000, tweet_id);
+        }
         sendMessage(null, 'tweet-created', { tweet: result }	)
         return res.status(statusCodes.success).json({ message: 'Successfully created tweet', _id: tweet_id});
     } catch (error) {
@@ -161,7 +164,7 @@ const editTweetById = async (req, res) => {
 };
 
 /**
- * TODO: Add socket.io to emit a tweet-deleted event to active clients
+ * TODO: Update to query user's liked tweets from Neo4j database when implemented
  * 
  * This function allows users to like or unlike a tweet by adding or removing their user ID from the liked_by list
  * @param {*} req: The request object with tweetId in params
@@ -233,33 +236,6 @@ const deleteTweetById = async (req, res) => {
     }
 };
 
-/**
- * This function creates a new poll and saves it to the database using the pollModel schema and values passed to it from the postTweet function
- * @param {String} title: The title of the poll
- * @param {Number} duration_seconds: The duration of the poll in seconds
- * @param {Array} option_values: The options for the poll
- * @returns: The id of the newly created poll, or null if an error occurs
- * 
- */
-const createPoll = async (title, duration_seconds, option_values) => {
-    const newPoll = new pollModel({
-        title: title,
-        duration_seconds: duration_seconds,
-        options: option_values.map(option => {
-            return { option_value: option, num_votes: 0, voter_ids: [] };
-        }),
-    });
-    try {
-        const poll = await newPoll.save();
-        logger.info(`Successfully created poll with id: ${poll._id}`);
-        setTimeout(closePoll, duration_seconds * 1000, poll._id);
-        return { id: poll._id };
-    } catch (error) {
-        console.log(error);
-        logger.error(`Error creating poll: ${error}`);
-        return { error: error.message };
-    }
-}
 
 /**
  *
@@ -292,16 +268,19 @@ const registerVote = async (req, res) => {
     logger.info(`Option index: ${option_index}`)
     user_id = req.user._id;
     user_email = req.user.email;
+    console.log(`User id: ${user_id}, User email: ${user_email}`)
     try {
-        const poll = await tweetModel.findById(poll_id).select('poll');
-        console.log(poll);
+        const result = await tweetModel.findById(poll_id).select('poll');
+        const poll = result.poll;
+
         if (poll.isClosed) {
             logger.error(`Error registering vote: Poll with id ${poll_id} is closed`);
             return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: Poll is closed' });
         }
         // Check if the user has already voted for an option in the poll
-        for (let i = 0; i < poll.options.length; i++) {
-            if (poll.options[i].voter_ids.includes(user_id)) {
+        for (option of poll.options){
+            console.log(option)
+            if (option.voter_ids.includes(user_id)) {
                 logger.error(`Error registering vote: User with id ${user_id} has already voted for an option in poll with id ${poll_id}`);
                 return res.status(statusCodes.badRequest).json({ message: 'Error registering vote: User has already voted for an option in this poll' });
             }
