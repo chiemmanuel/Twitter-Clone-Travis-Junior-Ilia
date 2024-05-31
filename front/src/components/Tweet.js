@@ -202,7 +202,7 @@ function Tweet( props ) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
-              {retweet.poll && <Poll poll_object={retweet.poll} />}
+              {retweet.poll.title && <Poll poll_object={retweet.poll} />}
             </div>
           </div>
         )}
