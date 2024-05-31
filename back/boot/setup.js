@@ -16,6 +16,8 @@ const logger = require("../middleware/winston");
 const healthCheck = require("../middleware/healthCheck");
 const verifyToken = require("../middleware/authentication");
 const validator = require("../middleware/validator");
+const Redis = require("./redis_client");
+
 
 // ROUTES
 const authRoutes = require("../routes/auth.routes");
@@ -34,6 +36,15 @@ try {
 } catch (error) {
   logger.error("Error connecting to MongoDB" + error);
 }
+ (async function () {
+  try {
+    const redisClient = Redis.init();
+    await redisClient.connect();
+    logger.info("Redis Connected");
+  } catch (error) {
+    logger.error("Error connecting to Redis" + error);
+  }
+})();
 
 
 server.listen(process.env.SOCKETIO_PORT || 4000 , () => {

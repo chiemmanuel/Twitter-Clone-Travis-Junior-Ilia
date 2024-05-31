@@ -1,10 +1,21 @@
 const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
+const redisCacheDurations = require('../constants/redisCacheDurations.js');
 const tweetModel = require('../models/tweetModel.js');
-const pollModel = require('../models/pollModel.js');
 const userModel = require('../models/userModel.js');
 const ObjectId = require('mongoose').Types.ObjectId;
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
+const crypto = require('crypto');
+const Redis = require('../boot/redis_client.js');
+
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 
 /**
@@ -88,29 +99,41 @@ const postTweet = async (req, res) => {
  * @returns: The res object with a status code and the tweet in the message
  */
 const getTweetById = async (req, res) => {
+    const redisClient = Redis.getRedisClient();
     const tweetId = req.params.tweetId;
     logger.info(`Fetching tweet with id: ${tweetId}`)
-    try {
-        var query = [
-            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
-            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-        ];
-        if (query[0].$match) {
-            query[0].$match._id = new ObjectId(tweetId);
-        } else {
-            query.unshift({ $match: { _id: new ObjectId(tweetId) } });
+    const reqHash = getHashKey({tweetId});
+    const cachedTweet = await redisClient.get(reqHash).catch((err) => {
+        logger.error(`Error fetching tweet from cache: ${err}`);
+    });
+    if (cachedTweet) {
+        logger.info(`fetched tweet from cache: ${cachedTweet}`)
+        return res.status(statusCodes.success).json({ tweet: JSON.parse(cachedTweet) });
+    }
+    else {
+        try {
+            var query = [
+                { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
+                { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
+            ];
+            if (query[0].$match) {
+                query[0].$match._id = new ObjectId(tweetId);
+            } else {
+                query.unshift({ $match: { _id: new ObjectId(tweetId) } });
+            }
+            console.log(query);
+            const tweet = await tweetModel.aggregate(query);
+            
+            if (tweet.length === 0) {
+                return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
+            }
+            logger.info(`fetched tweet: ${tweet}`)
+            await redisClient.set(reqHash, JSON.stringify(tweet[0]), 'EX', redisCacheDurations.getTweet);
+            return res.status(statusCodes.success).json({ tweet: tweet[0] });
+        } catch (error) {
+            console.log(error);
+            return res.status(statusCodes.queryError).json({ message: 'Error fetching tweet' });
         }
-        console.log(query);
-        const tweet = await tweetModel.aggregate(query);
-        
-        if (tweet.length === 0) {
-            return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
-        }
-        logger.info(`fetched tweet: ${tweet}`)
-        return res.status(statusCodes.success).json({ tweet: tweet[0] });
-    } catch (error) {
-        console.log(error);
-        return res.status(statusCodes.queryError).json({ message: 'Error fetching tweet' });
     }
 };
 

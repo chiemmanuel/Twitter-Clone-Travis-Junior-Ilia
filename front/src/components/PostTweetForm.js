@@ -164,7 +164,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             <form className="post-tweet-form" onSubmit={handleSubmit}>
                 <textarea
                     className="tweet-text"
-                    placeholder={isRetweet ? `Retweeting ${retweet.author?.username}` : displayPoll ? "Ask a question" :"What's happening?"}
+                    placeholder={isRetweet ? `Retweeting ${retweet.author_username}` : displayPoll ? "Ask a question" :"What's happening?"}
                     value={tweetText}
                     onChange={(e) => handleTweetTextChange(e)}
                 />
@@ -183,7 +183,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                         <div className="tweet__body">
                           <p>{retweet.content}</p>
                           { retweet.media !== "" && retweet.media !== null && <img src={retweet.media} alt="media" />}
-                          {retweet.poll ? ( <Poll poll_object={retweet.poll} />) : null }
+                          {retweet.poll.title ? ( <Poll poll_object={retweet.poll} poll_id={retweet._id} />) : null }
                           {retweet.retweet ? (
                             <div className="tweet__retweet" >
                               <div className="tweet__header">
@@ -204,7 +204,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                               <div className="tweet__body">
                                 <p>{retweet.retweet.content}</p>
                                 <img src={retweet.retweet.media} alt="media" />
-                                {retweet.retweet.poll && <Poll poll_object={retweet.poll} />}
+                                {retweet.retweet.poll.title && <Poll poll_object={retweet.poll} poll_id={retweet.retweet._id} />}
                               </div>
                             </div> 
                           ) : null}
