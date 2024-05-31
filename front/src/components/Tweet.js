@@ -34,11 +34,11 @@ function Tweet( props ) {
     const bookmarkStatus = useSelector(selectBookmarksStatus);
     const bookmarks = useSelector(selectBookmarks);
 
-    const { author, content, media, hashtags, created_at, updated_at, poll, retweet, retweet_author } = tweet;
+    const { author_id, author_email, author_username, author_profile_img, content, media, hashtags, created_at, updated_at, poll, retweet } = tweet;
+    const [num_likes, setNumLikes] = useState(tweet.num_likes);
     const [num_views, setNumViews] = useState(tweet.num_views);
     const [num_comments, setNumComments] = useState(tweet.num_comments);
-    const [liked_by, setLikedBy] = useState(tweet.liked_by);
-    const [isLiked, setIsLiked] = useState((liked_by && liked_by.includes(user._id)) || false);
+    const [isLiked, setIsLiked] = useState(false);
     const [num_bookmarks, setNumBookmarks] = useState(tweet.num_bookmarks);
     const [numRetweets, setNumRetweets] = useState(tweet.num_retweets);
 
@@ -64,9 +64,9 @@ function Tweet( props ) {
       socket.on("update-likes", data => {
         const { tweet_id, user_id, dislike } = data;
         if (tweet_id === tweet._id && dislike) {
-          setLikedBy( prevLikedBy => prevLikedBy.filter(id => id !== user_id));
+            setNumLikes(prevNumLikes => prevNumLikes - 1);
         } else if (tweet_id === tweet._id && !dislike) {
-            setLikedBy( prevLikedBy => [...prevLikedBy, user_id]);
+            setNumLikes(prevNumLikes => prevNumLikes + 1);
         }
       });
       socket.on("retweeted", data => {
@@ -108,8 +108,10 @@ function Tweet( props ) {
     const handleLike = () => {
         if (isLiked) {
             setIsLiked(false);
+            setNumLikes(num_likes - 1);
         } else {
             setIsLiked(true);
+            setNumLikes(num_likes + 1);
         }
         axios.put(requests.likeTweet + tweet._id, {}, {
           headers: {
@@ -163,13 +165,13 @@ function Tweet( props ) {
   return (
     <div className="tweet">
       <div className="tweet__header">
-        {author && author.profile_img && (
-          <img src={author.profile_img} alt="profile" />
+        {author_profile_img && (
+          <img src={author_profile_img} alt="profile" />
         )}
         <div className="tweet__headerText">
-        <div className='tweet__author' onClick={()=>navigate(`/profile/${author.username}`)}>
-          {author && author.username && (
-            <h3>{author.username} </h3>
+        <div className='tweet__author' onClick={()=>navigate(`/profile/${author_username}`)}>
+          {author_username && (
+            <h3>{author_username} </h3>
             )}
             </div>
           <p>{new Date(created_at).toUTCString()}</p>
@@ -179,16 +181,16 @@ function Tweet( props ) {
         <p>{content}</p>
         { media ? (<img src={media} alt=''/>) : null}
         {/* if poll exists, render poll component with poll object */}
-        {poll && <Poll poll_object={poll} />}
+        {poll.title && <Poll poll_object={poll} poll_id={tweet._id} />}
         {retweet && (
           <div className="tweet__retweet" onClick={handleRetweetOnClick}>
             <div className="tweet__header">
-              {retweet_author && retweet_author.profile_img && (
-                <img src={retweet_author.profile_img} alt="profile" />
+              {retweet && retweet.author_profile_img && (
+                <img src={retweet.author_profile_img} alt="profile" />
               )}
               <div className="tweet__headerText">
-                {retweet_author && retweet_author.username && (
-                  <h3>{retweet_author.username}</h3>
+                {retweet && retweet.author_username && (
+                  <h3>{retweet.author_username}</h3>
                 )}
                 {new Date(created_at).toUTCString() !== new Date(updated_at).toUTCString() ? (
                   <p>Edited: {new Date(updated_at).toUTCString()}</p>
@@ -200,7 +202,7 @@ function Tweet( props ) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
-              {retweet.poll && <Poll poll_object={retweet.poll} />}
+              {retweet.poll.title && <Poll poll_object={retweet.poll} />}
             </div>
           </div>
         )}
@@ -222,7 +224,7 @@ function Tweet( props ) {
             setIsOpen={setIsRetweetModalOpen} />
             <span onClick={handleLike}>
             <img src={like_icon} alt="like" className='tweet__footerIcon'/>
-            <span>{liked_by?.length}</span>
+            <span>{num_likes}</span>
             </span>
             <span onClick={handleBookmark}>
               <img src={bookmark_icon} alt="bookmark" className='tweet__footerIcon bookmark-icon' title='Bookmark'/>
