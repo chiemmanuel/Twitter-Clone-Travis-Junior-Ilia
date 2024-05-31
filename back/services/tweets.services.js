@@ -308,6 +308,8 @@ const getLiveTweets = async (req, res) => {
     logger.info(`Fetching tweets from the database`);
     logger.info(req.query.last_tweet_id)
     var query = [
+        { $sort: { created_at: -1 } },
+        { $limit: 10 },
         { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
         { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
     ];
