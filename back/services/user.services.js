@@ -8,7 +8,7 @@ const User = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const { createNeo4jSession } = require('../neo4j.config');
+const createNeo4jSession = require('../neo4j.config');
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -427,7 +427,7 @@ const deleteCurrentUser = async (req, res) => {
         return res
             .status(statusCodes.queryError)
             .json({ error: "Failed to delete user" });
-            
+
     } finally {
         await session.close();
     }

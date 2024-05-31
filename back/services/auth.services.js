@@ -3,7 +3,7 @@ const User = require('../models/userModel'); // Adjust the path based on your pr
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const { createNeo4jSession } = require('../neo4j.config');
+const createNeo4jSession = require('../neo4j.config');
 
 /**
  * This function handles user signup by creating a new user in the MongoDB database
@@ -73,11 +73,6 @@ const signup = async (req, res) => {
                 gender: $gender,
                 dob: $dob,
                 contact: $contact,
-                followers: [],
-                following: [],
-                bookmarked_tweets: [],
-                liked_tweets: [],
-                blocked_users: []
             })
             RETURN u
         `;
@@ -140,18 +135,16 @@ const login = async (req, res) => {
                 .json({ message: "Email or password don't match" });
         }
 
-        const passwordMatch = await bcrypt.compare(password, user.password);
+        const user = userRecord.get('u').properties;
 
+        const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
             return res
                 .status(statusCodes.badRequest)
                 .json({ message: "Email or password don't match" });
         }
 
-        const user = userRecord.get('u').properties;
-
         req.session.user = { _id: user._id, username: user.username, email: user.email };
-        console.log(req.session.user);
 
         const token = jwt.sign(
             { user: { _id: user._id, username: user.username, email: user.email } },
