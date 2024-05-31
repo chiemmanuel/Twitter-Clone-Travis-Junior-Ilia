@@ -100,6 +100,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         const imgData = await res.json();
 
         axios.post(requests.postTweet, {
+            author_profile_img: user.profile_img,
             content: tweetText,
             retweet_id: isRetweet ? retweet._id : null,
             media: imgData.url,

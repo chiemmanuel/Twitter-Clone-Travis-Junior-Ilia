@@ -4,7 +4,7 @@ import { requests } from '../constants/requests';
 import socket from '../socket';
 import '../styles/Poll.css';
 
-function Poll({ poll_object }) {
+function Poll({ poll_object, poll_id }) {
     console.log('poll_object', poll_object);
     const user = JSON.parse(localStorage.getItem('user'));
 
@@ -17,7 +17,7 @@ function Poll({ poll_object }) {
     useEffect(() => {
 
         socket.on("poll-vote", data => {
-            if (data.poll_id === poll_object._id && !options.some(option => option.voter_ids.includes(data.voter_id))){
+            if (data.poll_id === poll_id && !options.some(option => option.voter_ids.includes(data.voter_id))){
                 setOptions(prevOptions => {
                     let temp_options = [...prevOptions];
                     temp_options[data.option_index].num_votes += 1;
@@ -29,7 +29,7 @@ function Poll({ poll_object }) {
 
         socket.on("poll-close", data => {
             console.log('poll-close', data);
-            if (data.poll_id === poll_object._id) {
+            if (data.poll_id === poll_id) {
                 setIsClosed(true);
             }
         });
@@ -38,7 +38,7 @@ function Poll({ poll_object }) {
             socket.off("poll-vote");
             socket.off("poll-close");
         };
-    }, [poll_object._id, options]);
+    }, [poll_id, options]);
 
     const handleVote = (option_index) => {
         if (isClosed) {
@@ -58,7 +58,7 @@ function Poll({ poll_object }) {
         });
         setIsClosed(true);
         axios.put(requests.voteOnPoll, {
-            poll_id: poll_object._id,
+            poll_id: poll_id,
             option_index: option_index,
         }, {
             headers: {

@@ -61,6 +61,10 @@ const mongoose = require('mongoose');
     hashtags: [{
         type: String,
     }],
+    num_likes: {
+        type: Number,
+        default: 0,
+    },
     num_comments: {
         type: Number,
         default: 0,
