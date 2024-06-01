@@ -1,14 +1,10 @@
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const statusCodes = require('../constants/statusCodes');
 const commentModel = require('../models/commentModel');
-const tweetModel = require('../models/tweetModel');
-const ObjectId = require('mongoose').Types.ObjectId;
 const logger = require("../middleware/winston");
-const User = require('../models/userModel');
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const createNeo4jSession = require('../neo4j.config');
+const { createNeo4jSession, toNeo4jId } = require('../neo4j.config.js');
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -69,14 +65,12 @@ const updateUser = async (req, res) => {
             if (!isNaN(parsedDate)) {
                 // Format the date to 'YYYY-MM-DD'
                 const formattedDate = parsedDate.toISOString().split('T')[0];
-                // Now, `formattedDate` can be used to store in MongoDB
+                updateValues.dob = formattedDate;
             } else {
-                // Handle the case where the incoming date is invalid
                 return res
                     .status(statusCodes.badRequest)
                     .json({ error: "Invalid date format" });
             }
-            updateValues.dob = parsedDate;
         }
 
         if (contact) {
@@ -177,7 +171,6 @@ const updatePassword = async (req, res) => {
             .json({ message: "Password updated successfully" });
 
     } catch (error) {
-        console.error("Error while updating password", error.message);
         return res
             .status(statusCodes.queryError)
             .json({ error: "Internal server error" });
@@ -206,7 +199,7 @@ const getcurrentUser = async (req, res) => {
             RETURN u
         `;
 
-        const result = await session.run(getUserQuery, { userId: Number(_id) });
+        const result = await session.run(getUserQuery, { userId: toNeo4jId(_id) });
         const userRecord = result.records[0];
 
         if (!userRecord) {
@@ -216,10 +209,7 @@ const getcurrentUser = async (req, res) => {
         }
 
         const user = userRecord.get('u').properties;
-
-        return res
-            .status(statusCodes.success)
-            .json(user);
+        return res.status(statusCodes.success).json(user);
 
     } catch (error) {
         return res
@@ -259,10 +249,7 @@ const getUserByUsername = async (req, res) => {
         }
 
         const user = userRecord.get('u').properties;
-
-        return res
-            .status(statusCodes.success)
-            .json(user);
+        return res.status(statusCodes.success).json(user);
 
     } catch (error) {
         return res
@@ -284,17 +271,17 @@ const getUserTweets = async (req, res) => {
     const session = createNeo4jSession();
 
     try {
-        const { userId } = req.params;
+        const { email } = req.params;
 
         // Cypher query to fetch tweets by a user
         const fetchUserTweetsQuery = `
             MATCH (u:User)-[:POSTED]->(t:Tweet)
-            WHERE id(u) = $userId
+            WHERE u.email = $email
             RETURN t
         `;
 
         const result = await session.run(
-            fetchUserTweetsQuery, { userId: Number(userId) }
+            fetchUserTweetsQuery, { email: email }
         );
         
         const tweets = result.records.map(record => {
@@ -302,11 +289,10 @@ const getUserTweets = async (req, res) => {
             return { _id: tweet._id };
         });
 
-        return res
-            .status(statusCodes.success)
-            .json(tweets);
+        return res.status(statusCodes.success).json(tweets);
 
     } catch (error) {
+        console.log(error);
         return res
             .status(statusCodes.queryError)
             .json({ error: "Failed to get user tweets" });
@@ -325,17 +311,17 @@ const getUserLikedTweets = async (req, res) => {
     const session = createNeo4jSession();
 
     try {
-        const { userId } = req.params;
+        const { email } = req.params;
 
         // Cypher query to fetch tweets liked by a user
         const getUserLikedTweetsQuery = `
             MATCH (u:User)-[:LIKED]->(t:Tweet)
-            WHERE id(u) = $userId
+            WHERE u.email = $email
             RETURN t
         `;
 
         const result = await session.run(
-            getUserLikedTweetsQuery, { userId: Number(userId) }
+            getUserLikedTweetsQuery, { email: email }
         );
 
         const tweets = result.records.map(record => {
@@ -417,13 +403,14 @@ const deleteCurrentUser = async (req, res) => {
         `;
 
         // Execute the delete query
-        await session.run(deleteUserQuery, { userId: Number(_id) });
-
+        const result = await session.run(deleteUserQuery, { userId: toNeo4jId(_id) });
+        
         return res
             .status(statusCodes.success)
             .json({ message: "User deleted successfully" });
 
     } catch (error) {
+        console.log(error);
         return res
             .status(statusCodes.queryError)
             .json({ error: "Failed to delete user" });
@@ -434,13 +421,13 @@ const deleteCurrentUser = async (req, res) => {
 };
 
 module.exports = {
-    updateUser,
-    updatePassword,
-    getcurrentUser,
     logout,
+    updateUser,
+    getUserTweets,
+    getcurrentUser,
+    updatePassword,
+    getUserComments,
     deleteCurrentUser,
     getUserByUsername,
-    getUserTweets,
     getUserLikedTweets,
-    getUserComments
 };

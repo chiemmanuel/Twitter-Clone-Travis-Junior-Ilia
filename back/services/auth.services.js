@@ -3,7 +3,7 @@ const User = require('../models/userModel'); // Adjust the path based on your pr
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const createNeo4jSession = require('../neo4j.config');
+const { createNeo4jSession } = require('../neo4j.config');
 
 /**
  * This function handles user signup by creating a new user in the MongoDB database
@@ -72,7 +72,7 @@ const signup = async (req, res) => {
                 bio: $bio,
                 gender: $gender,
                 dob: $dob,
-                contact: $contact,
+                contact: $contact
             })
             RETURN u
         `;
@@ -96,7 +96,7 @@ const signup = async (req, res) => {
         console.error("Error while saving user to neo4j database:", err);
         return res
             .status(statusCodes.queryError)
-            .json({ message: "Failed to save user" });
+            .json({ message: "Failed to register a user" });
 
     } finally {
         await session.close();
@@ -136,6 +136,7 @@ const login = async (req, res) => {
         }
 
         const user = userRecord.get('u').properties;
+        const userId = userRecord.get('u').identity.toInt();
 
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
@@ -144,10 +145,10 @@ const login = async (req, res) => {
                 .json({ message: "Email or password don't match" });
         }
 
-        req.session.user = { _id: user._id, username: user.username, email: user.email };
-
+        req.session.user = { _id: userId, username: user.username, email: user.email };
+        
         const token = jwt.sign(
-            { user: { _id: user._id, username: user.username, email: user.email } },
+            { user: { _id: userId, username: user.username, email: user.email } },
             process.env.JWT_SECRET_KEY,
             {
                 expiresIn: "1h",
@@ -158,7 +159,7 @@ const login = async (req, res) => {
             .status(statusCodes.success)
             .json({ 
                 "token": token, 
-                "_id": user._id, 
+                "_id": userId, 
                 "username": user.username, 
                 "email": user.email,
                 "profile_img": user.profile_img,
@@ -166,7 +167,6 @@ const login = async (req, res) => {
             });
 
     } catch (error) {
-        console.error("Error while getting user from neo4j database", error.message);
         return res
             .status(statusCodes.queryError)
             .json({ message: "Failed to get user" });
