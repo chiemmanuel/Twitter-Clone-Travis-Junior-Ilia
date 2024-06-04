@@ -2,6 +2,18 @@ const logger  = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const notificationModel = require('../models/notificationModel');
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
+const crypto = require('crypto');
+const Redis = require('../boot/redis_client.js');
+const redisCacheDurations = require('../constants/redisCacheDurations.js');
+
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 /**
  * This function creates a notification in the database based on the provided recipient_email and content fields
@@ -39,8 +51,19 @@ const createNotification = async (req, res) => {
  */
 const getNotifications = async (req, res) => {
     const recipient_email = req.user.email;
+    let notifications = [];
     try {
-        const notifications = await notificationModel.find({ recipient_email });
+        const cacheKey = getHashKey({ recipient_email });
+        const cachedNotifications = await Redis.get(cacheKey).catch((err) => {
+            logger.error(`Error getting notifications from cache: ${err}`);
+        });
+        notifications = JSON.parse(cachedNotifications);
+        if (!notifications) {
+            logger.info(`Fetching notifications from database for ${recipient_email}`);
+            notifications = await notificationModel.find({ recipient_email });
+            await Redis.set(cacheKey, JSON.stringify(notifications), 'EX', redisCacheDurations.notifications);
+        }
+
         // split the notifications into read and unread
         result = notifications.reduce((acc, notification) => {
             if (notification.isRead) {
