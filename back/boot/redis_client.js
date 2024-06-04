@@ -8,8 +8,10 @@ class Redis {
   init() {
     console.log('Creating Redis client');
     Redis.client = createClient({
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
       password: process.env.REDIS_PASSWORD,
-    })
+    });
     Redis.client.on('connect', () => console.log('Redis Client Connected'));
     Redis.client.on('error', err => console.log('Redis Client Error', err));
     return Redis.client;

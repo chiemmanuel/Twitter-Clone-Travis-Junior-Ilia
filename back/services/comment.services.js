@@ -4,7 +4,7 @@ const statusCodes = require('../constants/statusCodes');
 const tweetModel = require('../models/tweetModel');
 const User = require('../models/userModel');
 const { sendMessage } = require('../boot/socketio/socketio_connection');
-const Redis = require('../boot/redis/redis_connection');
+const Redis = require('../boot/redis_client');
 const crypto = require('crypto');
 const redisCacheDurations = require('../constants/redisCacheDurations');
 const logger = require("../middleware/winston");
@@ -155,7 +155,7 @@ const fetchCommentsByTweetId = async (req, res) => {
     const tweetId = new ObjectId(req.params.tweetId);
     const redisClient = Redis.getRedisClient();
     const key = getHashKey({ tweet_id: tweetId });
-    const cachedData = await redisClient.getAsync(key).catch((err) => console.error(err));
+    const cachedData = await redisClient.get(key).catch((err) => console.error(err));
     if (cachedData) {
         logger.info("Fetched comments from cache");
         return res.status(statusCodes.success).json({ comments: JSON.parse(cachedData) });

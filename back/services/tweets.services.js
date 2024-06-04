@@ -327,7 +327,6 @@ const registerVote = async (req, res) => {
 const getLiveTweets = async (req, res) => {
     var tweets = [];
     logger.info(`Fetching tweets from the database`);
-    logger.info(req.query.last_tweet_id)
     const redisClient = Redis.getRedisClient();
     var query = [
         { $sort: { created_at: -1 } },
@@ -352,7 +351,6 @@ const getLiveTweets = async (req, res) => {
             } else {
                 query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
             }
-            console.log(query);
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
             await redisClient.set(reqHash, JSON.stringify(tweets), 'EX', redisCacheDurations.getLiveTweets).catch((err) => {

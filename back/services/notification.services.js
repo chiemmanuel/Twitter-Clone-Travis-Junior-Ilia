@@ -51,17 +51,20 @@ const createNotification = async (req, res) => {
  */
 const getNotifications = async (req, res) => {
     const recipient_email = req.user.email;
+    const redisClient = Redis.getRedisClient();
     let notifications = [];
     try {
         const cacheKey = getHashKey({ recipient_email });
-        const cachedNotifications = await Redis.get(cacheKey).catch((err) => {
+        const cachedNotifications = await redisClient.get(cacheKey).catch((err) => {
             logger.error(`Error getting notifications from cache: ${err}`);
         });
         notifications = JSON.parse(cachedNotifications);
         if (!notifications) {
             logger.info(`Fetching notifications from database for ${recipient_email}`);
             notifications = await notificationModel.find({ recipient_email });
-            await Redis.set(cacheKey, JSON.stringify(notifications), 'EX', redisCacheDurations.notifications);
+            await redisClient.set(cacheKey, JSON.stringify(notifications), 'EX', redisCacheDurations.notifications);
+        } else {
+            logger.info(`Fetched notifications from cache for ${recipient_email}`);
         }
 
         // split the notifications into read and unread
