@@ -4,6 +4,20 @@ const statusCodes = require('../constants/statusCodes');
 const tweetModel = require('../models/tweetModel');
 const User = require('../models/userModel');
 const { sendMessage } = require('../boot/socketio/socketio_connection');
+const Redis = require('../boot/redis/redis_connection');
+const crypto = require('crypto');
+const redisCacheDurations = require('../constants/redisCacheDurations');
+const logger = require("../middleware/winston");
+
+
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 /**
  * This function creates a new comment and saves it to the database using the Comment model schema
@@ -43,7 +57,7 @@ const postComment = async (req, res) => {
         sendMessage(null, 'increment-comment-count', { tweetId: tweetId })
         return res.status(statusCodes.success).json({ message: 'Comment created successfully', comment });
     } catch (error) {
-        console.error("Error creating comment:", error);
+        logger.error("Error creating comment:", error);
         return res.status(statusCodes.queryError).json({ message: 'Failed to create comment' });
     }
 };
@@ -71,7 +85,7 @@ const editCommentById = async (req, res) => {
 
         return res.status(statusCodes.success).json({ message: 'Comment updated successfully', comment: updatedComment });
     } catch (error) {
-        console.error("Error updating comment:", error);
+        logger.error("Error updating comment:", error);
         return res.status(statusCodes.queryError).json({ message: 'Failed to update comment' });
     }
 };
@@ -93,7 +107,7 @@ const deleteCommentById = async (req, res) => {
 
         return res.status(statusCodes.success).json({ message: 'Comment deleted successfully' });
     } catch (error) {
-        console.error("Error deleting comment:", error);
+        logger.error("Error deleting comment:", error);
         return res.status(statusCodes.queryError).json({ message: 'Failed to delete comment' });
     }
 };
@@ -126,7 +140,7 @@ const likeComment = async (req, res) => {
 
         return res.status(statusCodes.success).json({ message: message});
     } catch (error) {
-        console.error("Error liking comment:", error);
+        logger.error("Error liking comment:", error);
         return res.status(statusCodes.queryError).json({ message: 'Failed to like comment' });
     }
 };
@@ -139,12 +153,26 @@ const likeComment = async (req, res) => {
  */
 const fetchCommentsByTweetId = async (req, res) => {
     const tweetId = new ObjectId(req.params.tweetId);
+    const redisClient = Redis.getRedisClient();
+    const key = getHashKey({ tweet_id: tweetId });
+    const cachedData = await redisClient.getAsync(key).catch((err) => console.error(err));
+    if (cachedData) {
+        logger.info("Fetched comments from cache");
+        return res.status(statusCodes.success).json({ comments: JSON.parse(cachedData) });
+    }
 
     try {
         const comments = await commentModel.find({ tweet_id: tweetId });
+        if (!comments) {
+            return res.status(statusCodes.queryError).json({ message: 'Comments not found' });
+        }
+        logger.info("Fetched comments from database");
+        redisClient.set(key, JSON.stringify(comments), 'EX', redisCacheDurations.getTweetComments);
+        logger.info("Cached comments");
         return res.status(statusCodes.success).json({ comments });
+
     } catch (error) {
-        console.error("Error fetching comments:", error);
+        logger.error("Error fetching comments:", error);
         return res.status(statusCodes.queryError).json({ message: 'Failed to fetch comments' });
     }
 }
