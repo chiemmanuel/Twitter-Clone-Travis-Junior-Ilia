@@ -181,7 +181,7 @@ function Tweet( props ) {
         <p>{content}</p>
         { media ? (<img src={media} alt=''/>) : null}
         {/* if poll exists, render poll component with poll object */}
-        {poll.title && <Poll poll_object={poll} poll_id={tweet._id} />}
+        {poll && poll.title && <Poll poll_object={poll} poll_id={tweet._id} />}
         {retweet && (
           <div className="tweet__retweet" onClick={handleRetweetOnClick}>
             <div className="tweet__header">
@@ -202,7 +202,7 @@ function Tweet( props ) {
             <div className="tweet__body">
               <p>{retweet.content}</p>
               {retweet.media ? (<img src={retweet.media} alt="media" />) : null}
-              {retweet.poll.title && <Poll poll_object={retweet.poll} />}
+              {retweet.poll && retweet.poll.title && <Poll poll_object={retweet.poll} />}
             </div>
           </div>
         )}

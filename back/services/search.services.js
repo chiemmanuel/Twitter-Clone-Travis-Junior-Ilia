@@ -58,7 +58,13 @@ const searchByHashtag = async (req, res) => {
             mostRecentTweets: Array.from(mostRecentTweets),
         };
         logger.info(`Caching search results for hashtag ${hashtag}`)
-        await redisClient.set(requestKey, JSON.stringify(results), 'EX', redisCacheDurations.searchResults);
+        await redisClient.set(requestKey, JSON.stringify(results)).then(
+            async () => {
+                await redisClient.expire(requestKey, redisCacheDurations.searchResults).catch((err) => {
+                    logger.error(`Error setting cache expiration: ${err}`);
+                });
+            }
+        );
 
         return res.status(statusCodes.success).json({ results: results});
 

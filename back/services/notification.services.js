@@ -62,7 +62,13 @@ const getNotifications = async (req, res) => {
         if (!notifications) {
             logger.info(`Fetching notifications from database for ${recipient_email}`);
             notifications = await notificationModel.find({ recipient_email });
-            await redisClient.set(cacheKey, JSON.stringify(notifications), 'EX', redisCacheDurations.notifications);
+            await redisClient.set(cacheKey, JSON.stringify(notifications)).then(
+                async () => {
+                    await redisClient.expire(cacheKey, redisCacheDurations.notifications).catch((err) => {
+                        logger.error(`Error setting cache expiration: ${err}`);
+                    });
+                }
+            );
         } else {
             logger.info(`Fetched notifications from cache for ${recipient_email}`);
         }

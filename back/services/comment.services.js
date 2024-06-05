@@ -167,7 +167,11 @@ const fetchCommentsByTweetId = async (req, res) => {
             return res.status(statusCodes.queryError).json({ message: 'Comments not found' });
         }
         logger.info("Fetched comments from database");
-        redisClient.set(key, JSON.stringify(comments), 'EX', redisCacheDurations.getTweetComments);
+        redisClient.set(key, JSON.stringify(comments)).then(
+            async () => {
+                await redisClient.expire(key, redisCacheDurations.getTweetComments).catch((err) => logger.error(err));
+            }
+        );
         logger.info("Cached comments");
         return res.status(statusCodes.success).json({ comments });
 

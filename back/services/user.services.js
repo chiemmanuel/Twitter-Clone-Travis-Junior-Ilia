@@ -7,6 +7,7 @@ const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const User = require('../models/userModel');
+const Tweet = require('../models/tweetModel');
 const Redis = require('../boot/redis_client');
 const redisCacheDurations = require('../constants/redisCacheDurations');
 const crypto = require('crypto');
@@ -91,6 +92,16 @@ const updateUser = async (req, res) => {
         // Update user information in the database
         const result = await User.findOneAndUpdate({ email }, updateValues);
         console.log(result);
+        let tweet_fields = {};
+        if (updateValues.username) {
+            tweet_fields.author_username = updateValues.username;
+        }
+        if (updateValues.profile_img) {
+            tweet_fields.author_profile_img = updateValues.profile_img;
+        }
+        await Tweet.updateMany({ author_email: email }, tweet_fields).then(
+            (result) => logger.info(`Updated ${result.nModified} tweets with new user information`)
+        ).catch((err) => logger.error(err));
         return res.status(statusCodes.success).json({ message: "User information updated successfully" });
     } catch (error) {
         console.error("Error while updating user information", error.message);
@@ -239,7 +250,13 @@ const getUserTweets = async (req, res) => {
                 // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
                 tweets = await tweetModel.aggregate(query);
                 logger.info(`Successfully fetched tweets from the database`);
-                await redisClient.set(requestKey, JSON.stringify(tweets), 'EX', redisCacheDurations.userTweets);
+                await redisClient.set(requestKey, JSON.stringify(tweets)).then(
+                    async () => {
+                        await redisClient.expire(requestKey, redisCacheDurations.userTweets).catch((err) => logger.error(err));
+                        logger.info(`Successfully cached tweets for user ${user_email}`);
+                }).catch((err) => {
+                    logger.error(`Error caching tweets for user ${user_email}: ${err}`);
+                });
             } catch (error) {
                 return {error: error};
             }
@@ -256,8 +273,10 @@ const getUserTweets = async (req, res) => {
                 query.unshift({ $match: { author_email: user_email } });
                 // Find tweets from the user with email user_email
                 tweets = await tweetModel.aggregate(query);
-                await redisClient.set(requestKey, JSON.stringify(tweets), 'EX', redisCacheDurations.userTweets).then(() => {
-                    logger.info(`Successfully cached tweets for user ${user_email}`);
+                await redisClient.set(requestKey, JSON.stringify(tweets)).then(
+                    async () => {
+                        await redisClient.expire(requestKey, redisCacheDurations.userTweets).catch((err) => logger.error(err));
+                        logger.info(`Successfully cached tweets for user ${user_email}`);
                 }).catch((err) => {
                     logger.error(`Error caching tweets for user ${user_email}: ${err}`);
                 });
@@ -353,8 +372,10 @@ const getUserComments = async (req, res) => {
         if (!cachedData) {
             comments = await commentModel.find({ author_name: username });
             logger.info(`Successfully fetched comments from the database`);
-            await redisClient.set(requestKey, JSON.stringify(comments), 'EX', redisCacheDurations.userComments).then(() => {
-                logger.info(`Successfully cached comments for user ${username}`);
+            await redisClient.set(requestKey, JSON.stringify(comments)).then(
+                async () => {
+                    await redisClient.expire(requestKey, redisCacheDurations.userComments).catch((err) => logger.error(err));
+                    logger.info(`Successfully cached comments for user ${username}`);
             }).catch((err) => {
                 logger.error(`Error caching comments for user ${username}: ${err}`);
             });

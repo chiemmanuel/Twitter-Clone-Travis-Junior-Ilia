@@ -127,7 +127,15 @@ const getTweetById = async (req, res) => {
                 return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
             }
             logger.info(`fetched tweet: ${tweet}`)
-            await redisClient.set(reqHash, JSON.stringify(tweet[0]), 'EX', redisCacheDurations.getTweet);
+            await redisClient.set(reqHash, JSON.stringify(tweet[0])).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getTweet).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }).catch((err) => {
+                    logger.error(`Error caching tweet: ${err}`);
+                }
+            );
             return res.status(statusCodes.success).json({ tweet: tweet[0] });
         } catch (error) {
             console.log(error);
@@ -326,7 +334,6 @@ const registerVote = async (req, res) => {
  */
 const getLiveTweets = async (req, res) => {
     var tweets = [];
-    logger.info(`Fetching tweets from the database`);
     const redisClient = Redis.getRedisClient();
     var query = [
         { $sort: { created_at: -1 } },
@@ -341,6 +348,15 @@ const getLiveTweets = async (req, res) => {
         });
         if (cachedTweets) {
             logger.info(`fetched tweets from cache: ${cachedTweets}`)
+            const redis_ttl = await redisClient.ttl(reqHash).catch((err) => {
+                logger.error(`Error getting ttl: ${err}`);
+            });
+            if (redis_ttl < 0) {
+                await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                    logger.error(`Error setting expiry: ${err}`);
+                });
+            }
+            logger.info(`TTL: ${redis_ttl}`);
             return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
         }
         const last_tweet_id = new ObjectId(req.query.last_tweet_id);
@@ -353,9 +369,16 @@ const getLiveTweets = async (req, res) => {
             }
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
-            await redisClient.set(reqHash, JSON.stringify(tweets), 'EX', redisCacheDurations.getLiveTweets).catch((err) => {
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
                 logger.error(`Error caching tweets: ${err}`);
             });
+
             logger.info(`Successfully cached tweets`);
         } catch (error) {
             logger.error("Error fetching tweets from the database:" + error);
@@ -371,12 +394,30 @@ const getLiveTweets = async (req, res) => {
 
             if (cachedTweets) {
                 logger.info(`fetched tweets from cache: ${cachedTweets}`)
+                const redis_ttl = await redisClient.ttl(reqHash).catch((err) => {
+                    logger.error(`Error getting ttl: ${err}`);
+                });
+                if (redis_ttl < 0) {
+                    await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+                logger.info(`TTL: ${redis_ttl}`);
                 return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
             }
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
-            await redisClient.set(reqHash, JSON.stringify(tweets), 'EX', redisCacheDurations.getLiveTweets).catch((err) => {
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
                 logger.error(`Error caching tweets: ${err}`);
+            });
+            await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                logger.error(`Error setting expiry: ${err}`);
             });
         } catch (error) {
             console.log(error);
@@ -438,7 +479,13 @@ const getFollowedTweets = async (req, res) => {
             }
 
             tweets = await tweetModel.aggregate(query);
-            await redisClient.set(reqHash, JSON.stringify(tweets), 'EX', redisCacheDurations.getFollowedTweets).catch((err) => {
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getFollowedTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
                 logger.error(`Error caching tweets: ${err}`);
             });
             console.log(tweets);
@@ -464,7 +511,13 @@ const getFollowedTweets = async (req, res) => {
                 query.unshift({ $match: { author_id: { $in: followed_users } } });
             }
             tweets = await tweetModel.aggregate(query);
-            await redisClient.set(reqHash, JSON.stringify(tweets), 'EX', redisCacheDurations.getFollowedTweets).catch((err) => {
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getFollowedTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
                 logger.error(`Error caching tweets: ${err}`);
             });
             logger.info(`Successfully fetched tweets from the database`);

@@ -1,6 +1,6 @@
 const getTweet = 90;
 const getTweetComments = 60;
-const getLiveTweets = 45;
+const getLiveTweets = 5;
 const getFollowedTweets = 45;
 const notifications = 60;
 const searchResults = 60;
