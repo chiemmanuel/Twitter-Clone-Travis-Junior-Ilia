@@ -7,6 +7,17 @@ const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const User = require('../models/userModel');
+const Redis = require('../boot/redis_client');
+const redisCacheDurations = require('../constants/redisCacheDurations');
+
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -200,61 +211,59 @@ const getUserByUsername = async (req, res) => {
  */
 const getUserTweets = async (req, res) => {
     user_email = req.params.user_email;
-    console.log(user_email);
     var tweets = [];
+    const redisClient = Redis.getRedisClient();
     var query = [
         { $sort: { created_at: -1 } },
         { $limit: 10 },
-        { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-        { $unwind: { path: '$author'}},
-        { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-        { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
         { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
         { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-        { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-        { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-        { $project: {
-            "author_email": 1,
-            "content": 1,
-            "media": 1,
-            "poll": 1,
-            "retweet": 1,
-            "hashtags": 1,
-            "num_comments": 1,
-            "liked_by": 1,
-            "num_retweets": 1,
-            "num_views": 1,
-            "num_bookmarks": 1,
-            "created_at": 1,
-            "updated_at": 1,
-            "author.username": 1,
-            "author.profile_img": 1,
-            "retweet_author.username": 1,
-            "retweet_author.profile_img": 1,
-        } },
-    ];;
+    ];
     if(req.body.last_tweet_id) {
-        last_tweet_id = new ObjectId(req.body.last_tweet_id);
-        try {
-            if (query[0].$match) {
-                query[0].$match.author_email = user_email;
-                query[0].$match._id.$lt = last_tweet_id;
-            } else {
-                query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
-            }
-            // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
-            tweets = await tweetModel.aggregate(query);
-            logger.info(`Successfully fetched tweets from the database`);
-        } catch (error) {
-            return {error: error};
+        const requestKey = getHashKey({ user_email: user_email, last_tweet_id: req.body.last_tweet_id });
+        const cachedData = await redisClient.get(requestKey).catch((err) => console.error(err));
+        if (cachedData) {
+            logger.info("Fetched tweets from cache");
+            tweets = JSON.parse(cachedData);
         }
+        else {
+            last_tweet_id = new ObjectId(req.body.last_tweet_id);
+            try {
+                if (query[0].$match) {
+                    query[0].$match.author_email = user_email;
+                    query[0].$match._id.$lt = last_tweet_id;
+                } else {
+                    query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
+                }
+                // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
+                tweets = await tweetModel.aggregate(query);
+                logger.info(`Successfully fetched tweets from the database`);
+                await redisClient.set(requestKey, JSON.stringify(tweets), 'EX', redisCacheDurations.userTweets);
+            } catch (error) {
+                return {error: error};
+            }
+    }
     } else {
-        try {
-            query.unshift({ $match: { author_email: user_email } });
-            // Find tweets from the user with email user_email
-            tweets = await tweetModel.aggregate(query);
-        } catch (error) {
-            return res.status(statusCodes.queryError).json({ error: error });
+        const requestKey = getHashKey({ user_email: user_email });
+        const cachedData = await redisClient.get(requestKey).catch((err) => console.error(err));
+        if (cachedData) {
+            logger.info("Fetched tweets from cache");
+            tweets = JSON.parse(cachedData);
+        }
+        else {
+            try {
+                query.unshift({ $match: { author_email: user_email } });
+                // Find tweets from the user with email user_email
+                tweets = await tweetModel.aggregate(query);
+                await redisClient.set(requestKey, JSON.stringify(tweets), 'EX', redisCacheDurations.userTweets).then(() => {
+                    logger.info(`Successfully cached tweets for user ${user_email}`);
+                }).catch((err) => {
+                    logger.error(`Error caching tweets for user ${user_email}: ${err}`);
+                });
+            } catch (error) {
+                return res.status(statusCodes.queryError).json({ error: error });
+            }
+            logger.info(`Successfully fetched tweets from the database`);
         }
     }
     if (tweets.length > 0) {
