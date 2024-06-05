@@ -9,6 +9,7 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const User = require('../models/userModel');
 const Redis = require('../boot/redis_client');
 const redisCacheDurations = require('../constants/redisCacheDurations');
+const crypto = require('crypto');
 
 const getHashKey = (_filter) => {
     let retKey = '';
@@ -342,13 +343,27 @@ const getUserLikedTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched comments
  */
 const getUserComments = async (req, res) => {
-    username = req.params.username;
+    const redisClient = Redis.getRedisClient();
+    const username = req.params.username;
     var comments = [];
     try {
         // Find comments from the user with email user_email
-        comments = await commentModel.find({ author_name: username });
-        logger.info(`Successfully fetched comments from the database`);
+        const requestKey = getHashKey({ username: username });
+        const cachedData = await redisClient.get(requestKey).catch((err) => logger.error(err));
+        if (!cachedData) {
+            comments = await commentModel.find({ author_name: username });
+            logger.info(`Successfully fetched comments from the database`);
+            await redisClient.set(requestKey, JSON.stringify(comments), 'EX', redisCacheDurations.userComments).then(() => {
+                logger.info(`Successfully cached comments for user ${username}`);
+            }).catch((err) => {
+                logger.error(`Error caching comments for user ${username}: ${err}`);
+            });
+        } else {
+            comments = JSON.parse(cachedData);
+            logger.info("Fetched comments from cache");
+        }
     } catch (error) {
+        logger.error("Error while fetching comments", error);
         return res.status(statusCodes.queryError).json({ error: error });
     }
     return res.status(statusCodes.success).json({comments: comments});
