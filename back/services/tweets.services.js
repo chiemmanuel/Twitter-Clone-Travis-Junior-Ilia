@@ -347,16 +347,7 @@ const getLiveTweets = async (req, res) => {
             logger.error(`Error fetching tweets from cache: ${err}`);
         });
         if (cachedTweets) {
-            logger.info(`fetched tweets from cache: ${cachedTweets}`)
-            const redis_ttl = await redisClient.ttl(reqHash).catch((err) => {
-                logger.error(`Error getting ttl: ${err}`);
-            });
-            if (redis_ttl < 0) {
-                await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
-                    logger.error(`Error setting expiry: ${err}`);
-                });
-            }
-            logger.info(`TTL: ${redis_ttl}`);
+            logger.info(`fetched tweets from cache`)
             return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
         }
         const last_tweet_id = new ObjectId(req.query.last_tweet_id);
@@ -393,16 +384,7 @@ const getLiveTweets = async (req, res) => {
             });
 
             if (cachedTweets) {
-                logger.info(`fetched tweets from cache: ${cachedTweets}`)
-                const redis_ttl = await redisClient.ttl(reqHash).catch((err) => {
-                    logger.error(`Error getting ttl: ${err}`);
-                });
-                if (redis_ttl < 0) {
-                    await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
-                        logger.error(`Error setting expiry: ${err}`);
-                    });
-                }
-                logger.info(`TTL: ${redis_ttl}`);
+                logger.info(`fetched tweets from cache`)
                 return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
             }
             tweets = await tweetModel.aggregate(query);
@@ -467,7 +449,7 @@ const getFollowedTweets = async (req, res) => {
                 logger.error(`Error fetching tweets from cache: ${err}`);
             });
             if (cachedTweets) {
-                logger.info(`fetched tweets from cache: ${cachedTweets}`)
+                logger.info(`fetched tweets from cache`)
                 return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
             } 
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
@@ -501,7 +483,7 @@ const getFollowedTweets = async (req, res) => {
                 logger.error(`Error fetching tweets from cache: ${err}`);
             }); 
             if (cachedTweets) {
-                logger.info(`fetched tweets from cache: ${cachedTweets}`)
+                logger.info(`fetched tweets from cache`)
                 return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
             }
             // Find tweets from the users that the current user follows
