@@ -3,109 +3,171 @@ const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
 const userModel = require("../models/userModel.js");
 const { sendMessage } = require('../boot/socketio/socketio_connection');
+const crypto = require('crypto');
+const Redis = require('../boot/redis_client.js');
+const { createNeo4jSession } = require('../neo4j.config.js');
+
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 const getBookmarks = async (req, res) => {
+    const redisClient = Redis.getRedisClient();
     const userId = req.user._id;
+    logger.info(`Fetching bookmarked tweets for user with id: ${userId}`);
+    const reqHash = getHashKey({ userId, type: 'bookmarked_tweets' });
+
+    const session = createNeo4jSession();
 
     try {
-        const user = await userModel.findById(userId);
+        // Retrieve bookmarked tweet IDs from Neo4j
+        const result = await session.run(
+            'MATCH (u:User {id: $userId})-[:BOOKMARKED]->(t:Tweet) RETURN t.id AS tweetId',
+            { userId }
+        );
 
-        var query = [
-            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-            { $unwind: { path: '$author'}},
-            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
-            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-            { $project: {
-                "author_email": 1,
-                "content": 1,
-                "media": 1,
-                "poll": 1,
-                "retweet": 1,
-                "hashtags": 1,
-                "num_comments": 1,
-                "liked_by": 1,
-                "num_retweets": 1,
-                "num_views": 1,
-                "num_bookmarks": 1,
-                "created_at": 1,
-                "updated_at": 1,
-                "author.username": 1,
-                "author.profile_img": 1,
-                "retweet_author.username": 1,
-                "retweet_author.profile_img": 1,
-            } },
-        ];;
-        if (query[0].$match) {
-            query[0].$match._id = { $in: user.bookmarked_tweets };
-        } else {
-        query.unshift({ $match: { _id: { $in: user.bookmarked_tweets } } });
+        const tweetIds = result.records.map(record => record.get('tweetId'));
+
+        if (tweetIds.length === 0) {
+            return res.status(statusCodes.success).json({ tweets: [] });
         }
-        const bookmarked_tweets = await tweetModel.aggregate(query);
-        return res.status(statusCodes.success).json({ bookmarks: user.bookmarked_tweets , bookmarked_tweets: bookmarked_tweets});
+
+        const cachedTweets = [];
+        const tweetsToFetch = [];
+
+        // Check each tweet ID in the cache
+        for (const tweetId of tweetIds) {
+            const reqHash = getHashKey({ tweetId });
+            const cachedTweet = await redisClient.get(reqHash).catch((err) => {
+                logger.error(`Error fetching tweet from cache: ${err}`);
+            });
+
+            if (cachedTweet) {
+                cachedTweets.push(JSON.parse(cachedTweet));
+            } else {
+                tweetsToFetch.push(tweetId);
+            }
+        }
+
+        let fetchedTweets = [];
+
+        if (tweetsToFetch.length > 0) {
+            // Fetch the missing tweets from MongoDB
+            fetchedTweets = await tweetModel.find({ _id: { $in: tweetsToFetch } });
+
+            // Cache the fetched tweets
+            for (const tweet of fetchedTweets) {
+                const reqHash = getHashKey({ tweetId: tweet._id });
+                await redisClient.set(reqHash, JSON.stringify(tweet)).then(
+                    async () => {
+                        await redisClient.expire(reqHash, redisCacheDurations.getTweet).catch((err) => {
+                            logger.error(`Error setting expiry: ${err}`);
+                        });
+                    }).catch((err) => {
+                        logger.error(`Error caching tweet: ${err}`);
+                    }
+                );
+            }
+        }
+
+        const allTweets = [...cachedTweets, ...fetchedTweets];
+
+        return res.status(statusCodes.success).json({ tweets: allTweets });
 
     } catch (error) {
-        logger.error(`Error while fetching bookmarks: ${error}`);
-        res.status(statusCodes.queryError).send('Error while fetching bookmarks');
+        logger.error(`Error while fetching bookmarked tweets: ${error}`);
+        return res.status(statusCodes.queryError).json({ error: 'Error while fetching bookmarked tweets' });
+    } finally {
+        await session.close();
     }
 };
-    
 
+    
 const addBookmark = async (req, res) => {
     const { tweet_id } = req.params;
     const userId = req.user._id;
 
+    const session = createNeo4jSession();
+
     try {
-        const user = await userModel.findById(userId);
-        const tweet = await tweetModel.findById(tweet_id);
+        // Ensure the user and tweet exist and create them if they do not
+        await session.run(
+            'MERGE (u:User {id: $userId}) ' +
+            'MERGE (t:Tweet {id: $tweet_id}) ' +
+            'ON CREATE SET t.num_bookmarks = 0', 
+            { userId, tweet_id }
+        );
 
-        if (!tweet) {
-            return res.status(statusCodes.notFound).json({ error: 'Tweet not found' });
-        }
+        // Create a bookmark relationship if it doesn't exist
+        const bookmarkResult = await session.run(
+            'MATCH (u:User {id: $userId}), (t:Tweet {id: $tweet_id}) ' +
+            'MERGE (u)-[r:BOOKMARKED]->(t) ' + // Relationship name is specified here
+            'ON CREATE SET t.num_bookmarks = t.num_bookmarks + 1 ' +
+            'RETURN r',
+            { userId, tweet_id }
+        );
 
-        if (user.bookmarked_tweets.includes(tweet_id)) {
+        if (bookmarkResult.records.length === 0) {
             return res.status(statusCodes.success).json({ message: 'This tweet is already bookmarked' });
-        } else {
-            user.bookmarked_tweets.push(tweet_id);
-            tweet.num_bookmarks += 1;
-            await user.save();
-            await tweet.save();
         }
-        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: false})
+
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: false });
         return res.status(statusCodes.success).json({ message: 'Added new bookmark' });
 
     } catch (error) {
         logger.error(`Error while adding a bookmark: ${error}`);
         return res.status(statusCodes.queryError).json({ error: 'Error while adding a bookmark' });
+    } finally {
+        await session.close();
     }
 };
+
 
 const deleteBookmark = async (req, res) => {
     const { tweet_id } = req.params;
     const userId = req.user._id;
 
-    try {
-        const user = await userModel.findById(userId);
-        const tweet = await tweetModel.findById(tweet_id);
+    const session = createNeo4jSession();
 
-        if (!tweet) {
-            return res.status(statusCodes.notFound).json({ error: 'Tweet not found' });
+    try {
+        // Ensure the user and tweet exist and create them if they do not
+        const userTweetCheckResult = await session.run(
+            'MATCH (u:User {id: $userId})-[r:BOOKMARKED]->(t:Tweet {id: $tweet_id}) ' +
+            'RETURN r',
+            { userId, tweet_id }
+        );
+
+        if (userTweetCheckResult.records.length === 0) {
+            return res.status(statusCodes.notFound).json({ message: 'Bookmark not found' });
         }
 
-        user.bookmarked_tweets.pull(tweet_id);
-        tweet.num_bookmarks -= 1;
-        await user.save();
-        await tweet.save();
-        
-        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: true})
-        return res.status(statusCodes.success).json({ message: 'Bookmark deleted' });
-    
+        // Remove the bookmark relationship
+        await session.run(
+            'MATCH (u:User {id: $userId})-[r:BOOKMARKED]->(t:Tweet {id: $tweet_id}) ' +
+            'DELETE r',
+            { userId, tweet_id }
+        );
+
+        // Decrement the number of bookmarks in the MongoDB tweet document
+        const tweet = await tweetModel.findById(tweet_id);
+        if (tweet) {
+            tweet.num_bookmarks = Math.max(tweet.num_bookmarks - 1, 0); // Ensure it doesn't go below 0
+            await tweet.save();
+        }
+
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: true });
+        return res.status(statusCodes.success).json({ message: 'Bookmark deleted successfully' });
+
     } catch (error) {
         logger.error(`Error while deleting a bookmark: ${error}`);
         return res.status(statusCodes.queryError).json({ error: 'Error while deleting a bookmark' });
+    } finally {
+        await session.close();
     }
 };
 
