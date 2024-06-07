@@ -2,7 +2,6 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const statusCodes = require('../constants/statusCodes');
 const commentModel = require('../models/commentModel');
 const ObjectId = require('mongoose').Types.ObjectId;
-const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const User = require('../models/userModel');
 const Tweet = require('../models/tweetModel');
 const Redis = require('../boot/redis_client');
