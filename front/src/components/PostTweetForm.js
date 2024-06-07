@@ -183,7 +183,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                         <div className="tweet__body">
                           <p>{retweet.content}</p>
                           { retweet.media !== "" && retweet.media !== null && <img src={retweet.media} alt="media" />}
-                          {retweet.poll.title ? ( <Poll poll_object={retweet.poll} poll_id={retweet._id} />) : null }
+                          {retweet.poll && retweet.poll.title && <Poll poll_object={retweet.poll} poll_id={retweet._id} /> }
                           {retweet.retweet ? (
                             <div className="tweet__retweet" >
                               <div className="tweet__header">

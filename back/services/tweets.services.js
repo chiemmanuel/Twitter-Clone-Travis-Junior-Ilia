@@ -91,7 +91,6 @@ const postTweet = async (req, res) => {
 }
 
 /**
- * TODO: Add socket.io to emit a tweet-updated event to active clients
  * 
  * This function retrieves a tweet by its ID and returns it in the response
  * @param {*} req: The request object with tweetId in params
@@ -128,7 +127,15 @@ const getTweetById = async (req, res) => {
                 return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
             }
             logger.info(`fetched tweet: ${tweet}`)
-            await redisClient.set(reqHash, JSON.stringify(tweet[0]), 'EX', redisCacheDurations.getTweet);
+            await redisClient.set(reqHash, JSON.stringify(tweet[0])).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getTweet).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }).catch((err) => {
+                    logger.error(`Error caching tweet: ${err}`);
+                }
+            );
             return res.status(statusCodes.success).json({ tweet: tweet[0] });
         } catch (error) {
             console.log(error);
@@ -138,7 +145,6 @@ const getTweetById = async (req, res) => {
 };
 
 /**
- * TODO: Add socket.io to emit a tweet-updated event to active clients
  * 
  * This function updates a tweet by its ID based on the provided fields in the request body
  * @param {*} req: The request object with tweetId in params and updated fields in the body
@@ -328,8 +334,7 @@ const registerVote = async (req, res) => {
  */
 const getLiveTweets = async (req, res) => {
     var tweets = [];
-    logger.info(`Fetching tweets from the database`);
-    logger.info(req.query.last_tweet_id)
+    const redisClient = Redis.getRedisClient();
     var query = [
         { $sort: { created_at: -1 } },
         { $limit: 10 },
@@ -337,6 +342,14 @@ const getLiveTweets = async (req, res) => {
         { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
     ];
     if(req.query.last_tweet_id) {
+        const reqHash = getHashKey({last_tweet_id: req.query.last_tweet_id});
+        const cachedTweets = await redisClient.get(reqHash).catch((err) => {
+            logger.error(`Error fetching tweets from cache: ${err}`);
+        });
+        if (cachedTweets) {
+            logger.info(`fetched tweets from cache`)
+            return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
+        }
         const last_tweet_id = new ObjectId(req.query.last_tweet_id);
             try {
             // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
@@ -345,9 +358,19 @@ const getLiveTweets = async (req, res) => {
             } else {
                 query.unshift({ $match: { _id: { $lt: last_tweet_id } } });
             }
-            console.log(query);
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
+                logger.error(`Error caching tweets: ${err}`);
+            });
+
+            logger.info(`Successfully cached tweets`);
         } catch (error) {
             logger.error("Error fetching tweets from the database:" + error);
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
@@ -355,7 +378,29 @@ const getLiveTweets = async (req, res) => {
     } else {
         try {
             // If no last_tweet_id is provided, fetch the most recent tweets
+            const reqHash = getHashKey({last_tweet_id: null});
+            const cachedTweets = await redisClient.get(reqHash).catch((err) => {
+                logger.error(`Error fetching tweets from cache: ${err}`);
+            });
+
+            if (cachedTweets) {
+                logger.info(`fetched tweets from cache`)
+                return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
+            }
             tweets = await tweetModel.aggregate(query);
+            logger.info(`Successfully fetched tweets from the database`);
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
+                logger.error(`Error caching tweets: ${err}`);
+            });
+            await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
+                logger.error(`Error setting expiry: ${err}`);
+            });
         } catch (error) {
             console.log(error);
             logger.error("Error fetching tweets from the database:" + error);
@@ -380,6 +425,7 @@ const getFollowedTweets = async (req, res) => {
     user_id = req.user._id;
     var tweets = [];
     var followed_users = [];
+    const redisClient = Redis.getRedisClient();
     try {
         // Find the users that the current user follows
         const user = await userModel.findOne({ _id: user_id });
@@ -398,6 +444,14 @@ const getFollowedTweets = async (req, res) => {
     if(req.query.last_tweet_id) {
         last_tweet_id = new ObjectId(req.query.last_tweet_id);
         try {
+            const reqHash = getHashKey({last_tweet_id: req.query.last_tweet_id, followed_users: followed_users});
+            const cachedTweets = await redisClient.get(reqHash).catch((err) => {
+                logger.error(`Error fetching tweets from cache: ${err}`);
+            });
+            if (cachedTweets) {
+                logger.info(`fetched tweets from cache`)
+                return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
+            } 
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             if (query[0].$match) {
                 query[0].$match._id = { $lt: last_tweet_id };
@@ -405,7 +459,17 @@ const getFollowedTweets = async (req, res) => {
             } else {
                 query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             }
+
             tweets = await tweetModel.aggregate(query);
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getFollowedTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
+                logger.error(`Error caching tweets: ${err}`);
+            });
             console.log(tweets);
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
@@ -414,6 +478,14 @@ const getFollowedTweets = async (req, res) => {
         }
     } else {
         try {
+            const reqHash = getHashKey({last_tweet_id: null, followed_users: followed_users});
+            const cachedTweets = await redisClient.get(reqHash).catch((err) => {
+                logger.error(`Error fetching tweets from cache: ${err}`);
+            }); 
+            if (cachedTweets) {
+                logger.info(`fetched tweets from cache`)
+                return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
+            }
             // Find tweets from the users that the current user follows
             if (query[0].$match) {
                 query[0].$match.author_id = { $in: followed_users} ;
@@ -421,6 +493,15 @@ const getFollowedTweets = async (req, res) => {
                 query.unshift({ $match: { author_id: { $in: followed_users } } });
             }
             tweets = await tweetModel.aggregate(query);
+            await redisClient.set(reqHash, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(reqHash, redisCacheDurations.getFollowedTweets).catch((err) => {
+                        logger.error(`Error setting expiry: ${err}`);
+                    });
+                }
+            ).catch((err) => {
+                logger.error(`Error caching tweets: ${err}`);
+            });
             logger.info(`Successfully fetched tweets from the database`);
         } catch (error) {
             logger.error(`Error fetching tweets from the database: ${error}`);
