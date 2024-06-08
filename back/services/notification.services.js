@@ -6,6 +6,11 @@ const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
 const redisCacheDurations = require('../constants/redisCacheDurations.js');
 
+/**
+ * This function generates a hash key for caching based on the provided filter
+ * @param {*} _filter: The filter object to be hashed
+ * @returns: The hash key
+ */
 const getHashKey = (_filter) => {
     let retKey = '';
     if (_filter) {

@@ -8,6 +8,11 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
 
+/**
+ * This function generates a hash key for caching based on the provided filter
+ * @param {*} _filter: The filter object to be hashed
+ * @returns: The hash key
+ */
 const getHashKey = (_filter) => {
     let retKey = '';
     if (_filter) {
@@ -102,6 +107,8 @@ const getTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
     logger.info(`Fetching tweet with id: ${tweetId}`)
     const reqHash = getHashKey({tweetId});
+
+    // Check if the tweet is already cached
     const cachedTweet = await redisClient.get(reqHash).catch((err) => {
         logger.error(`Error fetching tweet from cache: ${err}`);
     });
@@ -109,6 +116,7 @@ const getTweetById = async (req, res) => {
         logger.info(`fetched tweet from cache: ${cachedTweet}`)
         return res.status(statusCodes.success).json({ tweet: JSON.parse(cachedTweet) });
     }
+    // If the tweet is not cached, fetch it from the database
     else {
         try {
             var query = [
@@ -120,7 +128,6 @@ const getTweetById = async (req, res) => {
             } else {
                 query.unshift({ $match: { _id: new ObjectId(tweetId) } });
             }
-            console.log(query);
             const tweet = await tweetModel.aggregate(query);
             
             if (tweet.length === 0) {
@@ -335,13 +342,19 @@ const registerVote = async (req, res) => {
 const getLiveTweets = async (req, res) => {
     var tweets = [];
     const redisClient = Redis.getRedisClient();
+
+    // Declare base query to fetch the most recent tweets
     var query = [
         { $sort: { created_at: -1 } },
         { $limit: 10 },
         { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
         { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
     ];
+
+    // If a last_tweet_id is provided in the query, fetch the next set of tweets
     if(req.query.last_tweet_id) {
+
+        // Check if response has already been cached
         const reqHash = getHashKey({last_tweet_id: req.query.last_tweet_id});
         const cachedTweets = await redisClient.get(reqHash).catch((err) => {
             logger.error(`Error fetching tweets from cache: ${err}`);
@@ -350,9 +363,11 @@ const getLiveTweets = async (req, res) => {
             logger.info(`fetched tweets from cache`)
             return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
         }
+
+        // On cache miss, fetch the next set of tweets from the database
         const last_tweet_id = new ObjectId(req.query.last_tweet_id);
             try {
-            // Find tweets that have an _id less than the last_tweet_id (older than the last tweet fetched by the client)
+            // Add a match condition to the query to fetch tweets with an _id less than the last_tweet_id
             if (query[0].$match) {
                 query[0].$match._id = { $lt: last_tweet_id };
             } else {
@@ -360,6 +375,8 @@ const getLiveTweets = async (req, res) => {
             }
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
+
+            // Cache the fetched tweets
             await redisClient.set(reqHash, JSON.stringify(tweets)).then(
                 async () => {
                     await redisClient.expire(reqHash, redisCacheDurations.getLiveTweets).catch((err) => {
@@ -376,8 +393,9 @@ const getLiveTweets = async (req, res) => {
             return res.status(statusCodes.queryError).json({ message: 'Error fetching tweets from the database' });
         }
     } else {
+        // If no last_tweet_id is provided, fetch the most recent tweets
         try {
-            // If no last_tweet_id is provided, fetch the most recent tweets
+            // Check if response has already been cached
             const reqHash = getHashKey({last_tweet_id: null});
             const cachedTweets = await redisClient.get(reqHash).catch((err) => {
                 logger.error(`Error fetching tweets from cache: ${err}`);
@@ -387,6 +405,8 @@ const getLiveTweets = async (req, res) => {
                 logger.info(`fetched tweets from cache`)
                 return res.status(statusCodes.success).json({ tweets: JSON.parse(cachedTweets) });
             }
+
+            // On cache miss, fetch the most recent tweets from the database
             tweets = await tweetModel.aggregate(query);
             logger.info(`Successfully fetched tweets from the database`);
             await redisClient.set(reqHash, JSON.stringify(tweets)).then(
