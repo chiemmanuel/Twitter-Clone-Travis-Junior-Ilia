@@ -12,11 +12,13 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const morgan = require("morgan");
 const logger = require("../middleware/winston");
-// const errors = require("../middleware/errors");
+const dotenv = require("dotenv");
+dotenv.config();
 const healthCheck = require("../middleware/healthCheck");
 const verifyToken = require("../middleware/authentication");
 const validator = require("../middleware/validator");
 const Redis = require("./redis_client");
+
 
 
 // ROUTES
@@ -31,7 +33,7 @@ const notificationRoutes = require("../routes/notification.routes");
 
 
 try {
-  mongoose.connect("mongodb://localhost:27017/twitter-clone");
+  mongoose.connect(process.env.MONGO_URI);
   logger.info("MongoDB Connected");
 } catch (error) {
   logger.error("Error connecting to MongoDB" + error);
@@ -42,7 +44,7 @@ try {
     await redisClient.connect();
     logger.info("Redis Connected");
   } catch (error) {
-    logger.error("Error connecting to Redis" + error);
+    logger.error("Error connecting to Redis: " + error);
   }
 })();
 
