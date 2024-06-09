@@ -78,7 +78,7 @@ function Tweet( props ) {
         }
       });
       socket.on("bookmark", data => {
-          if (data._id === tweet._id && user._id !== data.user_id) {
+          if (data._id === tweet._id && user.email !== data.user_email) {
               let value = data.deleted ? -1 : 1;
               setNumBookmarks(prevNumBookmarks => prevNumBookmarks + value);
           }
@@ -122,6 +122,7 @@ function Tweet( props ) {
     };
 
     const handleBookmark = () => {
+        console.log(bookmarks);
         const isBookmarked = bookmarks.includes(tweet._id);
         if (isBookmarked) {
             dispatch(removeBookmark(tweet._id));

@@ -32,7 +32,7 @@ const getBookmarks = async (req, res) => {
         const tweetIds = result.records.map(record => record.get('tweetId').toString());
 
         if (tweetIds.length === 0) {
-            return res.status(statusCodes.success).json({ tweets: [] });
+            return res.status(statusCodes.success).json({ bookmarks: [], bookmarked_tweets: []});
         }
 
         const cachedTweets = [];
@@ -74,8 +74,9 @@ const getBookmarks = async (req, res) => {
         }
 
         const allTweets = [...cachedTweets, ...fetchedTweets];
+        const bookmarks = allTweets.map(tweet => tweet._id.toString());
 
-        return res.status(statusCodes.success).json({ tweets: allTweets });
+        return res.status(statusCodes.success).json({ bookmarks: bookmarks, bookmarked_tweets: allTweets});
 
     } catch (error) {
         logger.error(`Error while fetching bookmarked tweets: ${error}`);
