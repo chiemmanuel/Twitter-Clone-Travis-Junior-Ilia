@@ -1,7 +1,6 @@
 const logger = require('../middleware/winston');
 const statusCodes = require('../constants/statusCodes.js');
 const tweetModel = require('../models/tweetModel.js');
-const userModel = require("../models/userModel.js");
 const { sendMessage } = require('../boot/socketio/socketio_connection');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
@@ -26,8 +25,8 @@ const getBookmarks = async (req, res) => {
     try {
         // Retrieve bookmarked tweet IDs from Neo4j
         const result = await session.run(
-            'MATCH (u:User {id: $userId})-[:BOOKMARKED]->(t:Tweet) RETURN t.id AS tweetId',
-            { userId }
+            'MATCH (u:User {email: $user_email})-[:BOOKMARKED]->(t:Tweet) RETURN t.id AS tweetId',
+            { user_email }
         );
 
         const tweetIds = result.records.map(record => record.get('tweetId').toString());
@@ -88,33 +87,32 @@ const getBookmarks = async (req, res) => {
     
 const addBookmark = async (req, res) => {
     const { tweet_id } = req.params;
-    const userId = req.user._id;
+    const user_email = req.user.email;
 
     const session = createNeo4jSession();
 
     try {
         // Ensure the user and tweet exist and create them if they do not
         await session.run(
-            'MERGE (u:User {id: $userId}) ' +
             'MERGE (t:Tweet {id: $tweet_id}) ' +
             'ON CREATE SET t.num_bookmarks = 0', 
-            { userId, tweet_id }
+            { user_email, tweet_id }
         );
 
         // Create a bookmark relationship if it doesn't exist
         const bookmarkResult = await session.run(
-            'MATCH (u:User {id: $userId}), (t:Tweet {id: $tweet_id}) ' +
+            'MATCH (u:User {email: $user_email}), (t:Tweet {id: $tweet_id}) ' +
             'MERGE (u)-[r:BOOKMARKED]->(t) ' + // Relationship name is specified here
             'ON CREATE SET t.num_bookmarks = t.num_bookmarks + 1 ' +
             'RETURN r',
-            { userId, tweet_id }
+            { user_email, tweet_id }
         );
 
         if (bookmarkResult.records.length === 0) {
             return res.status(statusCodes.success).json({ message: 'This tweet is already bookmarked' });
         }
 
-        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: false });
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_email: user_email, deleted: false });
         return res.status(statusCodes.success).json({ message: 'Added new bookmark' });
 
     } catch (error) {
@@ -128,16 +126,16 @@ const addBookmark = async (req, res) => {
 
 const deleteBookmark = async (req, res) => {
     const { tweet_id } = req.params;
-    const userId = req.user._id;
+    const user_email = req.user.email;
 
     const session = createNeo4jSession();
 
     try {
         // Ensure the user and tweet exist and create them if they do not
         const userTweetCheckResult = await session.run(
-            'MATCH (u:User {id: $userId})-[r:BOOKMARKED]->(t:Tweet {id: $tweet_id}) ' +
+            'MATCH (u:User {email: $user_email})-[r:BOOKMARKED]->(t:Tweet {id: $tweet_id}) ' +
             'RETURN r',
-            { userId, tweet_id }
+            { user_email, tweet_id }
         );
 
         if (userTweetCheckResult.records.length === 0) {
@@ -146,9 +144,9 @@ const deleteBookmark = async (req, res) => {
 
         // Remove the bookmark relationship
         await session.run(
-            'MATCH (u:User {id: $userId})-[r:BOOKMARKED]->(t:Tweet {id: $tweet_id}) ' +
+            'MATCH (u:User {email: $user_email})-[r:BOOKMARKED]->(t:Tweet {id: $tweet_id}) ' +
             'DELETE r',
-            { userId, tweet_id }
+            { user_email, tweet_id }
         );
 
         // Decrement the number of bookmarks in the MongoDB tweet document
@@ -158,7 +156,7 @@ const deleteBookmark = async (req, res) => {
             await tweet.save();
         }
 
-        sendMessage(null, 'bookmark', { _id: tweet_id, user_id: userId, deleted: true });
+        sendMessage(null, 'bookmark', { _id: tweet_id, user_email: user_email, deleted: true });
         return res.status(statusCodes.success).json({ message: 'Bookmark deleted successfully' });
 
     } catch (error) {
