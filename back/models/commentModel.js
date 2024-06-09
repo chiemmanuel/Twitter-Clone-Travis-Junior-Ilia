@@ -22,7 +22,7 @@ const commentSchema = new mongoose.Schema({
         type: String,
     },
     likes: [{
-        type: mongoose.Schema.Types.ObjectId,
+        type: Number,
     }],
     },
     { timestamps: {

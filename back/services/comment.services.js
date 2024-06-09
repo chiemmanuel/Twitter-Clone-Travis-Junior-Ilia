@@ -28,11 +28,9 @@ const getHashKey = (_filter) => {
 const postComment = async (req, res) => {
     const tweetId = req.params.tweetId;
     const _id = req.user._id;
-    const user = await User.findById(_id);
-    const author_name = user.username;
-    const profile_image = user.profile_img;
+    const author_name = req.user.username;
 
-    const { content } = req.body;
+    const { content, profile_img } = req.body;
 
     let media = req.body.media;
     if (media === undefined) {
@@ -43,7 +41,7 @@ const postComment = async (req, res) => {
         tweet_id: tweetId,
         author_id: _id,
         author_name,
-        profile_image,
+        profile_image: profile_img,
         content,
         media,
     });

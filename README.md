@@ -30,7 +30,7 @@ The caching logic is implemented in the `/back/services/` folder.
 4. Have MongoDB, Neo4j, and Redis running on your local machine, or update the connection strings in the `.env` file to point to your database instances.
 5. Run `npm start` in the `/back` directory to start the backend server
 6. Run `npm start` in the `/front` directory to start the frontend server
-7. Open your browser and navigate to `http://localhost:3000` to view the application
+7. Open your browser and navigate to `http://localhost:3000` to view the application or use Postman to test the API endpoints (https://speeding-shuttle-145414.postman.co/workspace/New-Team-Workspace~9bbc6a62-0def-40d9-bad3-56959c01b44b/collection/32573845-4634dfc1-a3bb-4c1c-b204-dfc998a413d0?action=share&creator=32573845&active-environment=32573845-38dc3580-3f17-4b4d-a200-cf48c6470bb8)
 
 
 
