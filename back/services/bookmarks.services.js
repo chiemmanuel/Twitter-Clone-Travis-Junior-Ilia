@@ -20,7 +20,6 @@ const getBookmarks = async (req, res) => {
     const redisClient = Redis.getRedisClient();
     const userId = req.user._id;
     logger.info(`Fetching bookmarked tweets for user with id: ${userId}`);
-    const reqHash = getHashKey({ userId, type: 'bookmarked_tweets' });
 
     const session = createNeo4jSession();
 
@@ -31,7 +30,7 @@ const getBookmarks = async (req, res) => {
             { userId }
         );
 
-        const tweetIds = result.records.map(record => record.get('tweetId'));
+        const tweetIds = result.records.map(record => record.get('tweetId').toString());
 
         if (tweetIds.length === 0) {
             return res.status(statusCodes.success).json({ tweets: [] });
@@ -62,7 +61,7 @@ const getBookmarks = async (req, res) => {
 
             // Cache the fetched tweets
             for (const tweet of fetchedTweets) {
-                const reqHash = getHashKey({ tweetId: tweet._id });
+                const reqHash = getHashKey({ tweetId: tweet._id.toString() });
                 await redisClient.set(reqHash, JSON.stringify(tweet)).then(
                     async () => {
                         await redisClient.expire(reqHash, redisCacheDurations.getTweet).catch((err) => {
@@ -86,7 +85,6 @@ const getBookmarks = async (req, res) => {
         await session.close();
     }
 };
-
     
 const addBookmark = async (req, res) => {
     const { tweet_id } = req.params;
