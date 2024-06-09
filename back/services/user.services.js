@@ -10,7 +10,7 @@ const crypto = require('crypto');
 const tweetModel = require('../models/tweetModel');
 const redisCacheDurations = require('../constants/redisCacheDurations');
 
-const createNeo4jSession = require('../boot/neo4j.config.js');
+const { createNeo4jSession } = require('../boot/neo4j.config.js');
 
 /**
  * This function generates a hash key for caching based on the provided filter
@@ -209,18 +209,21 @@ const updatePassword = async (req, res) => {
  */
 const getcurrentUser = async (req, res) => {
     const session = createNeo4jSession();
+    logger.info(JSON.stringify(req.user))
 
     try {
-        const { _id } = req.user;
+        const { email } = req.user;
 
         // Fetch user information from the database based on the _id
         const getUserQuery = `
-            MATCH (u:User)
-            WHERE id(u) = $userId
-            RETURN u
-        `;
+        MATCH (u:User {email: $userEmail})
+        OPTIONAL MATCH (u)-[:FOLLOWS]->(f:User)
+        OPTIONAL MATCH (u)<-[:FOLLOWS]-(n:User)
+        RETURN u, count(distinct f) as following, count(distinct n) as followers
+    `;
 
-        const result = await session.run(getUserQuery, { userId: toNeo4jId(_id) });
+        const result = await session.run(getUserQuery, { userEmail: email });
+        logger.info(`result: ${JSON.stringify(result.records)}`)
         const userRecord = result.records[0];
 
         if (!userRecord) {
@@ -230,6 +233,8 @@ const getcurrentUser = async (req, res) => {
         }
 
         const user = userRecord.get('u').properties;
+        user.following = userRecord.get('following').low;
+        user.followers = userRecord.get('followers').low;
         return res.status(statusCodes.success).json(user);
 
     } catch (error) {
@@ -257,7 +262,9 @@ const getUserByUsername = async (req, res) => {
         // Fetch user information from the database based on the username
         const getUserQuery = `
             MATCH (u:User {username: $username})
-            RETURN u
+            OPTIONAL MATCH (u)-[:FOLLOWS]->(f:User)
+            OPTIONAL MATCH (u)<-[:FOLLOWS]-(n:User)
+            RETURN u, count(distinct f) as following, count(distinct n) as followers
         `;
 
         const result = await session.run(getUserQuery, { username });
@@ -270,6 +277,8 @@ const getUserByUsername = async (req, res) => {
         }
 
         const user = userRecord.get('u').properties;
+        user.following = userRecord.get('following').low;
+        user.followers = userRecord.get('followers').low;
         return res.status(statusCodes.success).json(user);
 
     } catch (error) {
@@ -325,9 +334,13 @@ const getUserTweets = async (req, res) => {
  */
 const getUserLikedTweets = async (req, res) => {
     const session = createNeo4jSession();
+    const redisClient = Redis.getRedisClient();
+
+    logger.info(`Fetching liked tweets for user ${req.params.email}`);
 
     try {
         const { email } = req.params;
+        
 
         // Cypher query to fetch tweets liked by a user
         const getUserLikedTweetsQuery = `
@@ -344,6 +357,13 @@ const getUserLikedTweets = async (req, res) => {
             const tweet = record.get('t').properties;
             return { _id: tweet._id };
         });
+
+        logger.info(`Fetched ${tweets.length} liked tweets for user ${email}`);
+
+        if (tweets.length === 0) {
+            return res.status(statusCodes.success).json([]);
+        } else
+
 
         return res.status(statusCodes.success).json(tweets);
 

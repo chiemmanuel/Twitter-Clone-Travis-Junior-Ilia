@@ -75,7 +75,7 @@ const AppStateReducer = (state, action) => {
 
     case "Unfollow": {
       const updatedUser = { ...state.user,
-        following: state.user.following.filter((id) => id !== action.payload),
+        following: state.user.following.filter((email) => email !== action.payload),
       };
       localStorage.setItem("user", JSON.stringify(updatedUser));
       return {

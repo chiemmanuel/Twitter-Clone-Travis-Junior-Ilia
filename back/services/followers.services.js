@@ -137,7 +137,7 @@ const getFollowing = async (req, res) => {
 
         const followings = result.records.map(record => record.get('following'));
 
-        logger.info(`Retrieved followings of user with email ${user_email}`);
+        logger.info(`Retrieved followings of user with email ${user_email}, ${followings}`);
         return res.status(statusCodes.success).json({ followings });
 
     } catch (error) {

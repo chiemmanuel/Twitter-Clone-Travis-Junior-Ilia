@@ -61,7 +61,7 @@ const ProfilePage = () => {
         setUserTweets(tweetsResponse.data.tweets);
 
         // Fetch liked tweets
-        await instance.get(requests.userLikedTweets + response.data._id, {
+        await instance.get(requests.userLikedTweets + response.data.email, {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
@@ -109,8 +109,8 @@ const ProfilePage = () => {
                     })}
                   </p>
                   <div className="follower-info">
-                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers.length} followers</div>
-                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following.length} following</div>
+                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers} followers</div>
+                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following} following</div>
                   </div>
                 </div>
               </div>
