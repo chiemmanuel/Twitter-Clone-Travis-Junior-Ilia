@@ -8,6 +8,8 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
 
+const { createNeo4jSession } = require('../neo4j.config.js');  
+
 /**
  * This function generates a hash key for caching based on the provided filter
  * @param {*} _filter: The filter object to be hashed
@@ -209,7 +211,9 @@ const editTweetById = async (req, res) => {
  */
 const likeTweet = async (req, res) => {
     const tweetId = req.params.tweetId;
-    const userId = req.user._id;
+    const user_email = req.user.email;
+
+    const session = createNeo4jSession();
 
     try {
         const tweet = await tweetModel.findById(tweetId);
@@ -218,36 +222,57 @@ const likeTweet = async (req, res) => {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }
 
-        const userIndex = tweet.liked_by.indexOf(userId);
+        // Check if the like relationship already exists in Neo4j
+        const result = await session.run(
+            'MATCH (u:User {email: $user_email})-[r:LIKED]->(t:Tweet {id: $tweetId}) RETURN r',
+            { user_email, tweetId }
+        );
 
-        if (userIndex !== -1) {
-            // If user has already liked the tweet, remove them from the liked_by list
-            tweet.liked_by.splice(userIndex, 1);
+        if (result.records.length > 0) {
+            // If the user has already liked the tweet, remove the like relationship
+            await session.run(
+                'MATCH (u:User {email: $user_email})-[r:LIKED]->(t:Tweet {id: $tweetId}) DELETE r',
+                { user_email, tweetId }
+            );
 
-            const updatedTweet = await tweet.save();
-        logger.info("roomId: ", req.user.email);
-        console.log("eventName: ", 'update-likes');
-        logger.info("message: ", { tweet: updatedTweet });
-        sendMessage(null, 'update-likes', { tweet_id: tweetId, user_id: userId, dislike: true});
-        return res.status(statusCodes.success).json({ message: 'unliked successfully', tweet: updatedTweet });
-        } else {
-            // If user has not liked the tweet, add them to the liked_by list
-            tweet.liked_by.push(userId);
+            // Decrement the number of likes in MongoDB
+            tweet.num_likes -= 1;
+            if (tweet.num_likes < 0) {
+                tweet.num_likes = 0;
+            }
 
             const updatedTweet = await tweet.save();
             logger.info("roomId: ", req.user.email);
             console.log("eventName: ", 'update-likes');
             logger.info("message: ", { tweet: updatedTweet });
-            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_id: userId, dislike: false});
-            return res.status(statusCodes.success).json({ message: 'liked successfully', tweet: updatedTweet });
+            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_email: user_email, dislike: true });
+            return res.status(statusCodes.success).json({ message: 'Unliked successfully' });
+        } else {
+            // If the user has not liked the tweet, create the like relationship in Neo4j
+            await session.run(
+                'MATCH (u:User {email: $user_email}), (t:Tweet {id: $tweetId}) ' +
+                'MERGE (u)-[r:LIKED]->(t)',
+                { user_email, tweetId }
+            );
+
+            // Increment the number of likes in MongoDB
+            tweet.num_likes += 1;
+
+            const updatedTweet = await tweet.save();
+            logger.info("roomId: ", req.user.email);
+            console.log("eventName: ", 'update-likes');
+            logger.info("message: ", { tweet: updatedTweet });
+            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_email: user_email, dislike: false });
+            return res.status(statusCodes.success).json({ message: 'Liked successfully' });
         }
 
     } catch (error) {
-        console.log(error);
+        logger.error(`Error liking/unliking tweet: ${error}`);
         return res.status(statusCodes.queryError).json({ message: 'Error liking/unliking tweet' });
+    } finally {
+        await session.close();
     }
 };
-
 /**
  * TODO: Add socket.io to emit a tweet-deleted event to active clients
  * 
