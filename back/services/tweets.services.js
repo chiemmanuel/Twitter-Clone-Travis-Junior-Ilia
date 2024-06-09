@@ -8,6 +8,8 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
 
+const { createNeo4jSession } = require('../neo4j.config.js');  
+
 const getHashKey = (_filter) => {
     let retKey = '';
     if (_filter) {
@@ -202,7 +204,7 @@ const editTweetById = async (req, res) => {
  */
 const likeTweet = async (req, res) => {
     const tweetId = req.params.tweetId;
-    const userId = req.user._id;
+    const user_email = req.user.email;
 
     const session = createNeo4jSession();
 
@@ -215,15 +217,15 @@ const likeTweet = async (req, res) => {
 
         // Check if the like relationship already exists in Neo4j
         const result = await session.run(
-            'MATCH (u:User {id: $userId})-[r:LIKED]->(t:Tweet {id: $tweetId}) RETURN r',
-            { userId, tweetId }
+            'MATCH (u:User {email: $user_email})-[r:LIKED]->(t:Tweet {id: $tweetId}) RETURN r',
+            { user_email, tweetId }
         );
 
         if (result.records.length > 0) {
             // If the user has already liked the tweet, remove the like relationship
             await session.run(
-                'MATCH (u:User {id: $userId})-[r:LIKED]->(t:Tweet {id: $tweetId}) DELETE r',
-                { userId, tweetId }
+                'MATCH (u:User {email: $user_email})-[r:LIKED]->(t:Tweet {id: $tweetId}) DELETE r',
+                { user_email, tweetId }
             );
 
             // Decrement the number of likes in MongoDB
@@ -236,14 +238,14 @@ const likeTweet = async (req, res) => {
             logger.info("roomId: ", req.user.email);
             console.log("eventName: ", 'update-likes');
             logger.info("message: ", { tweet: updatedTweet });
-            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_id: userId, dislike: true });
-            return res.status(statusCodes.success).json({ message: 'Unliked successfully', tweet: updatedTweet });
+            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_email: user_email, dislike: true });
+            return res.status(statusCodes.success).json({ message: 'Unliked successfully' });
         } else {
             // If the user has not liked the tweet, create the like relationship in Neo4j
             await session.run(
-                'MATCH (u:User {id: $userId}), (t:Tweet {id: $tweetId}) ' +
+                'MATCH (u:User {email: $user_email}), (t:Tweet {id: $tweetId}) ' +
                 'MERGE (u)-[r:LIKED]->(t)',
-                { userId, tweetId }
+                { user_email, tweetId }
             );
 
             // Increment the number of likes in MongoDB
@@ -253,8 +255,8 @@ const likeTweet = async (req, res) => {
             logger.info("roomId: ", req.user.email);
             console.log("eventName: ", 'update-likes');
             logger.info("message: ", { tweet: updatedTweet });
-            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_id: userId, dislike: false });
-            return res.status(statusCodes.success).json({ message: 'Liked successfully', tweet: updatedTweet });
+            sendMessage(null, 'update-likes', { tweet_id: tweetId, user_email: user_email, dislike: false });
+            return res.status(statusCodes.success).json({ message: 'Liked successfully' });
         }
 
     } catch (error) {
