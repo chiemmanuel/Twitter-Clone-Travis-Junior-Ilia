@@ -468,14 +468,16 @@ const getLiveTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getFollowedTweets = async (req, res) => {
+    const session = createNeo4jSession();
     user_id = req.user._id;
     var tweets = [];
     var followed_users = [];
     const redisClient = Redis.getRedisClient();
     try {
         // Find the users that the current user follows
-        const user = await userModel.findOne({ _id: user_id });
-        followed_users = user.following;
+        const getFollowedUsersQuery = `MATCH (u:User {email: $email})-[:FOLLOWS]->(f:User) RETURN f.email`;
+        const result = await session.run(getFollowedUsersQuery, { email: req.user.email });
+        followed_users = result.records.map(record => record.get('f.email'));
         logger.info(`Successfully fetched users that ${user_id} follows`);
     } catch (error) {
         logger.error(`Error fetching users that ${user_id} follows: ${error}`);
@@ -501,9 +503,9 @@ const getFollowedTweets = async (req, res) => {
             // Find tweets from the users that the current user follows that have an _id less than the last_tweet_id
             if (query[0].$match) {
                 query[0].$match._id = { $lt: last_tweet_id };
-                query[0].$match.author_id = { $in: followed_users };
+                query[0].$match.author_email = { $in: followed_users };
             } else {
-                query.unshift({ $match: { author_id: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
+                query.unshift({ $match: { author_email: { $in: followed_users }, _id: { $lt: last_tweet_id } } });
             }
 
             tweets = await tweetModel.aggregate(query);
@@ -534,9 +536,9 @@ const getFollowedTweets = async (req, res) => {
             }
             // Find tweets from the users that the current user follows
             if (query[0].$match) {
-                query[0].$match.author_id = { $in: followed_users} ;
+                query[0].$match.author_email = { $in: followed_users} ;
             } else {
-                query.unshift({ $match: { author_id: { $in: followed_users } } });
+                query.unshift({ $match: { author_email: { $in: followed_users } } });
             }
             tweets = await tweetModel.aggregate(query);
             await redisClient.set(reqHash, JSON.stringify(tweets)).then(

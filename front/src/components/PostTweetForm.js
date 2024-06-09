@@ -23,7 +23,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         setTweetText('')
         setTweetMedia(null)
         setPreviewURL(null)
-        setTweetHashTags([])
         setDisplayPoll(false)
         setPollTitle('')
         setPollOptions([])
@@ -35,7 +34,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         
     const isRetweet = retweet ? true : false
     const [tweetText, setTweetText] = useState('')
-    const [tweetHashTags, setTweetHashTags] = useState([])
     const [tweetMedia, setTweetMedia] = useState(null)
     const [previewURL, setPreviewURL] = useState(null);
     const [displayPoll, setDisplayPoll] = useState(false)
@@ -52,18 +50,20 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        var words = tweetText.split(/[\s#]+/);
+        var words = tweetText.split(/\s+/);
+        console.log(words)
         // use reduce to split words into two arrays, one for hashtags and one for the rest of the tweet
         var splitWords = words.reduce((acc, word) => {
+            console.log(word, word[0] === '#')
             if (word[0] === '#') {
-                acc.hashtags.push(word)
+                acc.hashtags.push(word.slice(1))
             } else {
                 acc.text.push(word)
             }
             return acc
         }, {hashtags: [],text: []})
+        console.log(splitWords)
         setTweetText(splitWords.text.join(' '));
-        setTweetHashTags(splitWords.hashtags);
 
         if (tweetText === '' && tweetMedia === null && !displayPoll) {
             setMessage('Please enter a tweet, attach media or create a poll')
@@ -101,10 +101,10 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
         axios.post(requests.postTweet, {
             author_profile_img: user.profile_img,
-            content: tweetText,
+            content: splitWords.text.join(' '),
             retweet_id: isRetweet ? retweet._id : null,
             media: imgData.url,
-            hashtags: tweetHashTags,
+            hashtags: splitWords.hashtags,
             poll: displayPoll ? {
                 title: pollTitle,
                 options: pollOptions,
@@ -121,7 +121,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             setTweetText('')
             setTweetMedia(null)
             setPreviewURL(null)
-            setTweetHashTags([])
             setDisplayPoll(false)
             setPollTitle('')
             setPollOptions([])

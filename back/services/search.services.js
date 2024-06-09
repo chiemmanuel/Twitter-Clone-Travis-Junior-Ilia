@@ -6,6 +6,9 @@ const Redis = require('../boot/redis_client');
 const crypto = require('crypto');
 const redisCacheDurations = require('../constants/redisCacheDurations');
 
+const { createNeo4jSession } = require('../boot/neo4j.config.js');
+
+
 /**
  * This function generates a hash key for caching based on the provided filter
  * @param {*} _filter: The filter object to be hashed
@@ -22,12 +25,15 @@ const getHashKey = (_filter) => {
 
 const searchByUsername = async (req, res) => {
     const { query } = req.params
+    const session = createNeo4jSession();
 
     try {
-        var query_regex = new RegExp("^" + query, 'i');
+        var query_regex = new RegExp(query + '.*', 'i');
         logger.info(`Searching by username: ${query}`);
-        logger.info(`Query regex: ${query_regex}`);
-        const results = await userModel.find({ username: { $regex: query_regex } })
+        logger.info(`Query regex: ${query_regex.source}`);
+        const userSearchQuery = `MATCH (u:User) WHERE u.username =~ $query RETURN u`;
+        const userSearchResults = await session.run(userSearchQuery, { query: query_regex.source });
+        const results = userSearchResults.records.map(record => record.get('u').properties);
         return res.status(statusCodes.success).json({ results: results });
     } catch (error) {
         logger.error(`Error while searching by username ${query}: ${error}`);
