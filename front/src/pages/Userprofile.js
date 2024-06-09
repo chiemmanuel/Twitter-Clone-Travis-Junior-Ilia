@@ -151,13 +151,6 @@ const Userprofile = () => {
                 <img src={user.profile_img} alt="Profile" />
                 <div className="user-details">
                   <h2>{user.username}</h2>
-                  <p>
-                    Joined since{" "}
-                    {new Date(user.created_at).toLocaleString("default", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
                   <div className="follower-info">
                     <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers} followers</div>
                     <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following} following</div>

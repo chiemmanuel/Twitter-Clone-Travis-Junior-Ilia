@@ -340,7 +340,12 @@ const getUserLikedTweets = async (req, res) => {
 
     try {
         const { email } = req.params;
-        
+        const requestKey = getHashKey({ likedTweetsForEmail: email });
+        const cachedData = await redisClient.get(requestKey).catch((err) => logger.error(err));
+        if (cachedData) {
+            logger.info("Fetched liked tweets from cache");
+            return res.status(statusCodes.success).json(JSON.parse(cachedData));
+        }
 
         // Cypher query to fetch tweets liked by a user
         const getUserLikedTweetsQuery = `
@@ -353,21 +358,35 @@ const getUserLikedTweets = async (req, res) => {
             getUserLikedTweetsQuery, { email: email }
         );
 
-        const tweets = result.records.map(record => {
+        const tweet_ids = result.records.map(record => {
             const tweet = record.get('t').properties;
-            return { _id: tweet._id };
+            return tweet.id;
         });
 
-        logger.info(`Fetched ${tweets.length} liked tweets for user ${email}`);
+        logger.info(`Fetched ${tweet_ids.length} liked tweets for user ${email}`);
 
-        if (tweets.length === 0) {
-            return res.status(statusCodes.success).json([]);
-        } else
+        if (tweet_ids.length === 0) {
+            return res.status(statusCodes.success).json({ likedTweets: [] });
+        } else {
+            await tweetModel.find({ _id: { $in: tweet_ids } }).then(
+                async (likedTweets) => {
+                    await redisClient.set(requestKey, JSON.stringify({likedTweets: likedTweets})).then(
+                        async () => {
+                            await redisClient.expire(requestKey, redisCacheDurations.userLikedTweets).catch((err) => logger.error(err));
+                            logger.info(`Successfully cached liked tweets for user ${email}`);
+                    }).catch((err) => {
+                        logger.error(`Error caching liked tweets for user ${email}: ${err}`);
+                    });
+                    return res.status(statusCodes.success).json({likedTweets: likedTweets});
+                }
+            ).catch((err) => {
+                logger.error(`Error fetching liked tweets for user ${email}: ${err}`);
+                return res.status(statusCodes.queryError).json({ error: err });
+            });
 
-
-        return res.status(statusCodes.success).json(tweets);
-
+        }
     } catch (error) {
+        logger.error(`Error fetching liked tweets for user ${req.params.email}: ${error}`);
         return res
             .status(statusCodes.queryError)
             .json({ error: "Failed to get user liked tweets" });

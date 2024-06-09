@@ -16,6 +16,9 @@ const verifyToken = (req, res, next) => {
     next();
   } catch (error) {
     logger.error(error);
+    if (error.name === "TokenExpiredError") {
+      return res.status(unauthorized).json({ error: "Token expired" });
+    }
     return res.status(unauthorized).json({ error: "Invalid token" });
   }
 };

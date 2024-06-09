@@ -108,10 +108,10 @@ function Tweet( props ) {
     const handleLike = () => {
         if (isLiked) {
             setIsLiked(false);
-            setNumLikes(num_likes - 1);
+            //setNumLikes(num_likes - 1);
         } else {
             setIsLiked(true);
-            setNumLikes(num_likes + 1);
+            //setNumLikes(num_likes + 1);
         }
         axios.put(requests.likeTweet + tweet._id, {}, {
           headers: {

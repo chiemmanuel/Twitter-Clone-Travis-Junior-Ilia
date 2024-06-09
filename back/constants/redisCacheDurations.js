@@ -5,6 +5,7 @@ const getFollowedTweets = 45;
 const notifications = 60;
 const searchResults = 60;
 const userTweets = 45;
+const userLikedTweets = 30;
 const userComments = 60;
 
 module.exports = {
@@ -15,5 +16,6 @@ module.exports = {
     notifications,
     searchResults,
     userTweets,
+    userLikedTweets,
     userComments
 };
