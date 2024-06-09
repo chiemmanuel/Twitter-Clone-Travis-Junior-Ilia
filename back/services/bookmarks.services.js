@@ -4,7 +4,7 @@ const tweetModel = require('../models/tweetModel.js');
 const { sendMessage } = require('../boot/socketio/socketio_connection');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
-const { createNeo4jSession } = require('../neo4j.config.js');
+const { createNeo4jSession }  = require('../neo4j.config.js');
 
 const getHashKey = (_filter) => {
     let retKey = '';
@@ -17,8 +17,8 @@ const getHashKey = (_filter) => {
 
 const getBookmarks = async (req, res) => {
     const redisClient = Redis.getRedisClient();
-    const userId = req.user._id;
-    logger.info(`Fetching bookmarked tweets for user with id: ${userId}`);
+    const user_email = req.user.email;
+    logger.info(`Fetching bookmarked tweets for user with email: ${user_email}`);
 
     const session = createNeo4jSession();
 
