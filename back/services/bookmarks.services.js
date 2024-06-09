@@ -4,7 +4,7 @@ const tweetModel = require('../models/tweetModel.js');
 const { sendMessage } = require('../boot/socketio/socketio_connection');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
-const { createNeo4jSession }  = require('../neo4j.config.js');
+const { createNeo4jSession }  = require('../boot/neo4j.config.js');
 
 const getHashKey = (_filter) => {
     let retKey = '';

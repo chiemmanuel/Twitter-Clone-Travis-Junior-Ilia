@@ -8,7 +8,7 @@ const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const crypto = require('crypto');
 const Redis = require('../boot/redis_client.js');
 
-const { createNeo4jSession } = require('../neo4j.config.js');  
+const { createNeo4jSession } = require('../boot/neo4j.config.js');  
 
 /**
  * This function generates a hash key for caching based on the provided filter
@@ -34,6 +34,7 @@ const getHashKey = (_filter) => {
  * @returns: The res object with a status code and a message
  */
 const postTweet = async (req, res) => {
+    const session = createNeo4jSession();
     let tweetInfo = {
         author_id: req.user._id,
         author_username: req.user.username,
@@ -81,6 +82,8 @@ const postTweet = async (req, res) => {
     try {
         const result = await newTweet.save();
         const tweet_id = result._id;
+        const addUserPostQuery = `MATCH (u:User {email: $email}) CREATE (t:Tweet {id: $tweet_id}) CREATE (u)-[:POSTED]->(t)`;
+        await session.run(addUserPostQuery, { email: req.user.email, tweet_id: tweet_id.toString() });
         if (req.body.retweet_id) {
             // If it's a retweet, increment the retweet count for the original tweet
             await tweetModel.findByIdAndUpdate(req.body.retweet_id, { $inc: { num_retweets: 1 } });
@@ -274,8 +277,6 @@ const likeTweet = async (req, res) => {
     }
 };
 /**
- * TODO: Add socket.io to emit a tweet-deleted event to active clients
- * 
  * This function deletes a tweet by its ID
  * @param {*} req: The request object with tweetId in params
  * @param {*} res: The response object

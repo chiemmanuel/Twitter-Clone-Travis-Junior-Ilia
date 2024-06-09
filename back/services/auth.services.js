@@ -3,7 +3,7 @@ const User = require('../models/userModel'); // Adjust the path based on your pr
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
-const { createNeo4jSession } = require('../neo4j.config');
+const { createNeo4jSession } = require('../boot/neo4j.config');
 
 /**
  * This function handles user signup by creating a new user in the MongoDB database

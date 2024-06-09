@@ -5,8 +5,26 @@ const logger = require("../middleware/winston");
 const User = require('../models/userModel');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const Redis = require('../boot/redis_client');
+const crypto = require('crypto');
+const tweetModel = require('../models/tweetModel');
+const redisCacheDurations = require('../constants/redisCacheDurations');
 
-const createNeo4jSession = require('../neo4j.config');
+const createNeo4jSession = require('../boot/neo4j.config.js');
+
+/**
+ * This function generates a hash key for caching based on the provided filter
+ * @param {*} _filter: The filter object to be hashed
+ * @returns: The hash key
+ */
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -271,40 +289,34 @@ const getUserByUsername = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getUserTweets = async (req, res) => {
-    const session = createNeo4jSession();
+    const redisClient = Redis.getRedisClient();
+    const userEmail = req.params.email;
+    var tweets = [];
 
     try {
-        const { userId } = req.params;
-
-        // Cypher query to fetch tweets by a user
-        const fetchUserTweetsQuery = `
-            MATCH (u:User)-[:POSTED]->(t:Tweet)
-            WHERE id(u) = $userId
-            RETURN t
-        `;
-
-        const result = await session.run(
-            fetchUserTweetsQuery, { userId: Number(userId) }
-        );
-        
-        const tweets = result.records.map(record => {
-            const tweet = record.get('t').properties;
-            return { _id: tweet._id };
-        });
-
-        return res
-            .status(statusCodes.success)
-            .json(tweets);
-
+        // Find tweets from the user with email user_email
+        const requestKey = getHashKey({ userEmail: userEmail });
+        const cachedData = await redisClient.get(requestKey).catch((err) => logger.error(err));
+        if (!cachedData) {
+            tweets = await tweetModel.find({ author_email: userEmail });
+            logger.info(`Successfully fetched tweets from the database`);
+            await redisClient.set(requestKey, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(requestKey, redisCacheDurations.userTweets).catch((err) => logger.error(err));
+                    logger.info(`Successfully cached tweets for user ${userEmail}`);
+            }).catch((err) => {
+                logger.error(`Error caching tweets for user ${userEmail}: ${err}`);
+            });
+        } else {
+            tweets = JSON.parse(cachedData);
+            logger.info("Fetched tweets from cache");
+        }
     } catch (error) {
-        return res
-            .status(statusCodes.queryError)
-            .json({ error: "Failed to get user tweets" });
-
-    } finally {
-        await session.close();
+        logger.error("Error while fetching tweets", error);
+        return res.status(statusCodes.queryError).json({ error: error });
     }
-};
+    return res.status(statusCodes.success).json({ tweets: tweets });
+}
 /**
  * This function finds all the tweets liked by a user based on the user's _id from the request
  * @param {*} req: The request object

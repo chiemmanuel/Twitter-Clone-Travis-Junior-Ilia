@@ -1,4 +1,4 @@
-const { createNeo4jSession } = require('../neo4j.config.js');
+const { createNeo4jSession } = require('../boot/neo4j.config.js');
 const statusCodes = require('../constants/statusCodes.js');
 const logger = require("../middleware/winston");
 
