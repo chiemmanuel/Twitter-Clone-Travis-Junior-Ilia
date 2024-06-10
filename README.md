@@ -14,12 +14,12 @@ Queries to MongoDB are made using Mongoose in the [/back/services/](./back/servi
 **Neo4j**:
 Neo4j is used to store our user data such as followers, following, and user relationships. 
 This allows us to easily query and traverse the graph to find relationships between users and their content interactions. 
-The queries to Neo4j are made using the `neo4j-driver` package in the [/back/services/](./back/services/) folder.
+The queries to Neo4j are made using the `neo4j-driver` package in the [/back/services/](./back/services/) folder. Neo4j configuration is defined in the [/back/boot/neo4j.config.js](/back/boot/neo4j.config.js) file.
 
 **Redis**:
 Redis is used to store our user sessions and cache frequently accessed data. 
 We used a cache-aside implementation, allowing for quick access to commonly requested data and reducing the load on our MongoDB and Neo4j databases. 
-The queries to Redis are made using the Redis client defined in the `/back/boot/redis_client.js` file.
+The queries to Redis are made using the Redis client defined in the [/back/boot/redis_client.js](/back/boot/redis_client.js) file.
 The caching logic is implemented in the [/back/services/](./back/services/) folder.
 
 A sample of the queries used in the project can be found in the [SAMPLE_QUERIES.md](./SAMPLE_QUERIES.md) file.
@@ -28,7 +28,7 @@ A sample of the queries used in the project can be found in the [SAMPLE_QUERIES.
 1. Clone the [Github repository](https://github.com/Travis-Berthrong/Twitter-Clone-Travis-Junior-Ilia/tree/Development) or download and extract the zip file
 2. Run `npm install` in the `/back` directory to install the dependencies for the backend
 3. Run `npm install` in the `/front` directory to install the dependencies for the frontend
-3. Ensure all environment variables are set in the `.env` file in the `/back` directory, as shown in the `.env.template` file
+3. Ensure all environment variables are set in the `.env` file in the `/back` directory, as shown in the [.env.template](/back/.env.template) file
 4. Have MongoDB, Neo4j, and Redis running on your local machine, or update the connection strings in the `.env` file to point to your database instances.
 5. Run `npm start` in the `/back` directory to start the backend server
 6. Run `npm start` in the `/front` directory to start the frontend server
