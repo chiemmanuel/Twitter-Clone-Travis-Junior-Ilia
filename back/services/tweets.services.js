@@ -2,7 +2,6 @@ const logger = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const redisCacheDurations = require('../constants/redisCacheDurations.js');
 const tweetModel = require('../models/tweetModel.js');
-const userModel = require('../models/userModel.js');
 const ObjectId = require('mongoose').Types.ObjectId;
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
 const crypto = require('crypto');
@@ -26,7 +25,6 @@ const getHashKey = (_filter) => {
 
 
 /**
- * TODO: Add socket.io to emit a tweet-created event to active clients
  * 
  * This function creates a new tweet and saves it to the database using the tweetModel schema
  * @param {*} req: The request object
@@ -205,7 +203,6 @@ const editTweetById = async (req, res) => {
 };
 
 /**
- * TODO: Update to query user's liked tweets from Neo4j database when implemented
  * 
  * This function allows users to like or unlike a tweet by adding or removing their user ID from the liked_by list
  * @param {*} req: The request object with tweetId in params
@@ -284,12 +281,17 @@ const likeTweet = async (req, res) => {
  */
 const deleteTweetById = async (req, res) => {
     const tweetId = req.params.tweetId;
+    const session = createNeo4jSession();
 
     try {
         const tweet = await tweetModel.findByIdAndDelete(tweetId);
         if (!tweet) {
             return res.status(statusCodes.notFound).json({ message: 'Tweet not found' });
         }
+        const deleteTweetQuery = `MATCH (t:Tweet {id: $tweet_id}) DETACH DELETE t`;
+        await session.run(deleteTweetQuery, { tweet_id: tweetId }).catch((err) => {
+            logger.error(`Error deleting tweet from Neo4j: ${err}`);
+        });
         sendMessage(null, 'tweet-deleted', { tweet_id: tweetId });
         return res.status(statusCodes.success).json({ message: 'Tweet deleted successfully' });
     } catch (error) {
