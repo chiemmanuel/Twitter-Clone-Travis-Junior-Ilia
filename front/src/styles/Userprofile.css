@@ -93,6 +93,7 @@
 .user-tweets-container,
 .user-comments-container {
   margin-bottom: 20px;
+  text-align: center;
 }
 
 /* Styles for the success message */

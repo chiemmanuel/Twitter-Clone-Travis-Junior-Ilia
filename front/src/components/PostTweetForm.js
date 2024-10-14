@@ -23,7 +23,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         setTweetText('')
         setTweetMedia(null)
         setPreviewURL(null)
-        setTweetHashTags([])
         setDisplayPoll(false)
         setPollTitle('')
         setPollOptions([])
@@ -35,7 +34,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         
     const isRetweet = retweet ? true : false
     const [tweetText, setTweetText] = useState('')
-    const [tweetHashTags, setTweetHashTags] = useState([])
     const [tweetMedia, setTweetMedia] = useState(null)
     const [previewURL, setPreviewURL] = useState(null);
     const [displayPoll, setDisplayPoll] = useState(false)
@@ -52,18 +50,20 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        var words = tweetText.split(/[\s#]+/);
+        var words = tweetText.split(/\s+/);
+        console.log(words)
         // use reduce to split words into two arrays, one for hashtags and one for the rest of the tweet
         var splitWords = words.reduce((acc, word) => {
+            console.log(word, word[0] === '#')
             if (word[0] === '#') {
-                acc.hashtags.push(word)
+                acc.hashtags.push(word.slice(1))
             } else {
                 acc.text.push(word)
             }
             return acc
         }, {hashtags: [],text: []})
+        console.log(splitWords)
         setTweetText(splitWords.text.join(' '));
-        setTweetHashTags(splitWords.hashtags);
 
         if (tweetText === '' && tweetMedia === null && !displayPoll) {
             setMessage('Please enter a tweet, attach media or create a poll')
@@ -100,10 +100,11 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
         const imgData = await res.json();
 
         axios.post(requests.postTweet, {
-            content: tweetText,
+            author_profile_img: user.profile_img,
+            content: splitWords.text.join(' '),
             retweet_id: isRetweet ? retweet._id : null,
             media: imgData.url,
-            hashtags: tweetHashTags,
+            hashtags: splitWords.hashtags,
             poll: displayPoll ? {
                 title: pollTitle,
                 options: pollOptions,
@@ -120,7 +121,6 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             setTweetText('')
             setTweetMedia(null)
             setPreviewURL(null)
-            setTweetHashTags([])
             setDisplayPoll(false)
             setPollTitle('')
             setPollOptions([])
@@ -163,7 +163,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
             <form className="post-tweet-form" onSubmit={handleSubmit}>
                 <textarea
                     className="tweet-text"
-                    placeholder={isRetweet ? `Retweeting ${retweet.author?.username}` : displayPoll ? "Ask a question" :"What's happening?"}
+                    placeholder={isRetweet ? `Retweeting ${retweet.author_username}` : displayPoll ? "Ask a question" :"What's happening?"}
                     value={tweetText}
                     onChange={(e) => handleTweetTextChange(e)}
                 />
@@ -182,7 +182,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                         <div className="tweet__body">
                           <p>{retweet.content}</p>
                           { retweet.media !== "" && retweet.media !== null && <img src={retweet.media} alt="media" />}
-                          {retweet.poll ? ( <Poll poll_object={retweet.poll} />) : null }
+                          {retweet.poll && retweet.poll.title && <Poll poll_object={retweet.poll} poll_id={retweet._id} /> }
                           {retweet.retweet ? (
                             <div className="tweet__retweet" >
                               <div className="tweet__header">
@@ -203,7 +203,7 @@ function PostTweetForm( { retweet, isOpen, setIsOpen } ) {
                               <div className="tweet__body">
                                 <p>{retweet.retweet.content}</p>
                                 <img src={retweet.retweet.media} alt="media" />
-                                {retweet.retweet.poll && <Poll poll_object={retweet.poll} />}
+                                {retweet.retweet.poll.title && <Poll poll_object={retweet.poll} poll_id={retweet.retweet._id} />}
                               </div>
                             </div> 
                           ) : null}

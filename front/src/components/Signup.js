@@ -66,11 +66,13 @@ const SignUp = ({ onClose, showLoginForm }) => {
 
       dispatch({
         type: "Login",
-        payload: {
+        payload:{
           token: loginResponse.data.token,
-          email: fields.email,
-          username: fields.username,
+          email: loginResponse.data.email,
           _id: loginResponse.data._id,
+          username: loginResponse.data.username,
+          profile_img: loginResponse.data.profile_img,
+          following: loginResponse.data.following,
         },
       });
 

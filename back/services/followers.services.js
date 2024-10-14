@@ -1,38 +1,75 @@
-const logger = require("../middleware/winston");
+const { createNeo4jSession } = require('../boot/neo4j.config.js');
 const statusCodes = require('../constants/statusCodes.js');
-const userModel = require('../models/userModel');
+const logger = require("../middleware/winston");
 
 const followUser = async (req, res) => {
-    console.log('followUser');
-    const { followed_user_id } = req.params;
-    const user_id  = req.user._id;
+    const session = createNeo4jSession();
+
     try {
-        await userModel.findOneAndUpdate( { _id: user_id }, { $addToSet: { following: followed_user_id } });
-        await userModel.findOneAndUpdate( { _id: followed_user_id }, { $addToSet: { followers: user_id } });
-        logger.info(`User with id ${user_id} has followed user with id ${followed_user_id}`);
-        res.status(statusCodes.success).send('User followed successfully');
-        console.log('User followed successfully');
+        const { user_email } = req.params;
+        const follower_user_email = req.user.email;
+
+        if (user_email === follower_user_email) {
+            throw new Error('User cannot follow his own account.');
+        }
+
+        // Create a "FOLLOWS" relationship between the users
+        const followUserQuery = `
+            MATCH (u1:User {email: $followerEmail}), (u2:User {email: $followedEmail})
+            MERGE (u1)-[:FOLLOWS]->(u2)
+        `;
+
+        await session.run(followUserQuery, { 
+            followerEmail: follower_user_email, followedEmail: user_email 
+        });
+
+        logger.info(
+            `User with email ${follower_user_email} has followed user with email ${user_email}`
+        );
+        return res.status(statusCodes.success).send('User followed successfully');
+
     } catch (error) {
         logger.error(`Error following user: ${error}`);
-        res.status(statusCodes.queryError).send('Error following user');
+        return res.status(statusCodes.queryError).send('Error following user');
+
+    } finally {
+        await session.close();
     }
 };
 
+
 const unfollowUser = async (req, res) => {
-    console.log('unfollowUser');
-    const { followed_user_id } = req.params;
-    const  user_id  = req.user._id;
-    console.log(followed_user_id);
-    console.log(user_id);
+    const session = createNeo4jSession();
+
     try {
-        await userModel.findOneAndUpdate( { _id: user_id }, { $pull: { following: followed_user_id } });
-        await userModel.findOneAndUpdate( { _id: followed_user_id }, { $pull: { followers: user_id } });
-        logger.info(`User with id ${user_id} has unfollowed user with id ${followed_user_id}`);
-        console.log('User unfollowed successfully');
-        res.status(statusCodes.success).send('User unfollowed successfully');
+        const { user_email } = req.params;
+        const follower_user_email = req.user.email;
+
+        if (user_email === follower_user_email) {
+            throw new Error('User cannot unfollow his own account.');
+        }
+
+        // Remove the "FOLLOWS" relationship between the users
+        const unfollowUserQuery = `
+            MATCH (u1:User {email: $followerEmail})-[r:FOLLOWS]->(u2:User {email: $followedEmail})
+            DELETE r
+        `;
+
+        await session.run(unfollowUserQuery, { 
+            followerEmail: follower_user_email, followedEmail: user_email 
+        });
+
+        logger.info(
+            `User with email ${follower_user_email} has unfollowed user with email ${user_email}`
+        );
+        return res.status(statusCodes.success).send('User unfollowed successfully');
+
     } catch (error) {
         logger.error(`Error unfollowing user: ${error}`);
-        res.status(statusCodes.queryError).send('Error unfollowing user');
+        return res.status(statusCodes.queryError).send('Error unfollowing user');
+
+    } finally {
+        await session.close();
     }
 };
 
@@ -43,37 +80,36 @@ const unfollowUser = async (req, res) => {
  * @returns a JSON object with the followers of the user
  */
 const getFollowers = async (req, res) => {
-    const { user_email } = req.params;
+    const session = createNeo4jSession();
+
     try {
-        const [followers] = await userModel.aggregate([
-            {
-                $match: { email: user_email }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'followers',
-                    foreignField: '_id',
-                    as: 'followers'
-                }
-            },
-            {
-                $project: {
-                    "followers._id": 1,
-                    "followers.email": 1,
-                    "followers.username": 1,
-                    "followers.bio": 1,
-                    "followers.profile_img": 1,
-                }
-            }
-        ]);
+        const { user_email } = req.params;
+
+        const getFollowersQuery = `
+            MATCH (u:User {email: $email})<-[:FOLLOWS]-(f:User)
+            RETURN f {
+                .email,
+                .username,
+                .bio,
+                .profile_img
+            } AS follower
+        `;
+
+        const result = await session.run(getFollowersQuery, { email: user_email });
+
+        const followers = result.records.map(record => record.get('follower'));
+
         logger.info(`Retrieved followers of user with email ${user_email}`);
-        res.status(statusCodes.success).json({ followers: followers.followers });
+        return res.status(statusCodes.success).json({ followers });
+
     } catch (error) {
         logger.error(`Error retrieving followers: ${error}`);
-        res.status(statusCodes.queryError).send('Error retrieving followers');
+        return res.status(statusCodes.queryError).send('Error retrieving followers');
+
+    } finally {
+        await session.close();
     }
-}
+};
 
 /**
  * This function retrieves the users that a user is following from the database
@@ -82,38 +118,36 @@ const getFollowers = async (req, res) => {
  * @returns a JSON object with the users that the user is following
  */
 const getFollowing = async (req, res) => {
-    const { user_email } = req.params;
+    const session = createNeo4jSession();
+
     try {
-        const [following] = await userModel.aggregate([
-            {
-                $match: { email: user_email }
-            },
-            {
-                $lookup: {
-                    from: 'users',
-                    localField: 'following',
-                    foreignField: '_id',
-                    as: 'following'
-                }
-            },
-            {
-                $project: {
-                    "following._id": 1,
-                    "following.email": 1,
-                    "following.username": 1,
-                    "following.bio": 1,
-                    "following.profile_img": 1,
-                }
-            }
-        ]);
-        logger.info(`Retrieved users that user with email ${user_email} is following`);
-        res.status(statusCodes.success).json({ following: following.following });
+        const { user_email } = req.params;
+
+        const getFollowingsQuery = `
+            MATCH (u:User  {email: $email})-[:FOLLOWS]->(f:User)
+            RETURN f {
+                .email,
+                .username,
+                .bio,
+                .profile_img
+            } AS following
+        `;
+
+        const result = await session.run(getFollowingsQuery, { email: user_email });
+
+        const followings = result.records.map(record => record.get('following'));
+
+        logger.info(`Retrieved followings of user with email ${user_email}, ${followings}`);
+        return res.status(statusCodes.success).json({ followings });
+
     } catch (error) {
-        logger.error(`Error retrieving following: ${error}`);
-        res.status(statusCodes.queryError).send('Error retrieving following');
+        logger.error(`Error retrieving followings: ${error}`);
+        return res.status(statusCodes.queryError).send('Error retrieving followings');
+
+    } finally {
+        await session.close();
     }
 }
-
 
 module.exports = {
     followUser,

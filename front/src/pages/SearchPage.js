@@ -86,7 +86,7 @@ function SearchPage() {
               if (result.username) {
                 return (
                   <div className='user-result' onClick={() => navigate(`/profile/${result.username}`)}>
-                    <User key={result._id} user={{ _id: result._id, username: result.username, profile_img: result.profile_img }} />
+                    <User key={result._id} user={{ email: result.email, username: result.username, profile_img: result.profile_img }} />
                   </div>
                 )
               }

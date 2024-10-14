@@ -2,6 +2,23 @@ const logger  = require("../middleware/winston");
 const statusCodes = require('../constants/statusCodes.js');
 const notificationModel = require('../models/notificationModel');
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
+const crypto = require('crypto');
+const Redis = require('../boot/redis_client.js');
+const redisCacheDurations = require('../constants/redisCacheDurations.js');
+
+/**
+ * This function generates a hash key for caching based on the provided filter
+ * @param {*} _filter: The filter object to be hashed
+ * @returns: The hash key
+ */
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 /**
  * This function creates a notification in the database based on the provided recipient_email and content fields
@@ -39,8 +56,28 @@ const createNotification = async (req, res) => {
  */
 const getNotifications = async (req, res) => {
     const recipient_email = req.user.email;
+    const redisClient = Redis.getRedisClient();
+    let notifications = [];
     try {
-        const notifications = await notificationModel.find({ recipient_email });
+        const cacheKey = getHashKey({ recipient_email });
+        const cachedNotifications = await redisClient.get(cacheKey).catch((err) => {
+            logger.error(`Error getting notifications from cache: ${err}`);
+        });
+        notifications = JSON.parse(cachedNotifications);
+        if (!notifications) {
+            logger.info(`Fetching notifications from database for ${recipient_email}`);
+            notifications = await notificationModel.find({ recipient_email });
+            await redisClient.set(cacheKey, JSON.stringify(notifications)).then(
+                async () => {
+                    await redisClient.expire(cacheKey, redisCacheDurations.notifications).catch((err) => {
+                        logger.error(`Error setting cache expiration: ${err}`);
+                    });
+                }
+            );
+        } else {
+            logger.info(`Fetched notifications from cache for ${recipient_email}`);
+        }
+
         // split the notifications into read and unread
         result = notifications.reduce((acc, notification) => {
             if (notification.isRead) {

@@ -30,8 +30,8 @@ const ViewTweetPage = () => {
         })
             .then((response) => {
                 console.log('response', response)
-                setTweet(response.data.tweet)
-                setTweetAuthorUsername(response.data.tweet.author.username)
+                setTweet(response.data.tweet[0] ? response.data.tweet[0] : response.data.tweet)
+                setTweetAuthorUsername(response.data.tweet.author_username)
                 setTweetAuthorEmail(response.data.tweet.author_email)
                 setLoading(false)
             })

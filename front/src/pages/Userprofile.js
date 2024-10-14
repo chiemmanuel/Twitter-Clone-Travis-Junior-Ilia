@@ -7,8 +7,10 @@ import Comment from "../components/Comment";
 import Navbar from "../components/Navbar";
 import "../styles/Userprofile.css";
 import { useNavigate } from 'react-router-dom';
+import useAppStateContext from "../hooks/useAppStateContext";
 
 const Userprofile = () => {
+  const { dispatch } = useAppStateContext();
   const { username } = useParams();
   const [activeContainer, setActiveContainer] = useState("userTweets");
   const [user, setUser] = useState(null);
@@ -31,10 +33,14 @@ const Userprofile = () => {
   const handleFollow = async () => {
     try {
       // Make a request to follow the user
-      await instance.post(requests.followUser + user._id, {}, {
+      await instance.post(requests.followUser + user.email, {}, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
+      });
+      dispatch ({
+        type: "Follow",
+        payload: user.email,
       });
       setIsFollowing(true);
       setFollowSuccess(true);
@@ -53,10 +59,14 @@ const Userprofile = () => {
   const handleUnfollow = async () => {
     try {
       // Make a request to unfollow the user
-      await instance.delete(requests.unFollowUser + user._id, {
+      await instance.delete(requests.unFollowUser + user.email, {
         headers: {
           Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
         },
+      });
+      dispatch ({
+        type: "Unfollow",
+        payload: user.email,
       });
       setIsFollowing(false);
       setUnfollowSuccess(true);
@@ -83,12 +93,8 @@ const Userprofile = () => {
 
         if (isMounted) {
           setUser(response.data);
-
-          // Check if current user is already following the user
           const currentUser = JSON.parse(localStorage.getItem("user"));
-          if (currentUser && response.data.followers.includes(currentUser._id)) {
-            setIsFollowing(true);
-          }
+          setIsFollowing(currentUser.following.includes(response.data.email));
 
           // Fetch user tweets
           const tweetsResponse = await instance.get(requests.userTweet + response.data.email, {
@@ -145,16 +151,9 @@ const Userprofile = () => {
                 <img src={user.profile_img} alt="Profile" />
                 <div className="user-details">
                   <h2>{user.username}</h2>
-                  <p>
-                    Joined since{" "}
-                    {new Date(user.created_at).toLocaleString("default", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
                   <div className="follower-info">
-                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers.length} followers</div>
-                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following.length} following</div>
+                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers} followers</div>
+                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following} following</div>
                   </div>
                 </div>
               </div>

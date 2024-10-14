@@ -1,12 +1,30 @@
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const statusCodes = require('../constants/statusCodes');
-const logger = require("../middleware/winston");
-const tweetModel = require('../models/tweetModel');
-const commentModel = require('../models/commentModel');
-const ObjectId = require('mongoose').Types.ObjectId;
 const { sendMessage } = require('../boot/socketio/socketio_connection.js');
+const statusCodes = require('../constants/statusCodes');
+const commentModel = require('../models/commentModel');
+const logger = require("../middleware/winston");
 const User = require('../models/userModel');
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const Redis = require('../boot/redis_client');
+const crypto = require('crypto');
+const tweetModel = require('../models/tweetModel');
+const redisCacheDurations = require('../constants/redisCacheDurations');
+
+const { createNeo4jSession } = require('../boot/neo4j.config.js');
+
+/**
+ * This function generates a hash key for caching based on the provided filter
+ * @param {*} _filter: The filter object to be hashed
+ * @returns: The hash key
+ */
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 /**
  * This function updates user information in the database based on the provided fields
@@ -15,31 +33,40 @@ const User = require('../models/userModel');
  * @returns: The res object with a status code and a message indicating the success or failure of the update
  */
 const updateUser = async (req, res) => {
+    const session = createNeo4jSession();
+
     try {
-        console.log(req.user);
         const { email } = req.user;
         const { username, profile_img, bio, gender, dob, contact } = req.body;
-        console.log("Updating user information");
 
         // Check if the desired username is already taken
-        const existingUsername = await User.findOne({ username });
+        const existingUsernameQuery = `
+            MATCH (u:User {username: $username})
+            WHERE u.email <> $email
+            RETURN u
+        `;
 
-        if (existingUsername && existingUsername.email !== email) {
-            return res.status(statusCodes.badRequest).json({ error: "Username already exists" });
+        const existingUsername = await session.run(existingUsernameQuery, { username, email });
+
+        if (existingUsername.records.length > 0) {
+            return res
+                .status(statusCodes.badRequest)
+                .json({ error: "Username already exists" });
         }
 
         const updateValues = {};
-        
+
         if (username) {
-            sendMessage(null, 'update-username', { old_username: req.user.username, new_username: username , _id: req.user._id});
+            sendMessage(null, 'update-username', { old_username: req.user.username, new_username: username, _id: req.user._id });
             updateValues.username = username;
 
             // Update session's username if changed
             req.user.username = username;
         }
+
         if (profile_img) {
             updateValues.profile_img = profile_img;
-            sendMessage(null, 'update-profile-image', { author_name: username, profile_img: profile_img, _id: req.user._id});
+            sendMessage(null, 'update-profile-image', { author_name: username, profile_img: profile_img, _id: req.user._id });
         }
 
         if (bio) {
@@ -54,18 +81,16 @@ const updateUser = async (req, res) => {
             // Parse the incoming date string if it exists
             const parsedDate = new Date(dob);
 
-        // Check if the parsed date is a valid date
-        if (!isNaN(parsedDate)) {
-            // Format the date to 'YYYY-MM-DD'
-            const formattedDate = parsedDate.toISOString().split('T')[0];
-            // Now, `formattedDate` can be used to store in MongoDB
-            console.log(formattedDate);
-        } else {
-            console.error("Invalid date format");
-            // Handle the case where the incoming date is invalid
-            return res.status(statusCodes.badRequest).json({ error: "Invalid date format" });
-        }
-            updateValues.dob = parsedDate;
+            // Check if the parsed date is a valid date
+            if (!isNaN(parsedDate)) {
+                // Format the date to 'YYYY-MM-DD'
+                const formattedDate = parsedDate.toISOString().split('T')[0];
+                updateValues.dob = formattedDate;
+            } else {
+                return res
+                    .status(statusCodes.badRequest)
+                    .json({ error: "Invalid date format" });
+            }
         }
 
         if (contact) {
@@ -73,16 +98,32 @@ const updateUser = async (req, res) => {
         }
 
         if (Object.keys(updateValues).length === 0) {
-            return res.status(statusCodes.badRequest).json({ error: "No fields to update" });
+            return res
+                .status(statusCodes.badRequest)
+                .json({ error: "No fields to update" });
         }
 
         // Update user information in the database
         const result = await User.findOneAndUpdate({ email }, updateValues);
         console.log(result);
+        let tweet_fields = {};
+        if (updateValues.username) {
+            tweet_fields.author_username = updateValues.username;
+        }
+        if (updateValues.profile_img) {
+            tweet_fields.author_profile_img = updateValues.profile_img;
+        }
+        await Tweet.updateMany({ author_email: email }, tweet_fields).then(
+            (result) => logger.info(`Updated ${result.nModified} tweets with new user information`)
+        ).catch((err) => logger.error(err));
         return res.status(statusCodes.success).json({ message: "User information updated successfully" });
     } catch (error) {
-        console.error("Error while updating user information", error.message);
-        return res.status(statusCodes.queryError).json({ error: "Failed to update user information" });
+        return res
+            .status(statusCodes.queryError)
+            .json({ error: "Failed to update user information" });
+
+    } finally {
+        await session.close();
     }
 };
 
@@ -93,48 +134,70 @@ const updateUser = async (req, res) => {
  * @returns: The res object with a status code and a message indicating the success or failure of the update
  */
 const updatePassword = async (req, res) => {
+    const session = createNeo4jSession();
+
     try {
         const { email } = req.user;
-        console.log(req.user);
-        console.log(email);
-        console.log(req.body);
-
         const { oldPassword, newPassword } = req.body;
-        console.log("Updating password");
 
         if (!oldPassword || !newPassword) {
-            return res.status(statusCodes.badRequest).json({ error: "Missing information" });
-            console.log("Missing information");
+            return res
+                .status(statusCodes.badRequest)
+                .json({ error: "Missing information" });
         }
 
         if (oldPassword === newPassword) {
-            return res.status(statusCodes.badRequest).json({ error: "Old and new passwords cannot be the same" });
-            console.log("Old and new passwords cannot be the same");
+            return res
+                .status(statusCodes.badRequest)
+                .json({ error: "Old and new passwords cannot be the same" });
         }
 
         // Fetch user information from the database
-        const user = await User.findOne({ email });
+        const userQuery = `
+            MATCH (u:User {email: $email})
+            RETURN u
+        `;
 
-        if (!user) {
-            return res.status(statusCodes.badRequest).json({ message: "User not found" });
-            console.log("User not found");
+        const result = await session.run(userQuery, { email });
+        const userRecord = result.records[0];
+
+        if (!userRecord) {
+            return res
+                .status(statusCodes.badRequest)
+                .json({ message: "User not found" });
         }
+
+        const user = userRecord.get('u').properties;
 
         // Compare old password with the stored hashed password
         if (!bcrypt.compareSync(oldPassword, user.password)) {
-            return res.status(statusCodes.badRequest).json({ message: "Old password is incorrect" });
-            console.log("Old password is incorrect");
+            return res
+                .status(statusCodes.badRequest)
+                .json({ message: "Old password is incorrect" });
         }
 
         // Hash and update the new password
         const hash = bcrypt.hashSync(newPassword, 10);
-        await User.findOneAndUpdate({ email }, { password: hash });
 
-        return res.status(statusCodes.success).json({ message: "Password updated successfully" });
+        const updatePasswordQuery = `
+            MATCH (u:User {email: $email})
+            SET u.password = $hash
+            RETURN u
+        `;
+
+        await session.run(updatePasswordQuery, { email, hash });
+
+        return res
+            .status(statusCodes.success)
+            .json({ message: "Password updated successfully" });
+
     } catch (error) {
-        console.error("Error in try-catch block", error.message);
-        return res.status(statusCodes.queryError).json({ error: "Internal server error" });
+        return res
+            .status(statusCodes.queryError)
+            .json({ error: "Internal server error" });
 
+    } finally {
+        await session.close();
     }
 };
 
@@ -145,24 +208,42 @@ const updatePassword = async (req, res) => {
  * @returns: The res object with a status code and the user information in the message
  */
 const getcurrentUser = async (req, res) => {
+    const session = createNeo4jSession();
+    logger.info(JSON.stringify(req.user))
+
     try {
-        console.log("getting current user")
-        console.log(req.user);
-        const { _id } = req.user;
+        const { email } = req.user;
 
-        // Fetch user information from the database based on the email
-        const user = await User.findById({ _id });
+        // Fetch user information from the database based on the _id
+        const getUserQuery = `
+        MATCH (u:User {email: $userEmail})
+        OPTIONAL MATCH (u)-[:FOLLOWS]->(f:User)
+        OPTIONAL MATCH (u)<-[:FOLLOWS]-(n:User)
+        RETURN u, count(distinct f) as following, count(distinct n) as followers
+    `;
 
-        console.log(user);
+        const result = await session.run(getUserQuery, { userEmail: email });
+        logger.info(`result: ${JSON.stringify(result.records)}`)
+        const userRecord = result.records[0];
 
-        if (!user) {
-            return res.status(statusCodes.badRequest).json({ message: "User not found" });
+        if (!userRecord) {
+            return res
+                .status(statusCodes.badRequest)
+                .json({ message: "User not found" });
         }
 
+        const user = userRecord.get('u').properties;
+        user.following = userRecord.get('following').low;
+        user.followers = userRecord.get('followers').low;
         return res.status(statusCodes.success).json(user);
+
     } catch (error) {
-        console.error("Error while getting user from MongoDB", error.message);
-        return res.status(statusCodes.queryError).json({ error: "Failed to get user" });
+        return res
+            .status(statusCodes.queryError)
+            .json({ error: "Failed to get user" });
+
+    } finally {
+        await session.close();
     }
 };
 
@@ -173,22 +254,40 @@ const getcurrentUser = async (req, res) => {
  * @returns: The res object with a status code and the user information in the message
  */
 const getUserByUsername = async (req, res) => {
+    const session = createNeo4jSession();
+
     try {
         const { username } = req.params;
-        logger.info(`Fetching user with username: ${username}`);
 
         // Fetch user information from the database based on the username
-        const user = await User.findOne({ username : username });
+        const getUserQuery = `
+            MATCH (u:User {username: $username})
+            OPTIONAL MATCH (u)-[:FOLLOWS]->(f:User)
+            OPTIONAL MATCH (u)<-[:FOLLOWS]-(n:User)
+            RETURN u, count(distinct f) as following, count(distinct n) as followers
+        `;
 
-        if (!user) {
-            console.log("User not found");
-            return res.status(statusCodes.badRequest).json({ message: "User not found" });
+        const result = await session.run(getUserQuery, { username });
+        const userRecord = result.records[0];
+
+        if (!userRecord) {
+            return res
+                .status(statusCodes.badRequest)
+                .json({ message: "User not found" });
         }
-        console.log(user);
+
+        const user = userRecord.get('u').properties;
+        user.following = userRecord.get('following').low;
+        user.followers = userRecord.get('followers').low;
         return res.status(statusCodes.success).json(user);
+
     } catch (error) {
-        console.error("Error while getting user from MongoDB", error.message);
-        return res.status(statusCodes.queryError).json({ error: "Failed to get user" });
+        return res
+            .status(statusCodes.queryError)
+            .json({ error: "Failed to get user" });
+            
+    } finally {
+        await session.close();
     }
 };
 
@@ -199,70 +298,33 @@ const getUserByUsername = async (req, res) => {
  * @returns: A JSON object containing the fetched tweets and the id of the last tweet fetched
  */
 const getUserTweets = async (req, res) => {
-    user_email = req.params.user_email;
-    console.log(user_email);
+    const redisClient = Redis.getRedisClient();
+    const userEmail = req.params.email;
     var tweets = [];
-    var query = [
-        { $sort: { created_at: -1 } },
-        { $limit: 10 },
-        { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-        { $unwind: { path: '$author'}},
-        { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-        { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-        { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
-        { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-        { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-        { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-        { $project: {
-            "author_email": 1,
-            "content": 1,
-            "media": 1,
-            "poll": 1,
-            "retweet": 1,
-            "hashtags": 1,
-            "num_comments": 1,
-            "liked_by": 1,
-            "num_retweets": 1,
-            "num_views": 1,
-            "num_bookmarks": 1,
-            "created_at": 1,
-            "updated_at": 1,
-            "author.username": 1,
-            "author.profile_img": 1,
-            "retweet_author.username": 1,
-            "retweet_author.profile_img": 1,
-        } },
-    ];;
-    if(req.body.last_tweet_id) {
-        last_tweet_id = new ObjectId(req.body.last_tweet_id);
-        try {
-            if (query[0].$match) {
-                query[0].$match.author_email = user_email;
-                query[0].$match._id.$lt = last_tweet_id;
-            } else {
-                query.unshift({ $match: { author_email: user_email, _id: { $lt: last_tweet_id } } });
-            }
-            // Find tweets from the user with email user_email that have an _id less than the last_tweet_id
-            tweets = await tweetModel.aggregate(query);
+
+    try {
+        // Find tweets from the user with email user_email
+        const requestKey = getHashKey({ userEmail: userEmail });
+        const cachedData = await redisClient.get(requestKey).catch((err) => logger.error(err));
+        if (!cachedData) {
+            tweets = await tweetModel.find({ author_email: userEmail });
             logger.info(`Successfully fetched tweets from the database`);
-        } catch (error) {
-            return {error: error};
+            await redisClient.set(requestKey, JSON.stringify(tweets)).then(
+                async () => {
+                    await redisClient.expire(requestKey, redisCacheDurations.userTweets).catch((err) => logger.error(err));
+                    logger.info(`Successfully cached tweets for user ${userEmail}`);
+            }).catch((err) => {
+                logger.error(`Error caching tweets for user ${userEmail}: ${err}`);
+            });
+        } else {
+            tweets = JSON.parse(cachedData);
+            logger.info("Fetched tweets from cache");
         }
-    } else {
-        try {
-            query.unshift({ $match: { author_email: user_email } });
-            // Find tweets from the user with email user_email
-            tweets = await tweetModel.aggregate(query);
-        } catch (error) {
-            return res.status(statusCodes.queryError).json({ error: error });
-        }
+    } catch (error) {
+        logger.error("Error while fetching tweets", error);
+        return res.status(statusCodes.queryError).json({ error: error });
     }
-    if (tweets.length > 0) {
-        return res.status(statusCodes.success).json({tweets: tweets, last_tweet_id: tweets[tweets.length - 1]._id});
-    } else {
-        console.log('No tweets found');
-        return res.status(statusCodes.success).json({tweets: [], last_tweet_id: null});
-    }
+    return res.status(statusCodes.success).json({ tweets: tweets });
 }
 /**
  * This function finds all the tweets liked by a user based on the user's _id from the request
@@ -271,57 +333,66 @@ const getUserTweets = async (req, res) => {
  * @returns {Object} A JSON object containing the liked tweets or an empty array
  */
 const getUserLikedTweets = async (req, res) => {
-    const { _id } = req.params;
-    console.log('Fetching liked tweets for user with _id:', _id);
-    console.log(_id);
-    try {
-        // Find tweets where the given user _id is present in the liked_by array
-        var query = [
-            { $lookup: { from: 'users', localField: 'author_id', foreignField: '_id', as: 'author' } },
-            { $unwind: { path: '$author'}},
-            { $lookup: { from: 'polls', localField: 'poll_id', foreignField: '_id', as: 'poll' } },
-            { $unwind: { path: '$poll', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from: 'tweets', localField: 'retweet_id', foreignField: '_id', as: 'retweet' } },
-            { $unwind: { path: '$retweet', preserveNullAndEmptyArrays: true } },
-            { $lookup: { from : 'users', localField: 'retweet.author_email', foreignField: 'email', as: 'retweet_author' } },
-            { $unwind: { path: '$retweet_author', preserveNullAndEmptyArrays: true}},
-            { $project: {
-                "author_email": 1,
-                "content": 1,
-                "media": 1,
-                "poll": 1,
-                "retweet": 1,
-                "hashtags": 1,
-                "num_comments": 1,
-                "liked_by": 1,
-                "num_retweets": 1,
-                "num_views": 1,
-                "num_bookmarks": 1,
-                "created_at": 1,
-                "updated_at": 1,
-                "author.username": 1,
-                "author.profile_img": 1,
-                "retweet_author.username": 1,
-                "retweet_author.profile_img": 1,
-            } },
-        ];
-        if (query[0].$match) {
-            query[0].$match.liked_by = new ObjectId(_id);
-        } else {
-            query.unshift({ $match: { liked_by: new ObjectId(_id) }});
-        }
-        const likedTweets = await tweetModel.aggregate(query);
+    const session = createNeo4jSession();
+    const redisClient = Redis.getRedisClient();
 
-        if (likedTweets.length > 0) {
-            return res.status(statusCodes.success).json({ status: 'success', likedTweets: likedTweets });
+    logger.info(`Fetching liked tweets for user ${req.params.email}`);
+
+    try {
+        const { email } = req.params;
+        const requestKey = getHashKey({ likedTweetsForEmail: email });
+        const cachedData = await redisClient.get(requestKey).catch((err) => logger.error(err));
+        if (cachedData) {
+            logger.info("Fetched liked tweets from cache");
+            return res.status(statusCodes.success).json(JSON.parse(cachedData));
+        }
+
+        // Cypher query to fetch tweets liked by a user
+        const getUserLikedTweetsQuery = `
+            MATCH (u:User)-[:LIKED]->(t:Tweet)
+            WHERE u.email = $email
+            RETURN t
+        `;
+
+        const result = await session.run(
+            getUserLikedTweetsQuery, { email: email }
+        );
+
+        const tweet_ids = result.records.map(record => {
+            const tweet = record.get('t').properties;
+            return tweet.id;
+        });
+
+        logger.info(`Fetched ${tweet_ids.length} liked tweets for user ${email}`);
+
+        if (tweet_ids.length === 0) {
+            return res.status(statusCodes.success).json({ likedTweets: [] });
         } else {
-            console.log('No liked tweets found');
-            return res.status(statusCodes.success).json({ status: 'success', likedTweets: [] });
+            await tweetModel.find({ _id: { $in: tweet_ids } }).then(
+                async (likedTweets) => {
+                    await redisClient.set(requestKey, JSON.stringify({likedTweets: likedTweets})).then(
+                        async () => {
+                            await redisClient.expire(requestKey, redisCacheDurations.userLikedTweets).catch((err) => logger.error(err));
+                            logger.info(`Successfully cached liked tweets for user ${email}`);
+                    }).catch((err) => {
+                        logger.error(`Error caching liked tweets for user ${email}: ${err}`);
+                    });
+                    return res.status(statusCodes.success).json({likedTweets: likedTweets});
+                }
+            ).catch((err) => {
+                logger.error(`Error fetching liked tweets for user ${email}: ${err}`);
+                return res.status(statusCodes.queryError).json({ error: err });
+            });
+
         }
     } catch (error) {
-        // Log the error and return an error response
-        console.error('Error finding liked tweets:', error);
-        return res.status(statusCodes.serverError).json({ status: 'error', error: error });
+        logger.error(`Error fetching liked tweets for user ${req.params.email}: ${error}`);
+        return res
+            .status(statusCodes.queryError)
+            .json({ error: "Failed to get user liked tweets" });
+
+    } finally {
+        await session.close();
     }
 };
 
@@ -333,16 +404,32 @@ const getUserLikedTweets = async (req, res) => {
  * @returns: A JSON object containing the fetched comments
  */
 const getUserComments = async (req, res) => {
-    username = req.params.username;
+    const redisClient = Redis.getRedisClient();
+    const username = req.params.username;
     var comments = [];
     try {
         // Find comments from the user with email user_email
-        comments = await commentModel.find({ author_name: username });
-        logger.info(`Successfully fetched comments from the database`);
+        const requestKey = getHashKey({ username: username });
+        const cachedData = await redisClient.get(requestKey).catch((err) => logger.error(err));
+        if (!cachedData) {
+            comments = await commentModel.find({ author_name: username });
+            logger.info(`Successfully fetched comments from the database`);
+            await redisClient.set(requestKey, JSON.stringify(comments)).then(
+                async () => {
+                    await redisClient.expire(requestKey, redisCacheDurations.userComments).catch((err) => logger.error(err));
+                    logger.info(`Successfully cached comments for user ${username}`);
+            }).catch((err) => {
+                logger.error(`Error caching comments for user ${username}: ${err}`);
+            });
+        } else {
+            comments = JSON.parse(cachedData);
+            logger.info("Fetched comments from cache");
+        }
     } catch (error) {
+        logger.error("Error while fetching comments", error);
         return res.status(statusCodes.queryError).json({ error: error });
     }
-    return res.status(statusCodes.success).json({comments: comments});
+    return res.status(statusCodes.success).json({ comments: comments });
 }
 
 /**
@@ -374,35 +461,44 @@ const logout = (req, res) => {
  * @returns: The res object with a status code and a message indicating success or failure
  */
 const deleteCurrentUser = async (req, res) => {
+    const session = createNeo4jSession();
+
     try {
         const { _id } = req.session.user;
 
-        // Check if the user exists before attempting to delete
-        const existingUser = await User.findById({ _id });
-        if (!existingUser) {
-            return res.status(statusCodes.badRequest).json({ message: "User not found" });
-        }
+        // Cypher query to delete the user and all related data
+        const deleteUserQuery = `
+            MATCH (u:User)
+            WHERE id(u) = $userId
+            DETACH DELETE u
+        `;
 
-        // Perform the user deletion
-        await User.findByIdAndDelete({ _id });
+        // Execute the delete query
+        const result = await session.run(deleteUserQuery, { userId: toNeo4jId(_id) });
+        
+        return res
+            .status(statusCodes.success)
+            .json({ message: "User deleted successfully" });
 
-        return res.status(statusCodes.success).json({ message: "User deleted successfully" });
     } catch (error) {
-        console.error("Error while deleting user from MongoDB", error.message);
-        return res.status(statusCodes.serverError).json({ error: "Failed to delete user" });
+        console.log(error);
+        return res
+            .status(statusCodes.queryError)
+            .json({ error: "Failed to delete user" });
+
+    } finally {
+        await session.close();
     }
 };
 
-
-
 module.exports = {
-    updateUser,
-    updatePassword,
-    getcurrentUser,
     logout,
+    updateUser,
+    getUserTweets,
+    getcurrentUser,
+    updatePassword,
+    getUserComments,
     deleteCurrentUser,
     getUserByUsername,
-    getUserTweets,
     getUserLikedTweets,
-    getUserComments
 };

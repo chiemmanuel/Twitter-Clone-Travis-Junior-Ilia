@@ -27,7 +27,8 @@ const FollowingPage = () => {
             Authorization: `Bearer ${current_user.token}`,
           },
         });
-        setFollowers(res.data.following);
+        console.log(res.data);
+        setFollowers(res.data.followings);
       };
 
       getFollowers();

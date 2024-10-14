@@ -4,6 +4,9 @@
   padding: 16px;
   margin-bottom: 16px;
 }
+.tweet__header {
+  cursor: pointer;
+}
 
 .tweet__header {
   display: flex;

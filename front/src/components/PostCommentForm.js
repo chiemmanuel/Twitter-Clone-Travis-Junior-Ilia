@@ -40,6 +40,7 @@ function PostCommentForm(props) {
       const imgData = await res.json();
 
       axios.post(requests.postComment + tweet_id, {
+        profile_img: user.profile_img,
         content: commentText,
         media: imgData.url
       }, {

@@ -2,15 +2,38 @@ const logger = require('../middleware/winston');
 const tweetModel = require('../models/tweetModel.js');
 const userModel = require('../models/userModel.js');
 const statusCodes = require('../constants/statusCodes.js');
+const Redis = require('../boot/redis_client');
+const crypto = require('crypto');
+const redisCacheDurations = require('../constants/redisCacheDurations');
+
+const { createNeo4jSession } = require('../boot/neo4j.config.js');
+
+
+/**
+ * This function generates a hash key for caching based on the provided filter
+ * @param {*} _filter: The filter object to be hashed
+ * @returns: The hash key
+ */
+const getHashKey = (_filter) => {
+    let retKey = '';
+    if (_filter) {
+      const text = JSON.stringify(_filter);
+      retKey = crypto.createHash('sha256').update(text).digest('hex');
+    }
+    return 'CACHE_ASIDE_' + retKey;
+  };
 
 const searchByUsername = async (req, res) => {
     const { query } = req.params
+    const session = createNeo4jSession();
 
     try {
-        var query_regex = new RegExp("^" + query, 'i');
+        var query_regex = new RegExp(query + '.*', 'i');
         logger.info(`Searching by username: ${query}`);
-        logger.info(`Query regex: ${query_regex}`);
-        const results = await userModel.find({ username: { $regex: query_regex } })
+        logger.info(`Query regex: ${query_regex.source}`);
+        const userSearchQuery = `MATCH (u:User) WHERE u.username =~ $query RETURN u`;
+        const userSearchResults = await session.run(userSearchQuery, { query: query_regex.source });
+        const results = userSearchResults.records.map(record => record.get('u').properties);
         return res.status(statusCodes.success).json({ results: results });
     } catch (error) {
         logger.error(`Error while searching by username ${query}: ${error}`);
@@ -19,6 +42,16 @@ const searchByUsername = async (req, res) => {
 };
 const searchByHashtag = async (req, res) => {
     const { hashtag } = req.params;
+    const redisClient = Redis.getRedisClient();
+    const requestKey = getHashKey({ hashtag });
+    const cachedResults = await redisClient.get(requestKey).catch((err) => {
+        logger.error(`Error getting search results from cache: ${err}`);
+    });
+
+    if (cachedResults) {
+        logger.info(`Cache hit for hashtag search: ${hashtag}`);
+        return res.status(statusCodes.success).json({ results: JSON.parse(cachedResults) });
+    }
     
     var query_regex = new RegExp("^" + hashtag, 'i');
     try {
@@ -30,10 +63,20 @@ const searchByHashtag = async (req, res) => {
         .sort({ created_at: -1 })
         .limit(10);
 
-        return res.status(statusCodes.success).json({ results: {
+        const results = {
             mostViewedTweets: Array.from(mostViewedTweets),
-            mostRecentTweets: Array.from(mostRecentTweets), 
-        }});
+            mostRecentTweets: Array.from(mostRecentTweets),
+        };
+        logger.info(`Caching search results for hashtag ${hashtag}`)
+        await redisClient.set(requestKey, JSON.stringify(results)).then(
+            async () => {
+                await redisClient.expire(requestKey, redisCacheDurations.searchResults).catch((err) => {
+                    logger.error(`Error setting cache expiration: ${err}`);
+                });
+            }
+        );
+
+        return res.status(statusCodes.success).json({ results: results});
 
     } catch (error) {
         logger.error(`Error while searching by hashtag ${hashtag}: ${error}`);

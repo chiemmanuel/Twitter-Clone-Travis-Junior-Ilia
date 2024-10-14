@@ -61,7 +61,7 @@ const ProfilePage = () => {
         setUserTweets(tweetsResponse.data.tweets);
 
         // Fetch liked tweets
-        await instance.get(requests.userLikedTweets + response.data._id, {
+        await instance.get(requests.userLikedTweets + response.data.email, {
           headers: {
             Authorization: `Bearer ${JSON.parse(localStorage.getItem("user")).token}`,
           },
@@ -101,16 +101,9 @@ const ProfilePage = () => {
                 <img src={user.profile_img} alt="Profile" />
                 <div className="user-details">
                   <h2>{user.username}</h2>
-                  <p>
-                    Joined since{" "}
-                    {new Date(user.created_at).toLocaleString("default", {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
                   <div className="follower-info">
-                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers.length} followers</div>
-                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following.length} following</div>
+                    <div className="ff" onClick={()=>navigate(`/followers/${user.username}`)}>{user.followers} followers</div>
+                    <div className="ff" onClick={()=>navigate(`/following/${user.username}`)}>{user.following} following</div>
                   </div>
                 </div>
               </div>
@@ -171,12 +164,9 @@ const ProfilePage = () => {
             {/* Overlay for EditProfile */}
             {showEditProfile && (
               <div className="overlay">
-                <div className="popup">
                   <UpdateProfile onClose={handleCloseEditProfile} />
-                </div>
               </div>
             )}
-    
             {/* Overlay for EditPassword */}
             {showEditPassword && (
               <div className="overlay">
